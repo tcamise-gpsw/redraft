@@ -1,6 +1,6 @@
 # Proposal Review Workspace — Core Design
 
-**Spec 1 of 2** — This spec covers the core review workspace: proposal browsing, markdown viewing, inline comments, document editing, and GitHub sync. A follow-up spec will add Google Docs-style text suggestions (replace/accept/reject).
+This spec covers the full MVP: proposal browsing, markdown viewing, inline comments, document editing, GitHub sync, and project scaffolding.
 
 ## Problem
 
@@ -16,12 +16,12 @@ A small engineering team can create, review, discuss, and evolve technical propo
 
 ## Non-Goals
 
-- Realtime collaboration
+- Realtime collaboration (beyond activity indicators)
 - Rich text / WYSIWYG editing
 - Notifications
 - User management / access control beyond GitHub PAT
 - AI assistants
-- Google Docs-style text suggestions (Spec 2)
+- Google Docs-style text suggestions
 
 ---
 
@@ -296,15 +296,19 @@ App
    ```
 4. App navigates to the new proposal's view
 
-### Conflict Handling
+### Concurrency
 
-Before every commit (edit or comment), the app:
+The app uses a two-layer approach to handle concurrent edits:
+
+**Activity indicator:** Each proposal view shows a "last edited by @login at timestamp" line, derived from the most recent commit touching that file (fetched via `GET /repos/:owner/:repo/commits?path=:path&per_page=1`). This gives users visibility into who else is working on a proposal without any locking infrastructure.
+
+**SHA-based optimistic locking:** Before every commit (edit or comment), the app:
 
 1. Fetches the latest file SHA from the GitHub API
 2. Compares it to the SHA from when the file was last loaded
 3. If SHAs match → commit proceeds normally
 4. If SHAs differ → the file was modified externally. The app shows an error banner: **"This file was modified since you loaded it. Please refresh and re-apply your changes."**
-5. No auto-merge in the MVP. The user must refresh, which re-fetches the latest content, and then re-apply their changes.
+5. No auto-merge. The user must refresh, which re-fetches the latest content, and then re-apply their changes.
 
 ---
 
@@ -423,22 +427,40 @@ When the user selects text in the rendered markdown:
 
 ## Project Scaffolding
 
-The implementation will include full project scaffolding:
-
-### Files
+### Documentation
 
 | File | Purpose |
 |------|---------|
-| `README.md` | Project overview, setup instructions, development guide |
-| `AGENTS.md` | AI agent coding guidelines for this project |
+| `README.md` | Project overview, architecture summary, setup instructions, development commands, deployment guide. Kept accurate as the codebase evolves. |
+| `AGENTS.md` | AI agent coding guidelines: project conventions, directory structure, key patterns, testing approach, and common pitfalls. Updated whenever architecture changes. |
+
+**README.md** includes:
+- What the project is and how it works (architecture diagram)
+- Prerequisites (Node.js, GitHub PAT)
+- Local development setup (`npm install`, `npm run dev`)
+- How to deploy (GitHub Actions workflow)
+- How to configure (PAT, target repository)
+- Directory structure overview
+
+**AGENTS.md** includes:
+- Project structure and module responsibilities
+- Coding conventions (TypeScript strict, Tailwind utility classes, TanStack Query patterns)
+- How to add new components, routes, and API calls
+- Testing patterns and how to run tests
+- Common mistakes to avoid
+
+### Configuration Files
+
+| File | Purpose |
+|------|---------|
 | `package.json` | Dependencies and scripts |
 | `vite.config.ts` | Vite configuration with GitHub Pages base path |
-| `tsconfig.json` | TypeScript configuration |
+| `tsconfig.json` | TypeScript strict configuration |
 | `tailwind.config.ts` | Tailwind configuration |
 | `.eslintrc.cjs` | ESLint configuration |
 | `.prettierrc` | Prettier configuration |
 | `.gitignore` | Standard Vite/Node ignores |
-| `.github/workflows/deploy.yml` | GitHub Actions workflow for Pages deployment |
+| `.github/workflows/deploy.yml` | GitHub Actions: build + deploy to gh-pages branch on push to main |
 
 ### Directory Structure
 
@@ -465,6 +487,20 @@ src/
 
 ---
 
+## Development Workflow
+
+The project is developed with a full edit → push → deploy → verify loop:
+
+1. **Edit** — Code changes are made locally
+2. **Push** — Changes are pushed to the repository via a GitHub PAT with repo access
+3. **Deploy** — GitHub Actions builds and deploys to the `gh-pages` branch automatically on push to `main`
+4. **Verify** — The live GitHub Pages site is opened in a browser to verify the deployed app works correctly
+5. **Test** — Vitest unit/integration tests run locally; Playwright E2E tests run against the dev server
+
+This enables AI-assisted development where the agent can make changes, push them, and verify the result on the live site.
+
+---
+
 ## Open Questions Resolved
 
 | Question | Decision |
@@ -477,13 +513,5 @@ src/
 | State management? | TanStack Query + React useState/useReducer |
 | Styling? | Tailwind CSS |
 | Routing? | Hash-based (React Router) for GitHub Pages |
-
----
-
-## Future Work (Spec 2)
-
-The following is explicitly deferred to a second design spec:
-
-- **Text suggestions** — Google Docs-style "suggest replacing X with Y"
-- **Accept/Reject workflow** — author can accept (apply the replacement) or reject (dismiss the suggestion)
-- This will require extending the comment data model with a `suggestion` type and building a diff-rendering UI
+| Read method? | GitHub REST API for all reads (always fresh, PAT required anyway) |
+| Concurrency? | Activity indicator + SHA-based optimistic locking |
