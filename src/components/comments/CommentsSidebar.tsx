@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { useAuth } from '../../hooks/useAuth';
 import { useComments } from '../../hooks/useComments';
 import { useToast } from '../../hooks/useToast';
 import { resolveAnchor } from '../../lib/comments';
@@ -34,6 +35,7 @@ export function CommentsSidebar({
   onClearSelection: () => void;
 }) {
   const { addComment, addReply, resolveThread } = useComments(path);
+  const { user } = useAuth();
   const { showToast } = useToast();
 
   const { ordered, orphaned } = useMemo(() => {
@@ -85,8 +87,8 @@ export function CommentsSidebar({
                 quote: pendingSelection.quote,
                 quoteContext: pendingSelection.context,
                 author: {
-                  login: 'jdoe',
-                  avatarUrl: 'https://example.com/avatar.png',
+                  login: user?.login ?? '',
+                  avatarUrl: user?.avatarUrl ?? '',
                 },
                 body,
                 resolved: false,
@@ -109,8 +111,8 @@ export function CommentsSidebar({
             await withToast(async () => {
               await addReply(thread.id, {
                 author: {
-                  login: 'jdoe',
-                  avatarUrl: 'https://example.com/avatar.png',
+                  login: user?.login ?? '',
+                  avatarUrl: user?.avatarUrl ?? '',
                 },
                 body,
               });
@@ -132,8 +134,8 @@ export function CommentsSidebar({
           await withToast(async () => {
             await addReply(threadId, {
               author: {
-                login: 'jdoe',
-                avatarUrl: 'https://example.com/avatar.png',
+                login: user?.login ?? '',
+                avatarUrl: user?.avatarUrl ?? '',
               },
               body,
             });

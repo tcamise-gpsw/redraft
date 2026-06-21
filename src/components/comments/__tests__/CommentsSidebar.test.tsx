@@ -30,6 +30,18 @@ vi.mock('../../../hooks/useToast', () => ({
   }),
 }));
 
+vi.mock('../../../hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+    pat: 'ghp_test',
+    repo: { owner: 'acme', repo: 'workspace' },
+    isAuthenticated: true,
+    login: vi.fn(),
+    logout: vi.fn(),
+    updateRepo: vi.fn(),
+  }),
+}));
+
 import { CommentsSidebar } from '../CommentsSidebar';
 import { SelectionPopover } from '../SelectionPopover';
 
