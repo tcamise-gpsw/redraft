@@ -26,3 +26,6 @@
 
 - 2026-06-21 — Task 9: The editor tests were easiest to keep deterministic by mocking `useNavigate` and `useToast` instead of asserting on route state. That made the save and conflict branches precise without dragging the whole router into every assertion.
 - 2026-06-21 — Task 9: The proposal edit route needed to strip a trailing `/edit` from the wildcard route param before reconstructing the proposal path. Doing that once in the route kept the hook and editor contracts clean.
+
+- 2026-06-21 — Task 10: GitHub content URLs in Octokit requests are URL-encoded, so the Playwright route handlers needed `decodeURIComponent(url)` before matching proposal paths. Matching the raw encoded URL made the E2E tests look like app regressions when the bug was just in the mocks.
+- 2026-06-21 — Task 10: Browser E2E setup was the longest external dependency step because Playwright needed Chromium installed separately from the npm package. Once installed, the mocked-browser suite ran quickly and deterministically.

@@ -556,7 +556,7 @@ Routing setup in `App.tsx`:
 - [x] useProposalEdit: ConflictError triggers toast
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -608,22 +608,22 @@ Documentation updates:
 - AGENTS.md: complete module map, testing instructions, all conventions established during implementation
 
 **Checklist:**
-- [ ] Clicking a comment highlight scrolls to comment in sidebar
-- [ ] Clicking a comment in sidebar scrolls to highlight in document
-- [ ] Text selection → popover → comment form → submit → commit → visible comment (full flow)
-- [ ] 401 on any API call clears auth and shows AuthGate
-- [ ] Rate limit displays in header; exceeded state shows reset banner
-- [ ] E2E auth test passes
-- [ ] E2E proposal viewing test passes
-- [ ] E2E comment workflow test passes
-- [ ] E2E edit workflow test passes
-- [ ] README.md is comprehensive and accurate
-- [ ] AGENTS.md reflects final architecture and conventions
+- [x] Clicking a comment highlight scrolls to comment in sidebar
+- [x] Clicking a comment in sidebar scrolls to highlight in document
+- [x] Text selection → popover → comment form → submit → commit → visible comment (full flow)
+- [x] 401 on any API call clears auth and shows AuthGate
+- [x] Rate limit displays in header; exceeded state shows reset banner
+- [x] E2E auth test passes
+- [x] E2E proposal viewing test passes
+- [x] E2E comment workflow test passes
+- [x] E2E edit workflow test passes
+- [x] README.md is comprehensive and accurate
+- [x] AGENTS.md reflects final architecture and conventions
 
 **Tests:**
-- [ ] `npx playwright test`
-- [ ] All E2E tests pass against dev server with real browser
-- [ ] Key interactive flows verified visually via Playwright during development
+- [x] `npx playwright test`
+- [x] All E2E tests pass against dev server with real browser
+- [x] Key interactive flows verified visually via Playwright during development
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`

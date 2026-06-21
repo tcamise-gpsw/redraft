@@ -5,6 +5,7 @@ import type { RateLimitInfo } from '../../types/github';
 
 export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
   const { user } = useAuth();
+  const lowRateLimit = typeof rateLimit?.remaining === 'number' && rateLimit.remaining > 0 && rateLimit.remaining < 100;
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
@@ -24,7 +25,7 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
         </div>
 
         <div className="flex items-center gap-4 text-sm text-slate-300">
-          <span>
+          <span className={lowRateLimit ? 'text-amber-300' : ''}>
             API: {rateLimit?.remaining ?? 0}/{rateLimit?.limit ?? 0}
           </span>
           <Link className="rounded-md border border-slate-700 px-3 py-2 font-medium hover:border-slate-500" to="/settings">

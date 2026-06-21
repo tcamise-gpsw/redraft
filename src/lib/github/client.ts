@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/rest';
 
+import { dispatchAuthError } from '../auth/storage';
 import type { CommitInfo, FileContent, RateLimitInfo, TreeItem, User } from '../../types/github';
 
 interface GitHubClientOptions {
@@ -13,10 +14,13 @@ interface GetFileOptions {
 }
 
 interface RateLimitHeaders {
+  get?: (name: string) => string | null;
   'x-ratelimit-limit'?: string;
   'x-ratelimit-remaining'?: string;
   'x-ratelimit-reset'?: string;
 }
+
+export const RATE_LIMIT_EVENT = 'proposal-review:rate-limit';
 
 export class AuthError extends Error {
   readonly type = 'auth';
@@ -81,8 +85,21 @@ function encodeBase64(value: string): string {
   return btoa(binary);
 }
 
+function readHeader(headers: RateLimitHeaders | undefined, name: keyof Pick<RateLimitHeaders, 'x-ratelimit-limit' | 'x-ratelimit-remaining' | 'x-ratelimit-reset'>): string | undefined {
+  if (!headers) {
+    return undefined;
+  }
+
+  if (typeof headers.get === 'function') {
+    return headers.get(name) ?? undefined;
+  }
+
+  return headers[name];
+}
+
+
 function isRateLimitError(status: number | undefined, headers: RateLimitHeaders | undefined): boolean {
-  return status === 403 && headers?.['x-ratelimit-remaining'] === '0';
+  return status === 403 && readHeader(headers, 'x-ratelimit-remaining') === '0';
 }
 
 export class GitHubClient {
@@ -242,9 +259,9 @@ export class GitHubClient {
       return;
     }
 
-    const limit = Number(headers['x-ratelimit-limit']);
-    const remaining = Number(headers['x-ratelimit-remaining']);
-    const reset = Number(headers['x-ratelimit-reset']);
+    const limit = Number(readHeader(headers, 'x-ratelimit-limit'));
+    const remaining = Number(readHeader(headers, 'x-ratelimit-remaining'));
+    const reset = Number(readHeader(headers, 'x-ratelimit-reset'));
 
     if (Number.isFinite(limit) && Number.isFinite(remaining) && Number.isFinite(reset)) {
       this.rateLimit = {
@@ -252,10 +269,22 @@ export class GitHubClient {
         remaining,
         reset: new Date(reset * 1000),
       };
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(RATE_LIMIT_EVENT, { detail: this.rateLimit }));
+      }
     }
   }
 
   private async withErrorHandling<T extends { headers?: RateLimitHeaders }>(request: () => Promise<T>): Promise<T> {
+    if (
+      this.rateLimit.limit > 0 &&
+      this.rateLimit.remaining === 0 &&
+      this.rateLimit.reset.getTime() > Date.now()
+    ) {
+      throw new RateLimitError(`GitHub API rate limit exceeded. Resets at ${this.rateLimit.reset.toISOString()}`);
+    }
+
     try {
       return await request();
     } catch (error) {
@@ -278,6 +307,7 @@ export class GitHubClient {
     }
 
     if (status === 401) {
+      dispatchAuthError();
       return new AuthError();
     }
 

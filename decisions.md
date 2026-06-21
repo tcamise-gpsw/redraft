@@ -26,3 +26,6 @@
 
 - 2026-06-21 — Task 9: Kept the editor route thin by reusing `useProposal()` for reads and isolating write behavior in `useProposalEdit()`. The route only coordinates loading, save state, and navigation, which keeps the editor itself reusable and easy to test.
 - 2026-06-21 — Task 9: Conflict handling in the edit hook matches the comments flow’s user-facing message, even though the underlying signals still come from GitHub SHA failures. That keeps the UI consistent across document edits and comment mutations.
+
+- 2026-06-21 — Task 10: Used mocked GitHub API responses in Playwright rather than live GitHub state for the E2E suite. The browser is still real, but the API layer becomes deterministic enough to exercise auth, proposal loading, comments, editing, and conflict handling without depending on mutable remote repo state.
+- 2026-06-21 — Task 10: Simplified route selection by handling `/proposals/*` in one place and switching between `ProposalView` and `ProposalEdit` based on `location.pathname.endsWith('/edit')`. This is more reliable than trying to make a splat route match with a trailing literal segment.

@@ -10,6 +10,17 @@ npm run dev
 npm run build
 ```
 
+## Commands
+
+- `npm run dev` — start the Vite dev server
+- `npm run build` — produce a production bundle
+- `npm run preview` — preview the production bundle locally
+- `npx vitest run` — run unit and integration tests
+- `npx eslint src/` — lint the application source
+- `npx tsc --noEmit` — run the TypeScript compiler in check mode
+- `npx prettier --check src/` — verify source formatting
+- `npx playwright test` — run browser E2E tests
+
 ## What is in this repository
 
 - `src/` — application source code
@@ -28,10 +39,16 @@ flowchart LR
   Pages[GitHub Pages] --> App[React SPA]
   App --> API[GitHub REST API]
   API --> Repo[Proposal repository]
+  App --> Comments[Sidecar comment JSON]
 ```
 
-See `docs/architecture.md` for the detailed component breakdown and data model.
+## Current feature set
 
-## Development
+- Auth gate for PAT + `owner/repo`
+- Proposal tree from the repo's `proposals/` directory
+- Markdown proposal viewing with activity indicators
+- Inline comment threads with quote anchoring, replies, resolution, and orphan detection
+- Raw markdown editing with save/cancel flow and SHA-conflict protection
+- Rate-limit and auth-expiry handling surfaced in the shell
 
-All local development and deployment details live in `docs/development.md`.
+See `docs/architecture.md` for the detailed component breakdown and `docs/development.md` for deployment, configuration, and PAT setup.

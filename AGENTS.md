@@ -16,10 +16,17 @@ Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-prop
 
 ## Structure
 
-- `src/components/` — UI by feature area, not by generic abstraction
-- `src/lib/` — shared logic modules with no React rendering
-- `src/hooks/` — React hooks for data access and local UI state
-- `src/types/` — domain interfaces shared across hooks and components
+- `src/components/auth/` — PAT entry, auth gate
+- `src/components/layout/` — shell, header, layout tests
+- `src/components/tree/` — proposal navigation tree and create dialog
+- `src/components/document/` — markdown viewer, activity indicator, editor
+- `src/components/comments/` — sidebar threads, forms, selection popover
+- `src/components/ui/` — shared primitives (button, dialog, spinner, toast)
+- `src/lib/github/` — GitHub REST client, typed errors, rate-limit/auth events
+- `src/lib/comments/` — anchor resolution and fuzzy matching
+- `src/lib/markdown/` — markdown text extraction helpers
+- `src/hooks/` — auth, proposal loading, proposal editing, comments, toast state
+- `src/types/` — shared domain interfaces
 - `docs/` — architecture, development notes, and specs
 
 ## Conventions
@@ -28,6 +35,7 @@ Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-prop
 - Prefer focused components with one clear responsibility.
 - Keep GitHub API behavior inside `src/lib/github/`.
 - Keep anchor-matching logic inside `src/lib/comments/`.
+- Keep markdown DOM helpers inside `src/lib/markdown/`.
 - Use TanStack Query for server state, React state for local interaction state.
 - Update README and docs when architecture or commands change.
 
@@ -44,3 +52,4 @@ Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-prop
 - Do not invent alternate storage paths for proposal content.
 - Do not bypass SHA checks when writing proposal or comment files.
 - Do not introduce a backend or server-side auth flow.
+- Do not bypass the auth/rate-limit event path when changing `GitHubClient` behavior.
