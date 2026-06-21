@@ -73,7 +73,7 @@
     "vitest": "^3.2.4"
   },
   "bin": {
-    "redraft-local": "./bin/redraft.js",
-    "redraft": "./bin/redraft.js"
+    "redraft-local": "bin/redraft.js",
+    "redraft": "bin/redraft.js"
   }
 }
