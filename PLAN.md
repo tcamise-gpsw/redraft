@@ -36,7 +36,9 @@
 - Create: `src/index.css` — Tailwind directives (`@tailwind base/components/utilities`)
 - Create: `src/vite-env.d.ts` — Vite client type reference
 - Create: `.github/workflows/deploy.yml` — GitHub Actions: install, build, deploy to gh-pages
-- Create: `README.md` — Project overview, architecture, setup, dev commands, deploy guide
+- Create: `README.md` — Project overview, quick start, architecture summary (links to docs/ for details)
+- Create: `docs/architecture.md` — Detailed architecture: component tree, data flow, GitHub API usage
+- Create: `docs/development.md` — Local dev setup, commands, deployment guide, PAT configuration
 - Create: `AGENTS.md` — AI agent coding guide: conventions, structure, patterns, testing, commands
 
 **Behavior:**
@@ -44,7 +46,9 @@
 - `npm run dev` starts a dev server that renders the app
 - `npm run build` produces a `dist/` directory
 - `npx tsc --noEmit` passes with no type errors
-- README covers: what the project is, architecture diagram, prerequisites, local dev setup, deployment, configuration, directory structure
+- README covers: what the project is, quick start (3 commands), architecture summary, links to docs/ for details
+- docs/architecture.md covers: component architecture diagram, data flow, GitHub API endpoints, comment data model, routing
+- docs/development.md covers: prerequisites, local dev setup, all npm scripts, PAT creation guide, GitHub Pages deployment, directory structure
 - AGENTS.md covers: project structure, module responsibilities, coding conventions (TS strict, Tailwind utility classes, TanStack Query patterns), how to add components/routes/API calls, testing patterns, commands, common mistakes
 
 **Checklist:**
@@ -54,7 +58,8 @@
 - [ ] Tailwind CSS is working (a utility class renders correctly)
 - [ ] ESLint and Prettier configs are valid
 - [ ] GitHub Actions deploy workflow is syntactically valid
-- [ ] README.md contains all required sections
+- [ ] README.md links to docs/ for detailed architecture and development guides
+- [ ] docs/architecture.md and docs/development.md contain all required sections
 - [ ] AGENTS.md contains all required sections
 
 **Tests:**
@@ -589,8 +594,9 @@ Rate limit display in Header:
 - Warn visually (amber text) when remaining < 100
 - When remaining hits 0 (rate limit exceeded): show a banner with "API rate limit exceeded. Resets at {reset time}." All API calls are paused until reset.
 
-E2E tests (Playwright):
-- Run against `npm run dev` with mocked GitHub API responses (use Playwright's route interception to mock API)
+E2E tests (Playwright against real browser):
+- Run against `npm run dev` with a development GitHub PAT provided by the project owner
+- Playwright is the primary verification tool during development — each task's interactive behavior should be validated by launching a browser and testing the actual UI, not just unit tests
 - Auth flow: enter PAT + repo → validate → see proposal tree
 - Proposal view: navigate to proposal → see rendered markdown
 - Comment flow: select text → popover appears → add comment → comment visible in sidebar
@@ -616,7 +622,8 @@ Documentation updates:
 
 **Tests:**
 - [ ] `npx playwright test`
-- [ ] All E2E tests pass against dev server with mocked API
+- [ ] All E2E tests pass against dev server with real browser
+- [ ] Key interactive flows verified visually via Playwright during development
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
