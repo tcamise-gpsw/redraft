@@ -20,3 +20,6 @@
 
 - 2026-06-21 — Task 7: Kept anchor resolution as a pure text engine with no DOM dependencies. The viewer and sidebar can both consume the same `resolveAnchor()` result later, which keeps anchoring behavior consistent across rendering and comment ordering.
 - 2026-06-21 — Task 7: Fuzzy matching uses subsequence-based similarity with the existing substring helper as a lower-level signal. That is permissive enough to survive small inserted words while still rejecting unrelated text below the 0.7 threshold.
+
+- 2026-06-21 — Task 8: Kept `useComments()` narrowly responsible for GitHub reads/writes and mutation invalidation, while the sidebar owns user-facing toast behavior. That keeps the hook reusable in other surfaces without hard-wiring UI state into the data layer.
+- 2026-06-21 — Task 8: `ProposalView` now owns active comment selection and the scroll bridge between the document and sidebar. The document emits comment IDs and selection payloads; the sidebar consumes ordered threads and mutation helpers; the route coordinates both.

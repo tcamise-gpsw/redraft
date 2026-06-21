@@ -20,3 +20,6 @@
 
 - 2026-06-21 — Task 7: The apparent “wrong index” failure in the duplicate-quote test came from my own miscounting, not from the resolver. Re-checking the literal string before changing code saved unnecessary churn.
 - 2026-06-21 — Task 7: Longest-common-substring alone was too brittle for fuzzy anchor recovery because inserted words collapse the score too far. A subsequence-based score matched the intended “lightly edited” behavior much better for proposal text.
+
+- 2026-06-21 — Task 8: The `useComments` test wrapper had to avoid JSX because the approved path is a `.ts` test file. `createElement()` kept the test file valid without drifting from the plan.
+- 2026-06-21 — Task 8: `scrollIntoView` is not available in jsdom by default, so ProposalView’s scroll-sync behavior needed an explicit stub in the integration test. That made the comment↔highlight coordination testable without a browser.

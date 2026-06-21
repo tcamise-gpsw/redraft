@@ -103,7 +103,7 @@ describe('Markdown document viewer', () => {
       .mockResolvedValueOnce(null);
     getLatestCommit.mockResolvedValueOnce(null);
 
-    renderWithProviders(<DocumentView path="proposals/doc.md" />);
+    renderWithProviders(<DocumentView path="proposals/doc.md" onSelectComment={vi.fn()} onTextSelect={vi.fn()} />);
 
     expect(await screen.findByRole('heading', { name: 'Proposal' })).toBeInTheDocument();
     expect(getFileContent).toHaveBeenNthCalledWith(2, 'proposals/doc.comments.json', { optional: true });
@@ -113,7 +113,7 @@ describe('Markdown document viewer', () => {
     getFileContent.mockRejectedValueOnce(new Error('boom'));
     getLatestCommit.mockResolvedValueOnce(null);
 
-    renderWithProviders(<DocumentView path="proposals/doc.md" />);
+    renderWithProviders(<DocumentView path="proposals/doc.md" onSelectComment={vi.fn()} onTextSelect={vi.fn()} />);
 
     expect(await screen.findByText(/unable to load proposal/i)).toBeInTheDocument();
   });
@@ -147,28 +147,4 @@ describe('Markdown document viewer', () => {
     });
   });
 
-  it('captures selected text and surrounding context on mouse up', () => {
-    const onTextSelect = vi.fn();
-    const selection = {
-      toString: () => 'initialize lazily',
-    } as Selection;
-
-    vi.spyOn(window, 'getSelection').mockReturnValue(selection);
-
-    const { container } = render(
-      <MarkdownRenderer
-        content={'The camera should initialize lazily.'}
-        comments={[]}
-        onSelectComment={vi.fn()}
-        onTextSelect={onTextSelect}
-      />,
-    );
-
-    fireEvent.mouseUp(container.querySelector('p')!);
-
-    expect(onTextSelect).toHaveBeenCalledWith('initialize lazily', {
-      prefix: 'The camera should ',
-      suffix: '.',
-    });
-  });
 });

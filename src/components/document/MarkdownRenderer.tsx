@@ -10,10 +10,10 @@ interface MarkdownRendererProps {
   content: string;
   comments: CommentThread[];
   onSelectComment: (id: string) => void;
-  onTextSelect: (quote: string, context: { prefix: string; suffix: string }) => void;
+  onTextSelect: (selection: { quote: string; context: { prefix: string; suffix: string } }) => void;
 }
 
-export function MarkdownRenderer({ content, comments, onSelectComment, onTextSelect }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, comments, onSelectComment }: MarkdownRendererProps) {
   const highlightedContent = useMemo(() => {
     let next = content;
 
@@ -39,24 +39,6 @@ export function MarkdownRenderer({ content, comments, onSelectComment, onTextSel
         if (commentId) {
           onSelectComment(commentId);
         }
-      }}
-      onMouseUp={() => {
-        const quote = window.getSelection()?.toString().trim() ?? '';
-
-        if (!quote) {
-          return;
-        }
-
-        const start = content.indexOf(quote);
-
-        if (start < 0) {
-          return;
-        }
-
-        const prefix = content.slice(Math.max(0, start - 100), start);
-        const suffix = content.slice(start + quote.length, start + quote.length + 100);
-
-        onTextSelect(quote, { prefix, suffix });
       }}
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeHighlight]} skipHtml={false}>

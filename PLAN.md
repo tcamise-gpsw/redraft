@@ -426,7 +426,7 @@ Routing setup in `App.tsx`:
 - [x] Edge cases: empty inputs, line breaks, very long quotes
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -478,27 +478,27 @@ Routing setup in `App.tsx`:
 - Conflict on comment write: toast error "File was modified since you loaded it. Please refresh and re-apply your changes."
 
 **Checklist:**
-- [ ] Comments render sorted by document position
-- [ ] Orphaned comments appear in separate section at bottom
-- [ ] Text selection shows popover near selection
-- [ ] Clicking popover opens comment form in sidebar
-- [ ] Submitting comment creates a .comments.json commit
-- [ ] Reply to a comment appends to thread and commits
-- [ ] Resolve/unresolve toggles the resolved flag and commits
-- [ ] Clicking a comment scrolls to highlight in document
-- [ ] Clicking a highlight scrolls to comment in sidebar
-- [ ] Active comment is visually highlighted in sidebar
-- [ ] SHA conflict shows appropriate error message
-- [ ] Comment file created on first comment (version: 1)
+- [x] Comments render sorted by document position
+- [x] Orphaned comments appear in separate section at bottom
+- [x] Text selection shows popover near selection
+- [x] Clicking popover opens comment form in sidebar
+- [x] Submitting comment creates a .comments.json commit
+- [x] Reply to a comment appends to thread and commits
+- [x] Resolve/unresolve toggles the resolved flag and commits
+- [x] Clicking a comment scrolls to highlight in document
+- [x] Clicking a highlight scrolls to comment in sidebar
+- [x] Active comment is visually highlighted in sidebar
+- [x] SHA conflict shows appropriate error message
+- [x] Comment file created on first comment (version: 1)
 
 **Tests:**
-- [ ] `npx vitest run src/components/comments src/hooks`
-- [ ] CommentsSidebar: renders threads sorted by position, orphaned at bottom
-- [ ] CommentForm: validates non-empty body, calls addComment on submit
-- [ ] useComments: addComment creates file when none exists, appends when exists
-- [ ] useComments: addReply finds thread and appends
-- [ ] useComments: resolveThread toggles flag
-- [ ] Conflict handling: SHA mismatch triggers error
+- [x] `npx vitest run src/components/comments src/hooks`
+- [x] CommentsSidebar: renders threads sorted by position, orphaned at bottom
+- [x] CommentForm: validates non-empty body, calls addComment on submit
+- [x] useComments: addComment creates file when none exists, appends when exists
+- [x] useComments: addReply finds thread and appends
+- [x] useComments: resolveThread toggles flag
+- [x] Conflict handling: SHA mismatch triggers error
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`

@@ -4,8 +4,17 @@ import { useProposal } from '../../hooks/useProposal';
 import { ActivityIndicator } from './ActivityIndicator';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { Spinner } from '../ui/Spinner';
+import { SelectionPopover } from '../comments/SelectionPopover';
 
-export function DocumentView({ path }: { path: string }) {
+export function DocumentView({
+  path,
+  onSelectComment,
+  onTextSelect,
+}: {
+  path: string;
+  onSelectComment: (id: string) => void;
+  onTextSelect: (selection: { quote: string; context: { prefix: string; suffix: string } }) => void;
+}) {
   const { content, comments, commit, isLoading, error } = useProposal(path);
 
   if (isLoading) {
@@ -37,14 +46,15 @@ export function DocumentView({ path }: { path: string }) {
         </Link>
       </div>
       <ActivityIndicator commit={commit} />
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6" id="document-markdown-root">
         <MarkdownRenderer
           content={content}
           comments={comments?.comments ?? []}
-          onSelectComment={() => {}}
-          onTextSelect={() => {}}
+          onSelectComment={onSelectComment}
+          onTextSelect={onTextSelect}
         />
       </div>
+      <SelectionPopover rootSelector="#document-markdown-root" onSelect={onTextSelect} />
     </div>
   );
 }
