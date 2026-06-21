@@ -32,7 +32,7 @@
 - [x] No test file needed — scaffolding only. Run `npx tsc --noEmit -p server/tsconfig.json` to verify.
 
 **Commit:**
-- [ ] `build(server): scaffold local server project structure`
+- [x] `build(server): scaffold local server project structure`
 
 ---
 
@@ -72,18 +72,18 @@ listFiles(basePath: string): Promise<TreeEntry[]>
 - All file operations use UTF-8 encoding for text content
 
 **Checklist:**
-- [ ] SHA computation matches GitHub (verify with a known fixture: content "hello\n" → sha `ce013625030ba8dba906f756967f9e9ca394464a`)
-- [ ] Path traversal attack (`../../../etc/passwd`) is rejected
-- [ ] Conflict detection (SHA mismatch) returns structured 409 error
-- [ ] `listFiles` only returns `.md` and `.comments.json` files, ignoring other extensions
+- [x] SHA computation matches GitHub (verify with a known fixture: content "hello\n" → sha `ce013625030ba8dba906f756967f9e9ca394464a`)
+- [x] Path traversal attack (`../../../etc/passwd`) is rejected
+- [x] Conflict detection (SHA mismatch) returns structured 409 error
+- [x] `listFiles` only returns `.md` and `.comments.json` files, ignoring other extensions
 
 **Tests:**
-- [ ] Run `npx vitest run server/fs/operations.test.ts`
-- [ ] Test computeBlobSha against known GitHub values
-- [ ] Test writeFile conflict detection (stale SHA → error)
-- [ ] Test createFile rejects existing file
-- [ ] Test listFiles filters to .md and .comments.json only
-- [ ] Test path traversal rejection
+- [x] Run `npx vitest run server/fs/operations.test.ts`
+- [x] Test computeBlobSha against known GitHub values
+- [x] Test writeFile conflict detection (stale SHA → error)
+- [x] Test createFile rejects existing file
+- [x] Test listFiles filters to .md and .comments.json only
+- [x] Test path traversal rejection
 
 **Commit:**
 - [ ] `feat(server): implement filesystem operations layer`
