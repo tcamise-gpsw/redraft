@@ -139,8 +139,9 @@
 - `clearStoredAuth(): void`
 
 `useAuth` hook returns:
-- `{ user: User | null; pat: string | null; repo: { owner: string; repo: string } | null; isAuthenticated: boolean; login: (pat: string, owner: string, repo: string) => Promise<void>; logout: () => void; }`
+- `{ user: User | null; pat: string | null; repo: { owner: string; repo: string } | null; isAuthenticated: boolean; login: (pat: string, owner: string, repo: string) => Promise<void>; logout: () => void; updateRepo: (owner: string, repo: string) => void; }`
 - `login()` validates the PAT via `GitHubClient.validateAuth()`, stores on success, throws on failure
+- `updateRepo()` updates the stored owner/repo in localStorage and re-initializes the GitHubClient
 
 `AuthGate` — renders children when authenticated, renders `AuthForm` otherwise. Passes `useAuth`'s `login` function to AuthForm.
 
@@ -298,7 +299,7 @@ Routing setup in `App.tsx`:
 - Create: `src/components/document/MarkdownRenderer.tsx` — Renders markdown with comment highlight overlays
 - Create: `src/components/document/ActivityIndicator.tsx` — "Last edited by @user at time" line
 - Create: `src/hooks/useProposal.ts` — TanStack Query hook for fetching a single proposal's content + comments
-- Create: `src/lib/markdown/index.ts` — Markdown processing utilities
+- Create: `src/lib/markdown/index.ts` — Markdown processing: `extractTextContent(renderedHtml: string): string` to get plain text from rendered markdown for anchor operations; `findTextRange(containerEl: HTMLElement, text: string): Range | null` to map a text string to a DOM Range for highlighting
 - Modify: `src/routes/ProposalView.tsx` — Wire up DocumentView with CommentsSidebar (sidebar placeholder until Task 8)
 
 **Interface:**
@@ -311,7 +312,8 @@ Routing setup in `App.tsx`:
 
 `MarkdownRenderer` — accepts `{ content: string; comments: CommentThread[]; onSelectComment: (id: string) => void; onTextSelect: (quote: string, context: { prefix: string; suffix: string }) => void }`:
 - Renders markdown using react-markdown with remark-gfm
-- For each resolved comment anchor, wraps the matching text range in a highlight `<mark>` element with the comment's ID as a data attribute
+- Comment highlights use simple `indexOf` matching in this task. The full anchoring engine (`resolveAnchor`) is built in Task 7 and integrated into the sidebar in Task 8. Task 6 only needs to locate exact quote matches for initial highlight rendering.
+- For each matched comment anchor, wraps the matching text range in a highlight `<mark>` element with the comment's ID as a data attribute
 - Clicking a highlight calls `onSelectComment(commentId)`
 - Text selection triggers `onTextSelect` with the selected text and surrounding context (up to 100 chars before/after)
 
@@ -337,7 +339,7 @@ Routing setup in `App.tsx`:
 
 **Checklist:**
 - [ ] Markdown renders correctly with GFM support
-- [ ] Comment highlights appear on text that has anchored comments
+- [ ] Comment highlights appear on text that has anchored comments (using simple indexOf matching; full anchoring engine is Task 7)
 - [ ] Clicking a highlight calls onSelectComment with the correct ID
 - [ ] Text selection captures quote + surrounding context
 - [ ] Activity indicator shows last editor and relative time
@@ -585,6 +587,7 @@ Rate limit display in Header:
 - Read from GitHubClient's cached rate limit info
 - Display: "API: {remaining}/{limit}"
 - Warn visually (amber text) when remaining < 100
+- When remaining hits 0 (rate limit exceeded): show a banner with "API rate limit exceeded. Resets at {reset time}." All API calls are paused until reset.
 
 E2E tests (Playwright):
 - Run against `npm run dev` with mocked GitHub API responses (use Playwright's route interception to mock API)
@@ -592,6 +595,7 @@ E2E tests (Playwright):
 - Proposal view: navigate to proposal → see rendered markdown
 - Comment flow: select text → popover appears → add comment → comment visible in sidebar
 - Edit flow: click Edit → modify content → Save → see updated content
+- Conflict handling: simulate external SHA change → save → verify conflict error toast
 
 Documentation updates:
 - README: final architecture diagram, all npm scripts, PAT setup guide, deployment instructions
@@ -602,7 +606,7 @@ Documentation updates:
 - [ ] Clicking a comment in sidebar scrolls to highlight in document
 - [ ] Text selection → popover → comment form → submit → commit → visible comment (full flow)
 - [ ] 401 on any API call clears auth and shows AuthGate
-- [ ] Rate limit displays in header
+- [ ] Rate limit displays in header; exceeded state shows reset banner
 - [ ] E2E auth test passes
 - [ ] E2E proposal viewing test passes
 - [ ] E2E comment workflow test passes
