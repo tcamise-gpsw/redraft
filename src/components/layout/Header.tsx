@@ -22,7 +22,7 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
             />
           ) : null}
           <div>
-            <img src="/logo.png" alt="ReDraft" className="h-7 rounded bg-white px-1.5 py-0.5" />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="ReDraft" className="h-7 rounded bg-white px-1.5 py-0.5" />
             <p className="text-sm font-medium text-slate-100">
               @{user?.login ?? 'anonymous'}
             </p>
