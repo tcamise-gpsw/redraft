@@ -389,4 +389,4 @@ Read `skill://e2e-browser-testing` before starting this task.
 - [x] `npx prettier --write src/ server/ e2e/` to normalize formatting
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
+- [x] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
