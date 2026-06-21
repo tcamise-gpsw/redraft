@@ -16,7 +16,16 @@ vi.mock('../../tree/ProposalTree', () => ({
 }));
 
 vi.mock('../../document/DocumentView', () => ({
-  DocumentView: ({ onSelectComment, onTextSelect }: { onSelectComment: (id: string) => void; onTextSelect: (selection: { quote: string; context: { prefix: string; suffix: string } }) => void }) => (
+  DocumentView: ({
+    onSelectComment,
+    onTextSelect,
+  }: {
+    onSelectComment: (id: string) => void;
+    onTextSelect: (selection: {
+      quote: string;
+      context: { prefix: string; suffix: string };
+    }) => void;
+  }) => (
     <div>
       <button type="button" onClick={() => onSelectComment('thread-1')}>
         Trigger highlight
@@ -26,7 +35,10 @@ vi.mock('../../document/DocumentView', () => ({
         onClick={() =>
           onTextSelect({
             quote: 'initialize lazily',
-            context: { prefix: 'The camera should ', suffix: ' when preview starts.' },
+            context: {
+              prefix: 'The camera should ',
+              suffix: ' when preview starts.',
+            },
           })
         }
       >
@@ -38,7 +50,13 @@ vi.mock('../../document/DocumentView', () => ({
 }));
 
 vi.mock('../../comments/CommentsSidebar', () => ({
-  CommentsSidebar: ({ pendingSelection, onCommentClick }: { pendingSelection: { quote: string } | null; onCommentClick: (id: string) => void }) => (
+  CommentsSidebar: ({
+    pendingSelection,
+    onCommentClick,
+  }: {
+    pendingSelection: { quote: string } | null;
+    onCommentClick: (id: string) => void;
+  }) => (
     <div>
       <button type="button" onClick={() => onCommentClick('thread-1')}>
         Trigger sidebar click
@@ -100,7 +118,9 @@ describe('ProposalView comment interactions', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /trigger sidebar click/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /trigger sidebar click/i }),
+    );
 
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });

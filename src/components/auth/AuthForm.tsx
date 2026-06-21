@@ -54,12 +54,16 @@ export function AuthForm() {
         <div className="mb-8 space-y-2 text-center">
           <h1 className="text-2xl font-semibold">Connect to GitHub</h1>
           <p className="text-sm text-slate-300">
-            Enter a fine-grained GitHub PAT and the target repository to unlock proposal review.
+            Enter a fine-grained GitHub PAT and the target repository to unlock
+            proposal review.
           </p>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <label className="block space-y-2 text-sm font-medium" htmlFor="github-pat">
+          <label
+            className="block space-y-2 text-sm font-medium"
+            htmlFor="github-pat"
+          >
             <span>GitHub PAT</span>
             <input
               id="github-pat"
@@ -74,7 +78,10 @@ export function AuthForm() {
             />
           </label>
 
-          <label className="block space-y-2 text-sm font-medium" htmlFor="repository">
+          <label
+            className="block space-y-2 text-sm font-medium"
+            htmlFor="repository"
+          >
             <span>Repository</span>
             <input
               id="repository"
@@ -90,7 +97,9 @@ export function AuthForm() {
           </label>
 
           {error ? (
-            <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{error}</p>
+            <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+              {error}
+            </p>
           ) : null}
 
           <button

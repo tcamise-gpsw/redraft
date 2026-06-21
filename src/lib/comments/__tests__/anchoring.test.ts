@@ -4,7 +4,8 @@ import { createAnchor, resolveAnchor } from '../anchoring';
 
 describe('comment anchoring', () => {
   it('finds an exact quote at the correct position', () => {
-    const documentText = 'The camera should initialize lazily when preview starts.';
+    const documentText =
+      'The camera should initialize lazily when preview starts.';
 
     expect(
       resolveAnchor(documentText, {
@@ -40,7 +41,8 @@ describe('comment anchoring', () => {
   });
 
   it('finds a context match when nearby whitespace changed', () => {
-    const documentText = 'For performance reasons, initialize lazily when the preview opens.';
+    const documentText =
+      'For performance reasons, initialize lazily when the preview opens.';
 
     expect(
       resolveAnchor(documentText, {
@@ -59,11 +61,15 @@ describe('comment anchoring', () => {
   });
 
   it('finds a fuzzy match when the quote was lightly edited', () => {
-    const documentText = 'The camera should initialize more lazily during preview startup.';
+    const documentText =
+      'The camera should initialize more lazily during preview startup.';
 
     const result = resolveAnchor(documentText, {
       quote: 'initialize lazily',
-      quoteContext: { prefix: 'The camera should ', suffix: ' during preview startup.' },
+      quoteContext: {
+        prefix: 'The camera should ',
+        suffix: ' during preview startup.',
+      },
     });
 
     expect(result.status).toBe('fuzzy');
@@ -91,13 +97,16 @@ describe('comment anchoring', () => {
       'The camera should initialize lazily when preview starts so the rest of the pipeline can remain idle.';
     const startIndex = documentText.indexOf('initialize lazily');
 
-    expect(createAnchor(documentText, 'initialize lazily', startIndex)).toEqual({
-      quote: 'initialize lazily',
-      quoteContext: {
-        prefix: 'The camera should ',
-        suffix: ' when preview starts so the rest of the pipeline can remain idle.',
+    expect(createAnchor(documentText, 'initialize lazily', startIndex)).toEqual(
+      {
+        quote: 'initialize lazily',
+        quoteContext: {
+          prefix: 'The camera should ',
+          suffix:
+            ' when preview starts so the rest of the pipeline can remain idle.',
+        },
       },
-    });
+    );
   });
 
   it('handles empty inputs, line breaks, and long quotes', () => {

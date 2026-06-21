@@ -4,7 +4,10 @@ export function extractTextContent(renderedHtml: string): string {
   return container.textContent ?? '';
 }
 
-export function findTextRange(containerEl: HTMLElement, text: string): Range | null {
+export function findTextRange(
+  containerEl: HTMLElement,
+  text: string,
+): Range | null {
   if (!text) {
     return null;
   }

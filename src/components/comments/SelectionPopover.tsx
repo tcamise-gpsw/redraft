@@ -18,7 +18,10 @@ export function SelectionPopover({
   onSelect: (selection: PendingSelection) => void;
 }) {
   const [selection, setSelection] = useState<PendingSelection | null>(null);
-  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+  const [position, setPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
 
   useEffect(() => {
     const handleSelectionChange = () => {
@@ -44,7 +47,10 @@ export function SelectionPopover({
         quote,
         context: {
           prefix: rootText.slice(Math.max(0, start - 100), start),
-          suffix: rootText.slice(start + quote.length, start + quote.length + 100),
+          suffix: rootText.slice(
+            start + quote.length,
+            start + quote.length + 100,
+          ),
         },
       });
       setPosition({
@@ -64,7 +70,10 @@ export function SelectionPopover({
   }
 
   return (
-    <div className="fixed z-40" style={{ left: position.left, top: position.top }}>
+    <div
+      className="fixed z-40"
+      style={{ left: position.left, top: position.top }}
+    >
       <Button
         onClick={() => {
           onSelect(selection);

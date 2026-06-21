@@ -4,7 +4,13 @@ export interface ToastMessage {
   title: string;
 }
 
-export function Toast({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: string) => void }) {
+export function Toast({
+  toast,
+  onDismiss,
+}: {
+  toast: ToastMessage;
+  onDismiss: (id: string) => void;
+}) {
   return (
     <div
       className={[
@@ -16,7 +22,11 @@ export function Toast({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (i
       role="status"
     >
       <div className="flex-1 text-sm font-medium">{toast.title}</div>
-      <button type="button" onClick={() => onDismiss(toast.id)} className="text-xs uppercase tracking-wide">
+      <button
+        type="button"
+        onClick={() => onDismiss(toast.id)}
+        className="text-xs uppercase tracking-wide"
+      >
         Dismiss
       </button>
     </div>

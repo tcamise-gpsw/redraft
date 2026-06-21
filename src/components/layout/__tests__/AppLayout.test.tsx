@@ -18,7 +18,6 @@ function createLocalStorageMock() {
   };
 }
 
-
 function setStoredAuth() {
   localStorage.setItem(
     'proposal-review.auth',
@@ -54,7 +53,9 @@ describe('AppLayout', () => {
     expect(screen.getByTestId('app-layout')).toHaveClass('lg:grid');
     expect(screen.getByTestId('app-layout-sidebar')).toHaveTextContent('tree');
     expect(screen.getByTestId('app-layout-main')).toHaveTextContent('document');
-    expect(screen.getByTestId('app-layout-aside')).toHaveTextContent('comments');
+    expect(screen.getByTestId('app-layout-aside')).toHaveTextContent(
+      'comments',
+    );
   });
 
   it('routes to ProposalView for hash proposal paths', () => {
@@ -63,7 +64,7 @@ describe('AppLayout', () => {
 
     render(<App />);
 
-    expect(screen.getByText(/proposal view placeholder/i)).toBeInTheDocument();
+    expect(screen.getByText('Loading proposal…')).toBeInTheDocument();
   });
 
   it('routes to Settings for the settings hash path', () => {
@@ -72,7 +73,9 @@ describe('AppLayout', () => {
 
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: /settings/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /settings/i }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/@jdoe/i).length).toBeGreaterThan(0);
   });
 });

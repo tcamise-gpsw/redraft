@@ -66,7 +66,8 @@ export function CommentsSidebar({
     } catch (error) {
       showToast({
         tone: 'error',
-        title: error instanceof Error ? error.message : 'Unable to update comments',
+        title:
+          error instanceof Error ? error.message : 'Unable to update comments',
       });
       return false;
     }
@@ -83,7 +84,10 @@ export function CommentsSidebar({
               await addComment({
                 quote: pendingSelection.quote,
                 quoteContext: pendingSelection.context,
-                author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+                author: {
+                  login: 'jdoe',
+                  avatarUrl: 'https://example.com/avatar.png',
+                },
                 body,
                 resolved: false,
               });
@@ -103,7 +107,13 @@ export function CommentsSidebar({
           onClick={() => onCommentClick(thread.id)}
           onReply={async (body) => {
             await withToast(async () => {
-              await addReply(thread.id, { author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' }, body });
+              await addReply(thread.id, {
+                author: {
+                  login: 'jdoe',
+                  avatarUrl: 'https://example.com/avatar.png',
+                },
+                body,
+              });
             });
           }}
           onResolve={async () => {
@@ -120,7 +130,13 @@ export function CommentsSidebar({
         onCommentClick={onCommentClick}
         onReply={async (threadId, body) => {
           await withToast(async () => {
-            await addReply(threadId, { author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' }, body });
+            await addReply(threadId, {
+              author: {
+                login: 'jdoe',
+                avatarUrl: 'https://example.com/avatar.png',
+              },
+              body,
+            });
           });
         }}
         onResolve={async (threadId) => {

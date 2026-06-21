@@ -29,3 +29,5 @@
 
 - 2026-06-21 — Task 10: GitHub content URLs in Octokit requests are URL-encoded, so the Playwright route handlers needed `decodeURIComponent(url)` before matching proposal paths. Matching the raw encoded URL made the E2E tests look like app regressions when the bug was just in the mocks.
 - 2026-06-21 — Task 10: Browser E2E setup was the longest external dependency step because Playwright needed Chromium installed separately from the npm package. Once installed, the mocked-browser suite ran quickly and deterministically.
+
+- 2026-06-22 — Task 11: Running `npx prettier --write src/` late in the task sequence touched a large number of files, so the final validation pass needed one extra rerun after formatting. The clean rerun is the one that matters, and it finished green end to end.

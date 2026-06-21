@@ -13,8 +13,14 @@ export function ProposalTree() {
   return (
     <section className="flex h-full flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Proposals</h2>
-        <Button className="px-3 py-1.5 text-sm" onClick={() => setDialogOpen(true)} type="button">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+          Proposals
+        </h2>
+        <Button
+          className="px-3 py-1.5 text-sm"
+          onClick={() => setDialogOpen(true)}
+          type="button"
+        >
           New Proposal
         </Button>
       </div>
@@ -47,7 +53,10 @@ export function ProposalTree() {
         </ul>
       ) : null}
 
-      <CreateProposalDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+      <CreateProposalDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+      />
     </section>
   );
 }

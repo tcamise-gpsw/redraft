@@ -10,10 +10,17 @@ interface MarkdownRendererProps {
   content: string;
   comments: CommentThread[];
   onSelectComment: (id: string) => void;
-  onTextSelect: (selection: { quote: string; context: { prefix: string; suffix: string } }) => void;
+  onTextSelect: (selection: {
+    quote: string;
+    context: { prefix: string; suffix: string };
+  }) => void;
 }
 
-export function MarkdownRenderer({ content, comments, onSelectComment }: MarkdownRendererProps) {
+export function MarkdownRenderer({
+  content,
+  comments,
+  onSelectComment,
+}: MarkdownRendererProps) {
   const highlightedContent = useMemo(() => {
     let next = content;
 
@@ -34,14 +41,20 @@ export function MarkdownRenderer({ content, comments, onSelectComment }: Markdow
       className="prose prose-invert max-w-none prose-pre:rounded-xl prose-pre:border prose-pre:border-slate-800 prose-pre:bg-slate-950"
       onClick={(event) => {
         const target = event.target as HTMLElement | null;
-        const commentId = target?.closest('mark')?.getAttribute('data-comment-id');
+        const commentId = target
+          ?.closest('mark')
+          ?.getAttribute('data-comment-id');
 
         if (commentId) {
           onSelectComment(commentId);
         }
       }}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeHighlight]} skipHtml={false}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw, rehypeHighlight]}
+        skipHtml={false}
+      >
         {highlightedContent}
       </ReactMarkdown>
     </div>

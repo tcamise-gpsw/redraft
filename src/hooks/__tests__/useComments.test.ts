@@ -71,7 +71,9 @@ describe('useComments', () => {
     getFileContent.mockResolvedValueOnce(null);
     createFile.mockResolvedValueOnce({ sha: 'new-sha' });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), { wrapper });
+    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.addComment({
@@ -101,7 +103,10 @@ describe('useComments', () => {
             id: 'thread-1',
             quote: 'initialize lazily',
             quoteContext: { prefix: '', suffix: '' },
-            author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+            author: {
+              login: 'jdoe',
+              avatarUrl: 'https://example.com/avatar.png',
+            },
             body: 'Question',
             createdAt: '2026-06-21T05:00:00Z',
             resolved: false,
@@ -112,11 +117,16 @@ describe('useComments', () => {
     });
     updateFile.mockResolvedValueOnce({ sha: 'updated-sha' });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), { wrapper });
+    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.addReply('thread-1', {
-        author: { login: 'asmith', avatarUrl: 'https://example.com/avatar-2.png' },
+        author: {
+          login: 'asmith',
+          avatarUrl: 'https://example.com/avatar-2.png',
+        },
         body: 'Answer',
       });
     });
@@ -139,7 +149,10 @@ describe('useComments', () => {
             id: 'thread-1',
             quote: 'initialize lazily',
             quoteContext: { prefix: '', suffix: '' },
-            author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+            author: {
+              login: 'jdoe',
+              avatarUrl: 'https://example.com/avatar.png',
+            },
             body: 'Question',
             createdAt: '2026-06-21T05:00:00Z',
             resolved: false,
@@ -150,7 +163,9 @@ describe('useComments', () => {
     });
     updateFile.mockResolvedValueOnce({ sha: 'updated-sha' });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), { wrapper });
+    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.resolveThread('thread-1');
@@ -168,7 +183,9 @@ describe('useComments', () => {
     getFileContent.mockResolvedValueOnce(null);
     createFile.mockRejectedValueOnce(new Error('GitHub content SHA conflict'));
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), { wrapper });
+    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+      wrapper,
+    });
 
     await expect(
       result.current.addComment({

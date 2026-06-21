@@ -1,8 +1,16 @@
-import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
 
-import { AuthError, RATE_LIMIT_EVENT, RateLimitError } from './lib/github/client';
+import {
+  AuthError,
+  RATE_LIMIT_EVENT,
+  RateLimitError,
+} from './lib/github/client';
 import { AuthGate } from './components/auth/AuthGate';
 import { Header } from './components/layout/Header';
 import { AuthProvider } from './hooks/useAuth';
@@ -45,7 +53,10 @@ function AppShell() {
         queryCache: new QueryCache({
           onError: (error) => {
             if (error instanceof AuthError) {
-              showToast({ tone: 'error', title: 'Your session has expired. Please re-enter your PAT.' });
+              showToast({
+                tone: 'error',
+                title: 'Your session has expired. Please re-enter your PAT.',
+              });
               return;
             }
 
@@ -54,7 +65,10 @@ function AppShell() {
               return;
             }
 
-            const title = error instanceof Error ? error.message : 'Unexpected request failure';
+            const title =
+              error instanceof Error
+                ? error.message
+                : 'Unexpected request failure';
             showToast({ tone: 'error', title });
           },
         }),
@@ -74,9 +88,13 @@ function AppShell() {
         <HashRouter>
           <AuthGate>
             <Header rateLimit={rateLimit} />
-            {rateLimit && rateLimit.limit > 0 && rateLimit.remaining === 0 && rateLimit.reset.getTime() > Date.now() ? (
+            {rateLimit &&
+            rateLimit.limit > 0 &&
+            rateLimit.remaining === 0 &&
+            rateLimit.reset.getTime() > Date.now() ? (
               <div className="border-b border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-                API rate limit exceeded. Resets at {rateLimit.reset.toLocaleTimeString()}.
+                API rate limit exceeded. Resets at{' '}
+                {rateLimit.reset.toLocaleTimeString()}.
               </div>
             ) : null}
             <Routes>

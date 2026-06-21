@@ -44,7 +44,10 @@ describe('AuthGate', () => {
       </AuthProvider>,
     );
 
-    expect(screen.getByLabelText(/github pat/i)).toHaveAttribute('type', 'password');
+    expect(screen.getByLabelText(/github pat/i)).toHaveAttribute(
+      'type',
+      'password',
+    );
     expect(screen.getByLabelText(/repository/i)).toHaveValue('');
     expect(screen.queryByText('private content')).not.toBeInTheDocument();
   });

@@ -37,7 +37,9 @@ export function useProposal(path: string) {
         throw new Error('Authentication is required');
       }
 
-      return (await client.getFileContent(commentsPath, { optional: true })) ?? null;
+      return (
+        (await client.getFileContent(commentsPath, { optional: true })) ?? null
+      );
     },
     enabled: Boolean(client),
   });
@@ -64,7 +66,11 @@ export function useProposal(path: string) {
     comments,
     commentsSha: commentsQuery.data?.sha ?? null,
     commit: (commitQuery.data as CommitInfo | null | undefined) ?? null,
-    isLoading: contentQuery.isLoading || commentsQuery.isLoading || commitQuery.isLoading,
-    error: contentQuery.error ?? commentsQuery.error ?? commitQuery.error ?? null,
+    isLoading:
+      contentQuery.isLoading ||
+      commentsQuery.isLoading ||
+      commitQuery.isLoading,
+    error:
+      contentQuery.error ?? commentsQuery.error ?? commitQuery.error ?? null,
   };
 }

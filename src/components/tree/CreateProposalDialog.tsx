@@ -7,7 +7,13 @@ import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { GitHubClient } from '../../lib/github';
 
-export function CreateProposalDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CreateProposalDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const { pat, repo } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -37,7 +43,11 @@ export function CreateProposalDialog({ open, onClose }: { open: boolean; onClose
     setSubmitting(true);
 
     try {
-      const client = new GitHubClient({ pat, owner: repo.owner, repo: repo.repo });
+      const client = new GitHubClient({
+        pat,
+        owner: repo.owner,
+        repo: repo.repo,
+      });
       await client.createFile(
         fullPath,
         `# ${title.trim()}\n\n<!-- Write your proposal here -->`,
@@ -49,7 +59,11 @@ export function CreateProposalDialog({ open, onClose }: { open: boolean; onClose
       setTitle('');
       onClose();
     } catch (createError) {
-      setError(createError instanceof Error ? createError.message : 'Unable to create proposal');
+      setError(
+        createError instanceof Error
+          ? createError.message
+          : 'Unable to create proposal',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -58,7 +72,10 @@ export function CreateProposalDialog({ open, onClose }: { open: boolean; onClose
   return (
     <Dialog open={open} title="New proposal" onClose={onClose}>
       <form className="space-y-4" onSubmit={handleCreate}>
-        <label className="block space-y-2 text-sm font-medium" htmlFor="proposal-path">
+        <label
+          className="block space-y-2 text-sm font-medium"
+          htmlFor="proposal-path"
+        >
           <span>File path</span>
           <input
             id="proposal-path"
@@ -68,7 +85,10 @@ export function CreateProposalDialog({ open, onClose }: { open: boolean; onClose
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50"
           />
         </label>
-        <label className="block space-y-2 text-sm font-medium" htmlFor="proposal-title">
+        <label
+          className="block space-y-2 text-sm font-medium"
+          htmlFor="proposal-title"
+        >
           <span>Title</span>
           <input
             id="proposal-title"

@@ -1,4 +1,13 @@
-import { Fragment, createContext, createElement, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  Fragment,
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { nanoid } from 'nanoid';
 
 import { Toast, type ToastMessage } from '../components/ui/Toast';
@@ -18,17 +27,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((current) => current.filter((toast) => toast.id !== id));
   }, []);
 
-  const showToast = useCallback(
-    (toast: Omit<ToastMessage, 'id'>) => {
-      const id = nanoid();
-      setToasts((current) => [...current, { ...toast, id }]);
+  const showToast = useCallback((toast: Omit<ToastMessage, 'id'>) => {
+    const id = nanoid();
+    setToasts((current) => [...current, { ...toast, id }]);
 
-      window.setTimeout(() => {
-        setToasts((current) => current.filter((entry) => entry.id !== id));
-      }, 5000);
-    },
-    [],
-  );
+    window.setTimeout(() => {
+      setToasts((current) => current.filter((entry) => entry.id !== id));
+    }, 5000);
+  }, []);
 
   const value = useMemo(
     () => ({ toasts, dismissToast, showToast }),

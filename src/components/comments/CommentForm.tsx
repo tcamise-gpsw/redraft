@@ -25,8 +25,13 @@ export function CommentForm({
         setBody('');
       }}
     >
-      <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100">{quote}</div>
-      <label className="block space-y-2 text-sm font-medium" htmlFor="comment-body">
+      <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100">
+        {quote}
+      </div>
+      <label
+        className="block space-y-2 text-sm font-medium"
+        htmlFor="comment-body"
+      >
         <span>Comment body</span>
         <textarea
           id="comment-body"

@@ -5,7 +5,10 @@ import type { RateLimitInfo } from '../../types/github';
 
 export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
   const { user } = useAuth();
-  const lowRateLimit = typeof rateLimit?.remaining === 'number' && rateLimit.remaining > 0 && rateLimit.remaining < 100;
+  const lowRateLimit =
+    typeof rateLimit?.remaining === 'number' &&
+    rateLimit.remaining > 0 &&
+    rateLimit.remaining < 100;
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
@@ -19,8 +22,12 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
             />
           ) : null}
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Proposal Review Workspace</p>
-            <p className="text-sm font-medium text-slate-100">@{user?.login ?? 'anonymous'}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+              Proposal Review Workspace
+            </p>
+            <p className="text-sm font-medium text-slate-100">
+              @{user?.login ?? 'anonymous'}
+            </p>
           </div>
         </div>
 
@@ -28,7 +35,10 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
           <span className={lowRateLimit ? 'text-amber-300' : ''}>
             API: {rateLimit?.remaining ?? 0}/{rateLimit?.limit ?? 0}
           </span>
-          <Link className="rounded-md border border-slate-700 px-3 py-2 font-medium hover:border-slate-500" to="/settings">
+          <Link
+            className="rounded-md border border-slate-700 px-3 py-2 font-medium hover:border-slate-500"
+            to="/settings"
+          >
             Settings
           </Link>
         </div>

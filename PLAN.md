@@ -626,21 +626,21 @@ Documentation updates:
 - [x] Key interactive flows verified visually via Playwright during development
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
 ### Task 11: Final Validation
 
 **Checks:**
-- [ ] Full test suite passes: `npx vitest run`
-- [ ] E2E tests pass: `npx playwright test`
-- [ ] Type check clean: `npx tsc --noEmit`
-- [ ] Lint clean: `npx eslint src/`
-- [ ] Format clean: `npx prettier --check src/`
-- [ ] Build succeeds: `npm run build`
-- [ ] Dev server starts and app renders: `npm run dev`
-- [ ] All acceptance criteria from Tasks 1-10 verified
-- [ ] No TODO/FIXME/HACK comments left in source code
-- [ ] README.md and AGENTS.md are accurate and complete
-- [ ] All git changes committed with descriptive messages
+- [x] Full test suite passes: `npx vitest run`
+- [x] E2E tests pass: `npx playwright test`
+- [x] Type check clean: `npx tsc --noEmit`
+- [x] Lint clean: `npx eslint src/`
+- [x] Format clean: `npx prettier --check src/`
+- [x] Build succeeds: `npm run build`
+- [x] Dev server starts and app renders: `npm run dev`
+- [x] All acceptance criteria from Tasks 1-10 verified
+- [x] No TODO/FIXME/HACK comments left in source code
+- [x] README.md and AGENTS.md are accurate and complete
+- [x] All git changes committed with descriptive messages

@@ -38,7 +38,9 @@ export function ProposalEdit() {
           <MarkdownEditor
             initialContent={content}
             isSaving={isSaving}
-            onCancel={() => navigate(`/${path.replace(/^proposals\//, 'proposals/')}`)}
+            onCancel={() =>
+              navigate(`/${path.replace(/^proposals\//, 'proposals/')}`)
+            }
             onSave={async (nextContent) => {
               setIsSaving(true);
               try {
@@ -50,7 +52,11 @@ export function ProposalEdit() {
           />
         )
       }
-      aside={<div className="text-sm text-slate-300">Comments sidebar disabled while editing.</div>}
+      aside={
+        <div className="text-sm text-slate-300">
+          Comments sidebar disabled while editing.
+        </div>
+      }
     />
   );
 }

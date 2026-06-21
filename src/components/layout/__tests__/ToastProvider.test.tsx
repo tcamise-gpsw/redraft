@@ -10,7 +10,10 @@ function ToastHarness() {
   const { showToast } = useToast();
 
   return (
-    <button type="button" onClick={() => showToast({ tone: 'info', title: 'Saved' })}>
+    <button
+      type="button"
+      onClick={() => showToast({ tone: 'info', title: 'Saved' })}
+    >
       Trigger toast
     </button>
   );

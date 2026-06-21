@@ -21,7 +21,10 @@ export function ReplyForm({
         setBody('');
       }}
     >
-      <label className="block space-y-2 text-sm font-medium" htmlFor="reply-body">
+      <label
+        className="block space-y-2 text-sm font-medium"
+        htmlFor="reply-body"
+      >
         <span>Reply</span>
         <textarea
           id="reply-body"

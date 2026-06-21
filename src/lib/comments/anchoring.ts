@@ -72,28 +72,47 @@ function longestCommonSubsequenceLength(a: string, b: string): number {
   return table[a.length][b.length];
 }
 
-
 function similarity(a: string, b: string): number {
   if (!a || !b) {
     return 0;
   }
 
-  return Math.max(longestCommonSubstring(a, b).length, longestCommonSubsequenceLength(a, b)) / Math.max(a.length, b.length);
+  return (
+    Math.max(
+      longestCommonSubstring(a, b).length,
+      longestCommonSubsequenceLength(a, b),
+    ) / Math.max(a.length, b.length)
+  );
 }
 
-function scoreContext(documentText: string, startIndex: number, quoteLength: number, context: QuoteContext): number {
+function scoreContext(
+  documentText: string,
+  startIndex: number,
+  quoteLength: number,
+  context: QuoteContext,
+): number {
   let score = 0;
 
   if (context.prefix) {
-    const actualPrefix = documentText.slice(Math.max(0, startIndex - context.prefix.length), startIndex);
-    if (normalizeWhitespace(actualPrefix) === normalizeWhitespace(context.prefix)) {
+    const actualPrefix = documentText.slice(
+      Math.max(0, startIndex - context.prefix.length),
+      startIndex,
+    );
+    if (
+      normalizeWhitespace(actualPrefix) === normalizeWhitespace(context.prefix)
+    ) {
       score += 1;
     }
   }
 
   if (context.suffix) {
-    const actualSuffix = documentText.slice(startIndex + quoteLength, startIndex + quoteLength + context.suffix.length);
-    if (normalizeWhitespace(actualSuffix) === normalizeWhitespace(context.suffix)) {
+    const actualSuffix = documentText.slice(
+      startIndex + quoteLength,
+      startIndex + quoteLength + context.suffix.length,
+    );
+    if (
+      normalizeWhitespace(actualSuffix) === normalizeWhitespace(context.suffix)
+    ) {
       score += 1;
     }
   }
@@ -113,7 +132,11 @@ function findExactOccurrences(documentText: string, quote: string): number[] {
   return positions;
 }
 
-function findFuzzyCandidate(documentText: string, quote: string, context: QuoteContext): AnchorResult {
+function findFuzzyCandidate(
+  documentText: string,
+  quote: string,
+  context: QuoteContext,
+): AnchorResult {
   const normalizedPrefix = normalizeWhitespace(context.prefix);
   const normalizedSuffix = normalizeWhitespace(context.suffix);
 
@@ -121,12 +144,20 @@ function findFuzzyCandidate(documentText: string, quote: string, context: QuoteC
     const prefixStart = documentText.indexOf(normalizedPrefix);
     if (prefixStart >= 0) {
       const suffixSearchStart = prefixStart + normalizedPrefix.length;
-      const suffixStart = documentText.indexOf(normalizedSuffix, suffixSearchStart);
+      const suffixStart = documentText.indexOf(
+        normalizedSuffix,
+        suffixSearchStart,
+      );
 
       if (suffixStart > suffixSearchStart) {
-        const candidate = documentText.slice(suffixSearchStart, suffixStart).trim();
+        const candidate = documentText
+          .slice(suffixSearchStart, suffixStart)
+          .trim();
         if (similarity(candidate, quote) >= 0.7) {
-          const candidateStart = documentText.indexOf(candidate, suffixSearchStart);
+          const candidateStart = documentText.indexOf(
+            candidate,
+            suffixSearchStart,
+          );
           return {
             status: 'fuzzy',
             startIndex: candidateStart,
@@ -144,7 +175,11 @@ function findFuzzyCandidate(documentText: string, quote: string, context: QuoteC
   const maxLength = Math.max(minLength, Math.ceil(quote.length * 1.6));
 
   for (let start = 0; start < documentText.length; start += 1) {
-    for (let length = minLength; length <= maxLength && start + length <= documentText.length; length += 1) {
+    for (
+      let length = minLength;
+      length <= maxLength && start + length <= documentText.length;
+      length += 1
+    ) {
       const candidate = documentText.slice(start, start + length).trim();
       const score = similarity(candidate, quote);
 
@@ -163,7 +198,10 @@ function findFuzzyCandidate(documentText: string, quote: string, context: QuoteC
   return bestScore >= 0.7 ? bestMatch : orphaned();
 }
 
-export function resolveAnchor(documentText: string, anchor: AnchorInput): AnchorResult {
+export function resolveAnchor(
+  documentText: string,
+  anchor: AnchorInput,
+): AnchorResult {
   if (!documentText || !anchor.quote) {
     return orphaned();
   }
@@ -174,9 +212,17 @@ export function resolveAnchor(documentText: string, anchor: AnchorInput): Anchor
     const ranked = occurrences
       .map((startIndex) => ({
         startIndex,
-        score: scoreContext(documentText, startIndex, anchor.quote.length, anchor.quoteContext),
+        score: scoreContext(
+          documentText,
+          startIndex,
+          anchor.quote.length,
+          anchor.quoteContext,
+        ),
       }))
-      .sort((left, right) => right.score - left.score || left.startIndex - right.startIndex);
+      .sort(
+        (left, right) =>
+          right.score - left.score || left.startIndex - right.startIndex,
+      );
 
     const best = ranked[0];
     if (best) {
@@ -191,12 +237,24 @@ export function resolveAnchor(documentText: string, anchor: AnchorInput): Anchor
 
   if (occurrences.length === 1) {
     const [startIndex] = occurrences;
-    const rawPrefix = documentText.slice(Math.max(0, startIndex - anchor.quoteContext.prefix.length), startIndex);
-    const rawSuffix = documentText.slice(startIndex + anchor.quote.length, startIndex + anchor.quote.length + anchor.quoteContext.suffix.length);
+    const rawPrefix = documentText.slice(
+      Math.max(0, startIndex - anchor.quoteContext.prefix.length),
+      startIndex,
+    );
+    const rawSuffix = documentText.slice(
+      startIndex + anchor.quote.length,
+      startIndex + anchor.quote.length + anchor.quoteContext.suffix.length,
+    );
 
     if (
-      (anchor.quoteContext.prefix && rawPrefix !== anchor.quoteContext.prefix && normalizeWhitespace(rawPrefix) === normalizeWhitespace(anchor.quoteContext.prefix)) ||
-      (anchor.quoteContext.suffix && rawSuffix !== anchor.quoteContext.suffix && normalizeWhitespace(rawSuffix) === normalizeWhitespace(anchor.quoteContext.suffix))
+      (anchor.quoteContext.prefix &&
+        rawPrefix !== anchor.quoteContext.prefix &&
+        normalizeWhitespace(rawPrefix) ===
+          normalizeWhitespace(anchor.quoteContext.prefix)) ||
+      (anchor.quoteContext.suffix &&
+        rawSuffix !== anchor.quoteContext.suffix &&
+        normalizeWhitespace(rawSuffix) ===
+          normalizeWhitespace(anchor.quoteContext.suffix))
     ) {
       return {
         status: 'context',
@@ -217,11 +275,21 @@ export function resolveAnchor(documentText: string, anchor: AnchorInput): Anchor
   return findFuzzyCandidate(documentText, anchor.quote, anchor.quoteContext);
 }
 
-export function createAnchor(documentText: string, selectedText: string, selectionStartIndex: number): { quote: string; quoteContext: QuoteContext } {
+export function createAnchor(
+  documentText: string,
+  selectedText: string,
+  selectionStartIndex: number,
+): { quote: string; quoteContext: QuoteContext } {
   const prefixStart = Math.max(0, selectionStartIndex - 100);
-  const suffixEnd = Math.min(documentText.length, selectionStartIndex + selectedText.length + 100);
+  const suffixEnd = Math.min(
+    documentText.length,
+    selectionStartIndex + selectedText.length + 100,
+  );
   let prefix = documentText.slice(prefixStart, selectionStartIndex);
-  let suffix = documentText.slice(selectionStartIndex + selectedText.length, suffixEnd);
+  let suffix = documentText.slice(
+    selectionStartIndex + selectedText.length,
+    suffixEnd,
+  );
 
   if (prefixStart > 0) {
     const boundary = prefix.search(/\b/);

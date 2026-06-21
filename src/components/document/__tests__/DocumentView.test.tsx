@@ -70,7 +70,9 @@ describe('Markdown document viewer', () => {
   it('renders markdown, code blocks, and tables', () => {
     const { container } = render(
       <MarkdownRenderer
-        content={'# Title\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n```ts\nconst value = 1;\n```'}
+        content={
+          '# Title\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n```ts\nconst value = 1;\n```'
+        }
         comments={[]}
         onSelectComment={vi.fn()}
         onTextSelect={vi.fn()}
@@ -79,14 +81,19 @@ describe('Markdown document viewer', () => {
 
     expect(screen.getByRole('heading', { name: 'Title' })).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(container.querySelector('pre code')?.textContent).toContain('const value = 1;');
+    expect(container.querySelector('pre code')?.textContent).toContain(
+      'const value = 1;',
+    );
   });
 
   it('renders an activity indicator when commit info exists', () => {
     render(
       <ActivityIndicator
         commit={{
-          author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+          author: {
+            login: 'jdoe',
+            avatarUrl: 'https://example.com/avatar.png',
+          },
           date: '2026-06-21T05:00:00Z',
           message: 'Update proposal',
         }}
@@ -103,19 +110,39 @@ describe('Markdown document viewer', () => {
       .mockResolvedValueOnce(null);
     getLatestCommit.mockResolvedValueOnce(null);
 
-    renderWithProviders(<DocumentView path="proposals/doc.md" onSelectComment={vi.fn()} onTextSelect={vi.fn()} />);
+    renderWithProviders(
+      <DocumentView
+        path="proposals/doc.md"
+        onSelectComment={vi.fn()}
+        onTextSelect={vi.fn()}
+      />,
+    );
 
-    expect(await screen.findByRole('heading', { name: 'Proposal' })).toBeInTheDocument();
-    expect(getFileContent).toHaveBeenNthCalledWith(2, 'proposals/doc.comments.json', { optional: true });
+    expect(
+      await screen.findByRole('heading', { name: 'Proposal' }),
+    ).toBeInTheDocument();
+    expect(getFileContent).toHaveBeenNthCalledWith(
+      2,
+      'proposals/doc.comments.json',
+      { optional: true },
+    );
   });
 
   it('shows an error state when the proposal content request fails', async () => {
     getFileContent.mockRejectedValueOnce(new Error('boom'));
     getLatestCommit.mockResolvedValueOnce(null);
 
-    renderWithProviders(<DocumentView path="proposals/doc.md" onSelectComment={vi.fn()} onTextSelect={vi.fn()} />);
+    renderWithProviders(
+      <DocumentView
+        path="proposals/doc.md"
+        onSelectComment={vi.fn()}
+        onTextSelect={vi.fn()}
+      />,
+    );
 
-    expect(await screen.findByText(/unable to load proposal/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/unable to load proposal/i),
+    ).toBeInTheDocument();
   });
 
   it('fires onSelectComment when a highlighted comment is clicked', async () => {
@@ -141,10 +168,13 @@ describe('Markdown document viewer', () => {
       />,
     );
 
-    fireEvent.click(screen.getByText((_, element) => element?.textContent === 'initialize lazily'));
+    fireEvent.click(
+      screen.getByText(
+        (_, element) => element?.textContent === 'initialize lazily',
+      ),
+    );
     await waitFor(() => {
       expect(onSelectComment).toHaveBeenCalledWith('comment-1');
     });
   });
-
 });

@@ -5,7 +5,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary';
 }
 
-export function Button({ children, className = '', variant = 'primary', ...props }: ButtonProps) {
+export function Button({
+  children,
+  className = '',
+  variant = 'primary',
+  ...props
+}: ButtonProps) {
   const variantClasses =
     variant === 'primary'
       ? 'bg-cyan-500 text-slate-950 hover:bg-cyan-400'

@@ -29,3 +29,5 @@
 
 - 2026-06-21 — Task 10: Used mocked GitHub API responses in Playwright rather than live GitHub state for the E2E suite. The browser is still real, but the API layer becomes deterministic enough to exercise auth, proposal loading, comments, editing, and conflict handling without depending on mutable remote repo state.
 - 2026-06-21 — Task 10: Simplified route selection by handling `/proposals/*` in one place and switching between `ProposalView` and `ProposalEdit` based on `location.pathname.endsWith('/edit')`. This is more reliable than trying to make a splat route match with a trailing literal segment.
+
+- 2026-06-22 — Task 11: Accepted the Vite build’s chunk-size warning as a follow-up concern rather than blocking completion. The build succeeds, tests are green, and there is no plan requirement to introduce code splitting in this pass.

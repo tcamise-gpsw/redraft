@@ -1,7 +1,13 @@
 import { Octokit } from '@octokit/rest';
 
 import { dispatchAuthError } from '../auth/storage';
-import type { CommitInfo, FileContent, RateLimitInfo, TreeItem, User } from '../../types/github';
+import type {
+  CommitInfo,
+  FileContent,
+  RateLimitInfo,
+  TreeItem,
+  User,
+} from '../../types/github';
 
 interface GitHubClientOptions {
   pat: string;
@@ -85,7 +91,13 @@ function encodeBase64(value: string): string {
   return btoa(binary);
 }
 
-function readHeader(headers: RateLimitHeaders | undefined, name: keyof Pick<RateLimitHeaders, 'x-ratelimit-limit' | 'x-ratelimit-remaining' | 'x-ratelimit-reset'>): string | undefined {
+function readHeader(
+  headers: RateLimitHeaders | undefined,
+  name: keyof Pick<
+    RateLimitHeaders,
+    'x-ratelimit-limit' | 'x-ratelimit-remaining' | 'x-ratelimit-reset'
+  >,
+): string | undefined {
   if (!headers) {
     return undefined;
   }
@@ -97,8 +109,10 @@ function readHeader(headers: RateLimitHeaders | undefined, name: keyof Pick<Rate
   return headers[name];
 }
 
-
-function isRateLimitError(status: number | undefined, headers: RateLimitHeaders | undefined): boolean {
+function isRateLimitError(
+  status: number | undefined,
+  headers: RateLimitHeaders | undefined,
+): boolean {
   return status === 403 && readHeader(headers, 'x-ratelimit-remaining') === '0';
 }
 
@@ -161,7 +175,10 @@ export class GitHubClient {
       }));
   }
 
-  async getFileContent(path: string, options?: GetFileOptions): Promise<FileContent | null> {
+  async getFileContent(
+    path: string,
+    options?: GetFileOptions,
+  ): Promise<FileContent | null> {
     try {
       const response = await this.withErrorHandling(() =>
         this.octokit.repos.getContent({
@@ -189,7 +206,11 @@ export class GitHubClient {
     }
   }
 
-  async createFile(path: string, content: string, message: string): Promise<{ sha: string }> {
+  async createFile(
+    path: string,
+    content: string,
+    message: string,
+  ): Promise<{ sha: string }> {
     const response = await this.withErrorHandling(() =>
       this.octokit.repos.createOrUpdateFileContents({
         owner: this.owner,
@@ -207,7 +228,12 @@ export class GitHubClient {
     };
   }
 
-  async updateFile(path: string, content: string, sha: string, message: string): Promise<{ sha: string }> {
+  async updateFile(
+    path: string,
+    content: string,
+    sha: string,
+    message: string,
+  ): Promise<{ sha: string }> {
     const response = await this.withErrorHandling(() =>
       this.octokit.repos.createOrUpdateFileContents({
         owner: this.owner,
@@ -263,7 +289,11 @@ export class GitHubClient {
     const remaining = Number(readHeader(headers, 'x-ratelimit-remaining'));
     const reset = Number(readHeader(headers, 'x-ratelimit-reset'));
 
-    if (Number.isFinite(limit) && Number.isFinite(remaining) && Number.isFinite(reset)) {
+    if (
+      Number.isFinite(limit) &&
+      Number.isFinite(remaining) &&
+      Number.isFinite(reset)
+    ) {
       this.rateLimit = {
         limit,
         remaining,
@@ -271,18 +301,24 @@ export class GitHubClient {
       };
 
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent(RATE_LIMIT_EVENT, { detail: this.rateLimit }));
+        window.dispatchEvent(
+          new CustomEvent(RATE_LIMIT_EVENT, { detail: this.rateLimit }),
+        );
       }
     }
   }
 
-  private async withErrorHandling<T extends { headers?: RateLimitHeaders }>(request: () => Promise<T>): Promise<T> {
+  private async withErrorHandling<T extends { headers?: RateLimitHeaders }>(
+    request: () => Promise<T>,
+  ): Promise<T> {
     if (
       this.rateLimit.limit > 0 &&
       this.rateLimit.remaining === 0 &&
       this.rateLimit.reset.getTime() > Date.now()
     ) {
-      throw new RateLimitError(`GitHub API rate limit exceeded. Resets at ${this.rateLimit.reset.toISOString()}`);
+      throw new RateLimitError(
+        `GitHub API rate limit exceeded. Resets at ${this.rateLimit.reset.toISOString()}`,
+      );
     }
 
     try {
@@ -293,10 +329,21 @@ export class GitHubClient {
   }
 
   private normalizeError(error: unknown): Error {
-    const status = typeof error === 'object' && error !== null && 'status' in error ? Number(error.status) : undefined;
-    const message = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : undefined;
+    const status =
+      typeof error === 'object' && error !== null && 'status' in error
+        ? Number(error.status)
+        : undefined;
+    const message =
+      typeof error === 'object' && error !== null && 'message' in error
+        ? String(error.message)
+        : undefined;
     const responseHeaders =
-      typeof error === 'object' && error !== null && 'response' in error && typeof error.response === 'object' && error.response !== null && 'headers' in error.response
+      typeof error === 'object' &&
+      error !== null &&
+      'response' in error &&
+      typeof error.response === 'object' &&
+      error.response !== null &&
+      'headers' in error.response
         ? (error.response.headers as RateLimitHeaders)
         : undefined;
 
@@ -307,7 +354,9 @@ export class GitHubClient {
     }
 
     if (status === 401) {
-      dispatchAuthError();
+      if (typeof window !== 'undefined') {
+        dispatchAuthError();
+      }
       return new AuthError();
     }
 
@@ -315,7 +364,10 @@ export class GitHubClient {
       return new NotFoundError();
     }
 
-    if (status === 409 || (status === 422 && message?.toLowerCase().includes('sha'))) {
+    if (
+      status === 409 ||
+      (status === 422 && message?.toLowerCase().includes('sha'))
+    ) {
       return new ConflictError();
     }
 

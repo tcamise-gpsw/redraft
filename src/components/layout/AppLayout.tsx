@@ -11,7 +11,10 @@ export function AppLayout({ sidebar, main, aside }: AppLayoutProps) {
   const [asideOpen, setAsideOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50" data-testid="app-layout-root">
+    <div
+      className="min-h-screen bg-slate-950 text-slate-50"
+      data-testid="app-layout-root"
+    >
       <div className="border-b border-slate-800 px-4 py-3 lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <button
@@ -33,7 +36,10 @@ export function AppLayout({ sidebar, main, aside }: AppLayoutProps) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1600px] lg:grid lg:min-h-[calc(100vh-65px)] lg:grid-cols-[240px_minmax(0,1fr)_320px]" data-testid="app-layout">
+      <div
+        className="mx-auto max-w-[1600px] lg:grid lg:min-h-[calc(100vh-65px)] lg:grid-cols-[240px_minmax(0,1fr)_320px]"
+        data-testid="app-layout"
+      >
         <aside
           className={[
             'border-b border-slate-800 bg-slate-900/60 p-4 lg:block lg:border-b-0 lg:border-r',

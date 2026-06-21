@@ -61,7 +61,11 @@ describe('GitHubClient', () => {
   });
 
   it('validateAuth returns normalized user data on success', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.users.getAuthenticated.mockResolvedValue({
@@ -74,11 +78,18 @@ describe('GitHubClient', () => {
       login: 'jdoe',
       avatarUrl: 'https://example.com/avatar.png',
     });
-    expect(client.getRateLimit()).toMatchObject({ remaining: 4992, limit: 5000 });
+    expect(client.getRateLimit()).toMatchObject({
+      remaining: 4992,
+      limit: 5000,
+    });
   });
 
   it('validateAuth throws AuthError on 401', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.users.getAuthenticated.mockRejectedValue({ status: 401 });
@@ -87,7 +98,11 @@ describe('GitHubClient', () => {
   });
 
   it('getTree filters entries to the proposals prefix', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.git.getTree.mockResolvedValue({
@@ -109,7 +124,11 @@ describe('GitHubClient', () => {
   });
 
   it('getFileContent decodes base64 and returns sha', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.repos.getContent.mockResolvedValue({
@@ -129,25 +148,43 @@ describe('GitHubClient', () => {
   });
 
   it('getFileContent returns null for optional 404 reads', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.repos.getContent.mockRejectedValue({ status: 404 });
 
-    await expect(client.getFileContent('proposals/missing.comments.json', { optional: true })).resolves.toBeNull();
+    await expect(
+      client.getFileContent('proposals/missing.comments.json', {
+        optional: true,
+      }),
+    ).resolves.toBeNull();
   });
 
   it('getFileContent throws NotFoundError for required 404 reads', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.repos.getContent.mockRejectedValue({ status: 404 });
 
-    await expect(client.getFileContent('proposals/missing.md')).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      client.getFileContent('proposals/missing.md'),
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it('createFile writes without sha and returns the new sha', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.repos.createOrUpdateFileContents.mockResolvedValue({
@@ -156,7 +193,9 @@ describe('GitHubClient', () => {
       status: 201,
     });
 
-    await expect(client.createFile('proposals/new.md', '# New', 'Create proposal: new.md')).resolves.toEqual({ sha: 'new-sha' });
+    await expect(
+      client.createFile('proposals/new.md', '# New', 'Create proposal: new.md'),
+    ).resolves.toEqual({ sha: 'new-sha' });
     expect(octokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
       expect.objectContaining({
         owner: 'acme',
@@ -165,11 +204,17 @@ describe('GitHubClient', () => {
         message: 'Create proposal: new.md',
       }),
     );
-    expect(octokit.repos.createOrUpdateFileContents.mock.calls[0]?.[0]).not.toHaveProperty('sha');
+    expect(
+      octokit.repos.createOrUpdateFileContents.mock.calls[0]?.[0],
+    ).not.toHaveProperty('sha');
   });
 
   it('updateFile sends sha and throws ConflictError on mismatch', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.repos.createOrUpdateFileContents.mockRejectedValue({
@@ -179,19 +224,34 @@ describe('GitHubClient', () => {
     });
 
     await expect(
-      client.updateFile('proposals/doc.md', '# Updated', 'old-sha', 'Update proposal: doc.md'),
+      client.updateFile(
+        'proposals/doc.md',
+        '# Updated',
+        'old-sha',
+        'Update proposal: doc.md',
+      ),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
   it('getLatestCommit returns the newest commit info for a path', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.repos.listCommits.mockResolvedValue({
       data: [
         {
-          commit: { message: 'Update proposal', author: { date: '2026-06-21T05:00:00Z' } },
-          author: { login: 'jdoe', avatar_url: 'https://example.com/avatar.png' },
+          commit: {
+            message: 'Update proposal',
+            author: { date: '2026-06-21T05:00:00Z' },
+          },
+          author: {
+            login: 'jdoe',
+            avatar_url: 'https://example.com/avatar.png',
+          },
         },
       ],
       headers: responseHeaders,
@@ -206,7 +266,11 @@ describe('GitHubClient', () => {
   });
 
   it('classifies 403 responses with rate-limit headers as RateLimitError', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
     octokit.users.getAuthenticated.mockRejectedValue({
@@ -223,10 +287,16 @@ describe('GitHubClient', () => {
   });
 
   it('wraps unknown transport failures as NetworkError', async () => {
-    const client = new GitHubClient({ pat: 'ghp_test', owner: 'acme', repo: 'workspace' });
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
     const octokit = state.instances[0]!;
 
-    octokit.users.getAuthenticated.mockRejectedValue(new Error('socket hang up'));
+    octokit.users.getAuthenticated.mockRejectedValue(
+      new Error('socket hang up'),
+    );
 
     await expect(client.validateAuth()).rejects.toBeInstanceOf(NetworkError);
   });

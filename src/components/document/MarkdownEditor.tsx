@@ -20,7 +20,10 @@ export function MarkdownEditor({
   }, [initialContent]);
 
   const dirty = content !== initialContent;
-  const lineCount = useMemo(() => Math.max(1, content.split('\n').length), [content]);
+  const lineCount = useMemo(
+    () => Math.max(1, content.split('\n').length),
+    [content],
+  );
 
   return (
     <div className="flex min-h-[70vh] flex-col gap-4">
@@ -33,7 +36,10 @@ export function MarkdownEditor({
         <div className="flex items-center gap-3">
           <Button
             onClick={() => {
-              if (!dirty || window.confirm('You have unsaved changes. Discard?')) {
+              if (
+                !dirty ||
+                window.confirm('You have unsaved changes. Discard?')
+              ) {
                 onCancel();
               }
             }}
@@ -42,7 +48,11 @@ export function MarkdownEditor({
           >
             Cancel
           </Button>
-          <Button disabled={isSaving} onClick={() => void onSave(content)} type="button">
+          <Button
+            disabled={isSaving}
+            onClick={() => void onSave(content)}
+            type="button"
+          >
             {isSaving ? 'Saving…' : 'Save'}
           </Button>
         </div>

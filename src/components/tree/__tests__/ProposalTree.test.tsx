@@ -83,10 +83,14 @@ describe('ProposalTree', () => {
     expect(screen.getByText('media')).toBeInTheDocument();
     expect(screen.getByText('rest.md')).toBeInTheDocument();
 
-    const topLevelLabels = Array.from(screen.getByRole('tree').children).map((item) => {
-      const label = (item as HTMLElement).firstElementChild?.querySelector('[data-testid="proposal-tree-label"]');
-      return label?.textContent ?? null;
-    });
+    const topLevelLabels = Array.from(screen.getByRole('tree').children).map(
+      (item) => {
+        const label = (item as HTMLElement).firstElementChild?.querySelector(
+          '[data-testid="proposal-tree-label"]',
+        );
+        return label?.textContent ?? null;
+      },
+    );
     expect(topLevelLabels).toEqual(['api', 'media', 'rest.md']);
   });
 
@@ -121,7 +125,9 @@ describe('ProposalTree', () => {
 
     getTree.mockRejectedValueOnce(new Error('boom'));
     renderTree();
-    expect(await screen.findByText(/unable to load proposals/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/unable to load proposals/i),
+    ).toBeInTheDocument();
   });
 
   it('creates a proposal from the dialog and calls createFile', async () => {
@@ -130,7 +136,9 @@ describe('ProposalTree', () => {
 
     renderTree();
 
-    fireEvent.click(await screen.findByRole('button', { name: /new proposal/i }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: /new proposal/i }),
+    );
     fireEvent.change(screen.getByLabelText(/file path/i), {
       target: { value: 'api/new-proposal.md' },
     });

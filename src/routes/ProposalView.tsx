@@ -31,7 +31,9 @@ export function ProposalView() {
           path={path}
           onSelectComment={(id) => {
             setActiveCommentId(id);
-            document.getElementById(`comment-thread-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            document
+              .getElementById(`comment-thread-${id}`)
+              ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
           }}
           onTextSelect={(selection) => {
             setPendingSelection(selection);
@@ -46,7 +48,9 @@ export function ProposalView() {
           activeCommentId={activeCommentId}
           onCommentClick={(id) => {
             setActiveCommentId(id);
-            document.querySelector(`[data-comment-id="${id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            document
+              .querySelector(`[data-comment-id="${id}"]`)
+              ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
           }}
           pendingSelection={pendingSelection}
           onClearSelection={() => setPendingSelection(null)}

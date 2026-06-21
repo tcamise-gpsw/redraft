@@ -24,7 +24,10 @@ vi.mock('../../../hooks/useToast', () => ({
 }));
 
 vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  const actual =
+    await vi.importActual<typeof import('react-router-dom')>(
+      'react-router-dom',
+    );
   return {
     ...actual,
     useNavigate: () => navigate,
@@ -78,14 +81,22 @@ describe('MarkdownEditor', () => {
     updateFile.mockReset();
     navigate.mockReset();
     showToast.mockReset();
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
   });
 
   it('renders content and saves edits', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
 
     render(
-      <MarkdownEditor initialContent="# Proposal" isSaving={false} onCancel={vi.fn()} onSave={onSave} />,
+      <MarkdownEditor
+        initialContent="# Proposal"
+        isSaving={false}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />,
     );
 
     fireEvent.change(screen.getByLabelText(/markdown editor/i), {
@@ -105,7 +116,12 @@ describe('MarkdownEditor', () => {
     const onCancel = vi.fn();
 
     render(
-      <MarkdownEditor initialContent="# Proposal" isSaving={false} onCancel={onCancel} onSave={vi.fn()} />,
+      <MarkdownEditor
+        initialContent="# Proposal"
+        isSaving={false}
+        onCancel={onCancel}
+        onSave={vi.fn()}
+      />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
@@ -114,10 +130,17 @@ describe('MarkdownEditor', () => {
 
   it('inserts two spaces when tab is pressed', () => {
     render(
-      <MarkdownEditor initialContent="# Proposal" isSaving={false} onCancel={vi.fn()} onSave={vi.fn()} />,
+      <MarkdownEditor
+        initialContent="# Proposal"
+        isSaving={false}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+      />,
     );
 
-    const textarea = screen.getByLabelText(/markdown editor/i) as HTMLTextAreaElement;
+    const textarea = screen.getByLabelText(
+      /markdown editor/i,
+    ) as HTMLTextAreaElement;
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     fireEvent.keyDown(textarea, { key: 'Tab' });
@@ -129,7 +152,12 @@ describe('MarkdownEditor', () => {
     const onCancel = vi.fn();
 
     render(
-      <MarkdownEditor initialContent="# Proposal" isSaving={false} onCancel={onCancel} onSave={vi.fn()} />,
+      <MarkdownEditor
+        initialContent="# Proposal"
+        isSaving={false}
+        onCancel={onCancel}
+        onSave={vi.fn()}
+      />,
     );
 
     fireEvent.change(screen.getByLabelText(/markdown editor/i), {
@@ -137,14 +165,18 @@ describe('MarkdownEditor', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
-    expect(window.confirm).toHaveBeenCalledWith('You have unsaved changes. Discard?');
+    expect(window.confirm).toHaveBeenCalledWith(
+      'You have unsaved changes. Discard?',
+    );
     expect(onCancel).toHaveBeenCalled();
   });
 
   it('useProposalEdit saves with the right args and navigates back', async () => {
     updateFile.mockResolvedValueOnce({ sha: 'next-sha' });
 
-    const { result } = renderHook(() => useProposalEdit('proposals/doc.md'), { wrapper });
+    const { result } = renderHook(() => useProposalEdit('proposals/doc.md'), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.save('# Updated', 'current-sha');
@@ -157,13 +189,18 @@ describe('MarkdownEditor', () => {
       'Update proposal: doc.md',
     );
     expect(navigate).toHaveBeenCalledWith('/proposals/doc.md');
-    expect(showToast).toHaveBeenCalledWith({ tone: 'info', title: 'Proposal saved' });
+    expect(showToast).toHaveBeenCalledWith({
+      tone: 'info',
+      title: 'Proposal saved',
+    });
   });
 
   it('useProposalEdit shows a conflict toast on write failure', async () => {
     updateFile.mockRejectedValueOnce(new Error('GitHub content SHA conflict'));
 
-    const { result } = renderHook(() => useProposalEdit('proposals/doc.md'), { wrapper });
+    const { result } = renderHook(() => useProposalEdit('proposals/doc.md'), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.save('# Updated', 'current-sha');
@@ -171,7 +208,8 @@ describe('MarkdownEditor', () => {
 
     expect(showToast).toHaveBeenCalledWith({
       tone: 'error',
-      title: 'File was modified since you loaded it. Please refresh and re-apply your changes.',
+      title:
+        'File was modified since you loaded it. Please refresh and re-apply your changes.',
     });
   });
 });

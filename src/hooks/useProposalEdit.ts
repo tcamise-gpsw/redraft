@@ -26,22 +26,34 @@ export function useProposalEdit(path: string) {
     }
 
     try {
-      await client.updateFile(path, content, sha, `Update proposal: ${path.split('/').at(-1) ?? path}`);
-      await queryClient.invalidateQueries({ queryKey: ['proposal', path, 'content'] });
+      await client.updateFile(
+        path,
+        content,
+        sha,
+        `Update proposal: ${path.split('/').at(-1) ?? path}`,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ['proposal', path, 'content'],
+      });
       navigate(`/${path.replace(/^proposals\//, 'proposals/')}`);
       showToast({ tone: 'info', title: 'Proposal saved' });
     } catch (error) {
-      if (error instanceof ConflictError || (error instanceof Error && /sha|conflict/i.test(error.message))) {
+      if (
+        error instanceof ConflictError ||
+        (error instanceof Error && /sha|conflict/i.test(error.message))
+      ) {
         showToast({
           tone: 'error',
-          title: 'File was modified since you loaded it. Please refresh and re-apply your changes.',
+          title:
+            'File was modified since you loaded it. Please refresh and re-apply your changes.',
         });
         return;
       }
 
       showToast({
         tone: 'error',
-        title: error instanceof Error ? error.message : 'Unable to save proposal',
+        title:
+          error instanceof Error ? error.message : 'Unable to save proposal',
       });
     }
   }

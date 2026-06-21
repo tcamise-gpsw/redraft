@@ -1,4 +1,13 @@
-import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import { AuthError, GitHubClient } from '../lib/github';
 import {
@@ -54,20 +63,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(toState(null));
   }, []);
 
-  const login = useCallback(async (pat: string, owner: string, repo: string) => {
-    try {
-      const client = new GitHubClient({ pat, owner, repo });
-      const user = await client.validateAuth();
-      const stored = { pat, owner, repo, user } satisfies StoredAuth;
+  const login = useCallback(
+    async (pat: string, owner: string, repo: string) => {
+      try {
+        const client = new GitHubClient({ pat, owner, repo });
+        const user = await client.validateAuth();
+        const stored = { pat, owner, repo, user } satisfies StoredAuth;
 
-      setStoredAuth(stored);
-      setState(toState(stored));
-    } catch (error) {
-      clearStoredAuth();
-      setState(toState(null));
-      throw error;
-    }
-  }, []);
+        setStoredAuth(stored);
+        setState(toState(stored));
+      } catch (error) {
+        clearStoredAuth();
+        setState(toState(null));
+        throw error;
+      }
+    },
+    [],
+  );
 
   const updateRepo = useCallback(
     (owner: string, repo: string) => {
@@ -75,7 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const stored = { pat: state.pat, owner, repo, user: state.user } satisfies StoredAuth;
+      const stored = {
+        pat: state.pat,
+        owner,
+        repo,
+        user: state.user,
+      } satisfies StoredAuth;
       setStoredAuth(stored);
       setState(toState(stored));
     },

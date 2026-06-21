@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import '@testing-library/jest-dom/vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommentThread } from '../../../types/comments';
 
@@ -27,12 +33,17 @@ vi.mock('../../../hooks/useToast', () => ({
 import { CommentsSidebar } from '../CommentsSidebar';
 import { SelectionPopover } from '../SelectionPopover';
 
-function makeThread(overrides: Partial<CommentThread> & Pick<CommentThread, 'id' | 'quote'>): CommentThread {
+function makeThread(
+  overrides: Partial<CommentThread> & Pick<CommentThread, 'id' | 'quote'>,
+): CommentThread {
   return {
     id: overrides.id,
     quote: overrides.quote,
     quoteContext: overrides.quoteContext ?? { prefix: '', suffix: '' },
-    author: overrides.author ?? { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+    author: overrides.author ?? {
+      login: 'jdoe',
+      avatarUrl: 'https://example.com/avatar.png',
+    },
     body: overrides.body ?? 'Comment body',
     createdAt: overrides.createdAt ?? '2026-06-21T05:00:00Z',
     resolved: overrides.resolved ?? false,
@@ -65,8 +76,14 @@ describe('CommentsSidebar', () => {
       />,
     );
 
-    const headings = screen.getAllByTestId('comment-thread-quote').map((node) => node.textContent);
-    expect(headings).toEqual(['initialize lazily', 'preview starts', 'missing quote']);
+    const headings = screen
+      .getAllByTestId('comment-thread-quote')
+      .map((node) => node.textContent);
+    expect(headings).toEqual([
+      'initialize lazily',
+      'preview starts',
+      'missing quote',
+    ]);
     expect(screen.getByText(/orphaned comments/i)).toBeInTheDocument();
   });
 
@@ -82,7 +99,10 @@ describe('CommentsSidebar', () => {
         onCommentClick={vi.fn()}
         pendingSelection={{
           quote: 'initialize lazily',
-          context: { prefix: 'The camera should ', suffix: ' when preview starts.' },
+          context: {
+            prefix: 'The camera should ',
+            suffix: ' when preview starts.',
+          },
         }}
         onClearSelection={vi.fn()}
       />,
@@ -126,7 +146,9 @@ describe('CommentsSidebar', () => {
 
   it('shows the conflict toast when comment submission fails', async () => {
     addComment.mockRejectedValueOnce(
-      new Error('File was modified since you loaded it. Please refresh and re-apply your changes.'),
+      new Error(
+        'File was modified since you loaded it. Please refresh and re-apply your changes.',
+      ),
     );
 
     render(
@@ -138,7 +160,10 @@ describe('CommentsSidebar', () => {
         onCommentClick={vi.fn()}
         pendingSelection={{
           quote: 'initialize lazily',
-          context: { prefix: 'The camera should ', suffix: ' when preview starts.' },
+          context: {
+            prefix: 'The camera should ',
+            suffix: ' when preview starts.',
+          },
         }}
         onClearSelection={vi.fn()}
       />,
@@ -170,8 +195,13 @@ describe('SelectionPopover', () => {
 
     render(
       <div>
-        <div id="document-markdown-root">The camera should initialize lazily when preview starts.</div>
-        <SelectionPopover rootSelector="#document-markdown-root" onSelect={onSelect} />
+        <div id="document-markdown-root">
+          The camera should initialize lazily when preview starts.
+        </div>
+        <SelectionPopover
+          rootSelector="#document-markdown-root"
+          onSelect={onSelect}
+        />
       </div>,
     );
 
@@ -179,12 +209,16 @@ describe('SelectionPopover', () => {
       toString: () => quote,
       rangeCount: 1,
       getRangeAt: () => ({
-        commonAncestorContainer: document.getElementById('document-markdown-root')!.firstChild!,
+        commonAncestorContainer: document.getElementById(
+          'document-markdown-root',
+        )!.firstChild!,
         getBoundingClientRect: () => ({ left: 20, top: 40 }),
       }),
     };
 
-    vi.spyOn(window, 'getSelection').mockReturnValue(selection as unknown as Selection);
+    vi.spyOn(window, 'getSelection').mockReturnValue(
+      selection as unknown as Selection,
+    );
     await act(async () => {
       document.dispatchEvent(new Event('selectionchange'));
     });

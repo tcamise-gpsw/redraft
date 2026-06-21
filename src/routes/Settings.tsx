@@ -47,7 +47,10 @@ export function Settings() {
         </section>
 
         <form className="space-y-4" onSubmit={handleSave}>
-          <label className="block space-y-2 text-sm font-medium" htmlFor="settings-repository">
+          <label
+            className="block space-y-2 text-sm font-medium"
+            htmlFor="settings-repository"
+          >
             <span>Repository</span>
             <input
               id="settings-repository"
