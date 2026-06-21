@@ -501,7 +501,7 @@ Routing setup in `App.tsx`:
 - [x] Conflict handling: SHA mismatch triggers error
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -541,19 +541,19 @@ Routing setup in `App.tsx`:
 - Loading state while fetching content: spinner in center panel
 
 **Checklist:**
-- [ ] Editor renders with current markdown content
-- [ ] Save commits content to GitHub and navigates to view
-- [ ] Cancel navigates to view (with confirmation if unsaved changes)
-- [ ] SHA conflict shows error toast
-- [ ] Tab key inserts spaces, not focus change
-- [ ] Unsaved changes warning on navigation
+- [x] Editor renders with current markdown content
+- [x] Save commits content to GitHub and navigates to view
+- [x] Cancel navigates to view (with confirmation if unsaved changes)
+- [x] SHA conflict shows error toast
+- [x] Tab key inserts spaces, not focus change
+- [x] Unsaved changes warning on navigation
 
 **Tests:**
-- [ ] `npx vitest run src/components/document`
-- [ ] MarkdownEditor: renders content, calls onSave on save button click
-- [ ] MarkdownEditor: calls onCancel on cancel button click
-- [ ] useProposalEdit: save calls updateFile with correct args
-- [ ] useProposalEdit: ConflictError triggers toast
+- [x] `npx vitest run src/components/document`
+- [x] MarkdownEditor: renders content, calls onSave on save button click
+- [x] MarkdownEditor: calls onCancel on cancel button click
+- [x] useProposalEdit: save calls updateFile with correct args
+- [x] useProposalEdit: ConflictError triggers toast
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`

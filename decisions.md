@@ -23,3 +23,6 @@
 
 - 2026-06-21 — Task 8: Kept `useComments()` narrowly responsible for GitHub reads/writes and mutation invalidation, while the sidebar owns user-facing toast behavior. That keeps the hook reusable in other surfaces without hard-wiring UI state into the data layer.
 - 2026-06-21 — Task 8: `ProposalView` now owns active comment selection and the scroll bridge between the document and sidebar. The document emits comment IDs and selection payloads; the sidebar consumes ordered threads and mutation helpers; the route coordinates both.
+
+- 2026-06-21 — Task 9: Kept the editor route thin by reusing `useProposal()` for reads and isolating write behavior in `useProposalEdit()`. The route only coordinates loading, save state, and navigation, which keeps the editor itself reusable and easy to test.
+- 2026-06-21 — Task 9: Conflict handling in the edit hook matches the comments flow’s user-facing message, even though the underlying signals still come from GitHub SHA failures. That keeps the UI consistent across document edits and comment mutations.

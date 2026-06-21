@@ -23,3 +23,6 @@
 
 - 2026-06-21 — Task 8: The `useComments` test wrapper had to avoid JSX because the approved path is a `.ts` test file. `createElement()` kept the test file valid without drifting from the plan.
 - 2026-06-21 — Task 8: `scrollIntoView` is not available in jsdom by default, so ProposalView’s scroll-sync behavior needed an explicit stub in the integration test. That made the comment↔highlight coordination testable without a browser.
+
+- 2026-06-21 — Task 9: The editor tests were easiest to keep deterministic by mocking `useNavigate` and `useToast` instead of asserting on route state. That made the save and conflict branches precise without dragging the whole router into every assertion.
+- 2026-06-21 — Task 9: The proposal edit route needed to strip a trailing `/edit` from the wildcard route param before reconstructing the proposal path. Doing that once in the route kept the hook and editor contracts clean.
