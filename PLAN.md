@@ -193,7 +193,7 @@ function startWatcher(basePath: string, onEvent: (event: FileEvent) => void): ()
 - [x] Test hub handles client disconnect
 
 **Commit:**
-- [ ] `feat(server): implement file watcher and WebSocket hub`
+- [x] `feat(server): implement file watcher and WebSocket hub`
 
 ---
 
@@ -214,16 +214,16 @@ function startWatcher(basePath: string, onEvent: (event: FileEvent) => void): ()
 - These endpoints are convenience only — no other functionality depends on them
 
 **Checklist:**
-- [ ] Status endpoint shows modified files after a write
-- [ ] Commit endpoint creates a real git commit with the staged changes
-- [ ] Non-git directory returns 404 gracefully
-- [ ] Auto-generated commit message includes timestamp or file list
+- [x] Status endpoint shows modified files after a write
+- [x] Commit endpoint creates a real git commit with the staged changes
+- [x] Non-git directory returns 404 gracefully
+- [x] Auto-generated commit message includes timestamp or file list
 
 **Tests:**
-- [ ] Run `npx vitest run server/routes/git.test.ts`
-- [ ] Test status returns dirty state after file write (using a temp git repo)
-- [ ] Test commit creates a commit (verify with `git log`)
-- [ ] Test non-git directory returns appropriate error
+- [x] Run `npx vitest run server/routes/git.test.ts`
+- [x] Test status returns dirty state after file write (using a temp git repo)
+- [x] Test commit creates a commit (verify with `git log`)
+- [x] Test non-git directory returns appropriate error
 
 **Commit:**
 - [ ] `feat(server): add git status and commit convenience endpoints`

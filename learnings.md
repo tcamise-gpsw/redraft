@@ -21,3 +21,8 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 - `vi.advanceTimersByTimeAsync()` only proves the debounce timer fired; it does not guarantee any async file I/O awaited inside the timer callback has completed. The watcher tests had to await the real `onEvent` promise, not just the timer advance.
 - `vi.hoisted()` factories cannot safely close over imported runtime values. A fake watcher built on `EventEmitter` failed because the import had not initialized yet; a self-contained fake implementation inside the hoisted block avoids that trap.
 - Hono/WS integration tests need a server-side signal for disconnect bookkeeping. Waiting on the browser/client `close` event races the server cleanup path; emitting `connection-count` changes from the hub made the test deterministic.
+
+## Task 4 — Git Convenience Endpoints
+
+- macOS temp paths can appear under both `/var/...` and `/private/var/...`. Git reports the repository root using the realpath, so computing a repo-relative scope from the unresolved temp path produced an "outside repository" error. `realpath()` on both values fixes that class of bug.
+- Plain-text 404 bodies from Hono make route-registration misses obvious: a `response.json()` parse failure in tests is often a strong signal that the route never matched, not that the JSON payload shape is wrong.

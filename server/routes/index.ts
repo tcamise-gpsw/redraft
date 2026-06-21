@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { FileOperationError } from '../types.js';
 import { registerCommitsRoute } from './commits.js';
 import { registerContentsRoute } from './contents.js';
+import { registerGitRoute } from './git.js';
 import { registerTreeRoute } from './tree.js';
 import { registerUserRoute, type RouteHelpers } from './user.js';
 
@@ -39,7 +40,10 @@ export function buildGitHubApiRouter(basePath: string): Hono {
       return json({ message: error.message }, error.status);
     }
 
-    return json({ message: error instanceof Error ? error.message : 'Unknown error' }, 500);
+    return json(
+      { message: error instanceof Error ? error.message : 'Unknown error' },
+      500,
+    );
   });
 
   const helpers = { basePath, json, toApiPath, toLocalPath };
@@ -47,6 +51,7 @@ export function buildGitHubApiRouter(basePath: string): Hono {
   registerTreeRoute(app, helpers);
   registerContentsRoute(app, helpers);
   registerCommitsRoute(app, helpers);
+  registerGitRoute(app, helpers);
 
   return app;
 }

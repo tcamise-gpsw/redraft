@@ -24,3 +24,9 @@ Append-only record of meaningful execution-time decisions.
 - Implemented the watcher as a debounced path map keyed by relative file path, not as raw event passthrough. That collapses bursty editor/agent writes into a single flush per path while still preserving distinct created/changed/deleted semantics.
 - Computed SHAs at flush time rather than at queue time. This means a burst of writes yields the final on-disk content hash, which is the only state the UI cares about after invalidating its queries.
 - Extended `WebSocketHub` from `EventEmitter` and emitted `connection-count` changes. This was the cleanest deterministic signal for testing disconnect bookkeeping without introducing timer-based polling in the test suite.
+
+## Task 4 — Git Convenience Endpoints
+
+- Kept git as a convenience layer on top of immediate filesystem writes: the routes query and mutate the working tree, but no other server behavior depends on a successful commit. This preserves the spec's “commit button is optional” rule.
+- Scoped `git status` and `git add` to the proposals directory using the repo-relative path returned from `git rev-parse --show-toplevel` + `relative(...)`. That prevents unrelated repository changes from leaking into Draftspace's status view or convenience commits.
+- Forced a fallback git identity (`Draftspace <draftspace@local>`) on the commit command so the endpoint works even in fresh repos without user.name/user.email configured.
