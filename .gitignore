@@ -1,6 +1,8 @@
 **/.git/
 node_modules/
 dist/
+dist-server/
+*.tgz
 coverage/
 playwright-report/
 test-results/
