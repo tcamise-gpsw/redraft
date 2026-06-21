@@ -11,3 +11,6 @@
 
 - 2026-06-21 — Task 4: Kept the shell route placeholders intentionally thin (`Home`, `ProposalView`, `ProposalEdit`) and pushed shared chrome into `AppLayout` + `Header`. That preserves the feature-area route structure from the plan without over-abstracting before the data layers land.
 - 2026-06-21 — Task 4: Toast state lives in a dedicated provider instead of inside `App.tsx`, and the QueryClient is created from inside a component that can call `showToast`. This keeps TanStack Query error reporting aligned with the approved architecture while avoiding global singleton state.
+
+- 2026-06-21 — Task 5: Built the proposal tree directly from the flat Git tree API response inside `useProposals()` instead of inventing an intermediate service layer. The hook is the only consumer right now, so the tree normalization stays close to the query boundary and remains easy to replace if GitHub path semantics need to change.
+- 2026-06-21 — Task 5: Kept folder nodes expanded by default so nested proposals are immediately visible in the sidebar. The recursive `TreeNode` still owns expand/collapse state per directory, so the UX can be tightened later without changing the hook contract.

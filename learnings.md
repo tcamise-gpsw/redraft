@@ -11,3 +11,6 @@
 
 - 2026-06-21 — Task 4: The browser verification on `/#/settings` was the most reliable real-browser smoke check for the shell because it exercises the header, routing, and authenticated state without needing the proposal data layer yet.
 - 2026-06-21 — Task 4: `useToast.ts` hit the same `.ts`-with-JSX constraint as `useAuth.ts`. Keeping the provider in a `.ts` file required a `createElement`-based return rather than renaming the file and drifting from the approved plan.
+
+- 2026-06-21 — Task 5: Testing tree sort order against a flattened list was misleading once expanded child nodes were visible. The reliable assertion was to inspect only the immediate children of the root tree container.
+- 2026-06-21 — Task 5: The create-proposal flow is easiest to test at the component level by mocking `GitHubClient` and asserting the exact normalized repo path and commit message. That keeps the hook contract simple and still proves the write behavior end to end.

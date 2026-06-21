@@ -236,7 +236,7 @@ Routing setup in `App.tsx`:
 - [x] Routing: correct component renders for each route
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -278,19 +278,19 @@ Routing setup in `App.tsx`:
 - Tree nodes show only the filename (not full path), with path visible on hover
 
 **Checklist:**
-- [ ] Tree renders directory structure matching repo's `proposals/` contents
-- [ ] Folders expand/collapse
-- [ ] Clicking a file navigates to the proposal view
-- [ ] Current proposal is highlighted
-- [ ] "New Proposal" creates a file and navigates to it
-- [ ] Loading and error states render correctly
-- [ ] Tree is sorted (directories first, then alphabetical)
+- [x] Tree renders directory structure matching repo's `proposals/` contents
+- [x] Folders expand/collapse
+- [x] Clicking a file navigates to the proposal view
+- [x] Current proposal is highlighted
+- [x] "New Proposal" creates a file and navigates to it
+- [x] Loading and error states render correctly
+- [x] Tree is sorted (directories first, then alphabetical)
 
 **Tests:**
-- [ ] `npx vitest run src/components/tree src/hooks`
-- [ ] Tree rendering: given a mock tree response, correct nodes render
-- [ ] Tree sorting: directories before files, alphabetical within each
-- [ ] Create proposal: dialog validates inputs, calls createFile
+- [x] `npx vitest run src/components/tree src/hooks`
+- [x] Tree rendering: given a mock tree response, correct nodes render
+- [x] Tree sorting: directories before files, alphabetical within each
+- [x] Create proposal: dialog validates inputs, calls createFile
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
