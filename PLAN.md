@@ -366,7 +366,7 @@ AGENTS.md updates:
 - [x] Verify all links in README resolve to existing files
 
 **Commit:**
-- [ ] `docs: rewrite README for three-persona usage and update AGENTS.md`
+- [x] `docs: rewrite README for three-persona usage and update AGENTS.md`
 
 ---
 
@@ -398,14 +398,14 @@ AGENTS.md updates:
 - **Comment file format:** `{ version: 1, comments: CommentThread[] }` where each thread has `id`, `quote`, `quoteContext`, `author`, `body`, `createdAt`, `resolved`, `replies`
 
 **Checklist:**
-- [ ] Read `skill://skill-creator` and follow its process to create the skill
-- [ ] Skill triggers on `/draftspace-review` and related phrases
-- [ ] Skill finds all unresolved comments across all proposals
-- [ ] Skill presents each thread with full context (quote, body, replies)
-- [ ] Skill can draft and write a reply via the local server API
-- [ ] Skill can resolve a thread via the local server API
-- [ ] UI reflects changes in real-time as the skill works
-- [ ] Run skill-creator evals if available to verify trigger accuracy
+- [x] Read `skill://skill-creator` and follow its process to create the skill
+- [x] Skill triggers on `/draftspace-review` and related phrases
+- [x] Skill finds all unresolved comments across all proposals
+- [x] Skill presents each thread with full context (quote, body, replies)
+- [x] Skill can draft and write a reply via the local server API
+- [x] Skill can resolve a thread via the local server API
+- [x] UI reflects changes in real-time as the skill works
+- [x] Run skill-creator evals if available to verify trigger accuracy
 
 **Commit:**
 - [ ] `feat(skills): add draftspace-review AI skill for comment walkthrough`

@@ -49,3 +49,9 @@ Append-only record of meaningful execution-time decisions.
 - Repositioned the README as a user-facing product entry point, not a contributor setup guide. Development and architecture detail now stay in `docs/`, while the README explains usage modes, workflows, and prerequisites in plain language.
 - Kept the local-mode quick start in README even though it includes `npm install` and `npm run build`, because in the current dogfooding phase the local server is consumed from this repo rather than an npm release. Those steps are still user-facing for the power-user / AI-agent persona.
 - Updated `AGENTS.md` to acknowledge the new local server and repo-local skills as first-class parts of the codebase. Leaving the old “do not introduce a backend” rule in place would have become actively misleading.
+
+## Task 8 — AI Skill — `draftspace-review`
+
+- Followed the skill-creator anatomy rather than the earlier lowercase filename sketch: the skill lives at `.agents/skills/draftspace-review/SKILL.md` with a sibling README and eval seed file. This matches the documented skill package shape and is the least surprising structure for future tooling.
+- Kept the skill opinionated about the hybrid workflow boundary: proposal markdown is read and edited directly on disk, while comment mutations go through the local Draftspace API. That prevents the skill from silently bypassing SHA locking or live browser updates.
+- Seeded realistic eval prompts in `evals/evals.json` even though the repo does not vendor the full skill-creator benchmark/viewer scripts. That preserves the next step for future trigger/output evaluation without blocking this implementation task on missing local tooling.
