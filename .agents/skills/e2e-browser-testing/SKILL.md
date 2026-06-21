@@ -1,3 +1,8 @@
+---
+name: e2e-browser-testing
+description: Use when asked to run end-to-end testing of ReDraft, verify browser-visible behavior, investigate UI regressions, or exercise a feature in either remote GitHub mode or local filesystem mode. Also use for requests to smoke-test a change, validate a local server flow, or confirm that comment/editing/auth behavior works in a real browser.
+---
+
 # Skill: Browser E2E Testing for ReDraft
 
 Use this skill when asked to run end-to-end testing of the ReDraft, verify browser-visible behavior, investigate UI regressions, or exercise a feature in either **remote GitHub mode** or **local filesystem mode**.
@@ -76,7 +81,7 @@ npx playwright test e2e/editing.spec.ts --project=remote
 
 ### Remote stability rules
 - Keep the remote specs **unchanged** when using them as a regression gate.
-- In this repo, the comments flow was flaky under parallel Playwright execution. `workers: 1` is intentional and should not be “optimized away” casually.
+- In this repo, the comments flow was flaky under parallel Playwright execution. `workers: 1` is intentional and should not be "optimized away" casually.
 - If a remote spec fails only in the grouped suite, compare with an isolated run before concluding the app regressed.
 
 ---
@@ -90,7 +95,7 @@ npx playwright test e2e/editing.spec.ts --project=remote
 - Live updates come from filesystem watcher + WebSocket invalidation
 
 ### Preferred automated path
-Use the repo’s local Playwright project:
+Use the repo's local Playwright project:
 
 ```bash
 npx playwright test --project=local
@@ -114,7 +119,7 @@ The local server serves built assets. If you change frontend code, rebuild befor
 ## Startup and isolation rules
 
 ### Do not race builds
-Do **not** run `npm run build` concurrently with `npx playwright test` when Playwright’s `webServer` also builds. In this repo, concurrent builds can collide in `dist/` and fail with Vite `ENOTEMPTY` errors while preparing the output directory.
+Do **not** run `npm run build` concurrently with `npx playwright test` when Playwright's `webServer` also builds. In this repo, concurrent builds can collide in `dist/` and fail with Vite `ENOTEMPTY` errors while preparing the output directory.
 
 If that happens:
 1. treat it as environmental contention first, not an app regression
@@ -211,7 +216,7 @@ Use these as the default checklist for local E2E coverage.
 Remote comment tests are primarily regression tests for browser behavior. Keep them deterministic and do not depend on real GitHub propagation.
 
 ### Local mode
-The first save of a missing `*.comments.json` file matters. The local server must behave like the frontend’s GitHub client expects. In this repo, that meant supporting create-via-`PUT` with no `sha`, not only create-via-`POST`.
+The first save of a missing `*.comments.json` file matters. The local server must behave like the frontend's GitHub client expects. In this repo, that meant supporting create-via-`PUT` with no `sha`, not only create-via-`POST`.
 
 When validating local comments:
 - remove or isolate the sidecar first if the scenario needs first-write behavior

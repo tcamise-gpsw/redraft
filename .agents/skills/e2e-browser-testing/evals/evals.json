@@ -1,0 +1,29 @@
+{
+  "skill_name": "e2e-browser-testing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run the full E2E suite and tell me if anything is broken.",
+      "expected_output": "The skill should run `npx playwright test` (both projects), report failures with context, distinguish flaky parallelism issues from real regressions, and not claim success until the output is verified.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I just shipped a change to the comments sidebar. Smoke-test it in the browser against the local server.",
+      "expected_output": "The skill should rebuild the frontend, start or confirm the local server, open the browser against the local app, walk the comment flow (select text, post comment, verify sidecar on disk), and report findings with disk-level evidence.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "The remote comments Playwright spec is failing in CI but passes locally. Help me figure out why.",
+      "expected_output": "The skill should check whether the failure is isolated (run the spec alone vs. in the full suite), identify parallelism as a suspect given the known `workers: 1` history, and guide toward a deterministic root cause before proposing a fix.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Verify that editing a proposal in Raw mode and saving actually writes to disk in local mode.",
+      "expected_output": "The skill should build if needed, open the local app, navigate to a proposal, switch to Raw, make an edit, save, and read the `.md` file from disk to confirm the write — not just trust the success toast.",
+      "files": []
+    }
+  ]
+}
