@@ -1,276 +1,256 @@
-# Skill: Live Browser E2E Testing for Proposal Review Workspace
+# Skill: Browser E2E Testing for ReDraft
 
-Use this skill when asked to run end-to-end testing of the Proposal Review Workspace application, verify a new feature works in the browser, or investigate a browser-visible bug in the app.
+Use this skill when asked to run end-to-end testing of the ReDraft, verify browser-visible behavior, investigate UI regressions, or exercise a feature in either **remote GitHub mode** or **local filesystem mode**.
 
 ---
 
 ## Overview
 
-This skill drives a real Chromium browser against the dev server to exercise the full application stack: auth, proposals tree, document view, inline comments, editing, and replies. It fixes bugs found along the way and creates regression tests.
+This skill covers two distinct E2E paths:
+
+1. **Remote regression mode** — run the existing Playwright suite against the Vite app. These tests mock GitHub API traffic and protect the GitHub-backed browser behavior.
+2. **Local mode** — run browser tests or manual smoke checks against the local ReDraft server backed by real files on disk.
+
+Choose the mode first. Do not mix them casually — the auth model, server startup, and verification method differ.
 
 ---
 
-## Prerequisites
+## Mode selection
 
-### 1. Dev server
-```bash
-cd ~/gopro/draftspace
-npm run dev   # starts at http://localhost:5173/
-```
-Confirm with `curl -s http://localhost:5173/ | head -5`.
+### Use remote mode when
+- validating existing app behavior without touching real GitHub data
+- checking regressions in auth, proposals, comments, or editing
+- verifying frontend changes that should behave exactly as before in GitHub mode
 
-### 2. Test data in the repo
-The app reads proposals from `proposals/` via the GitHub REST API — local files are not visible unless pushed.
-
-Create test proposals and push before testing:
-```bash
-# proposals/test-proposal.md
-cat > ~/gopro/draftspace/proposals/test-proposal.md << 'EOF'
-# Test Proposal
-
-Content for E2E testing.
-EOF
-cd ~/gopro/draftspace && git add proposals/ && git commit -m "test: add E2E test proposals" && git push origin main
-```
-
-### 3. GitHub token
-Use the `gh` CLI OAuth token (has `repo` scope = Contents R/W + Metadata R):
-```bash
-gh auth token   # returns gho_... token
-```
-This is injected into the browser via `localStorage` — never committed.
+### Use local mode when
+- validating the local server flow
+- verifying filesystem writeback
+- verifying file watcher → WebSocket → UI updates
+- testing AI-agent workflows that operate on local proposal files
 
 ---
 
-## Auth Injection Pattern
+## Canonical test commands
 
-The app stores auth in `localStorage` under `proposal-review.auth`. **Never use `tab.click()` on the Connect button** — it causes a browser tool JS exception due to React re-render timing. Instead, seed `localStorage` directly:
-
-```js
-// In browser run code:
-const authResult = await tab.evaluate(async () => {
-  const existing = localStorage.getItem('proposal-review.auth');
-  if (existing) return JSON.parse(existing).user?.login;
-
-  const resp = await fetch('https://api.github.com/user', {
-    headers: { Authorization: 'token <GH_TOKEN>' }
-  });
-  const user = await resp.json();
-  localStorage.setItem('proposal-review.auth', JSON.stringify({
-    pat: '<GH_TOKEN>',
-    owner: '<OWNER>',
-    repo: '<REPO>',
-    user: { login: user.login, avatarUrl: user.avatar_url }
-  }));
-  return user.login;
-});
-await tab.goto('http://localhost:5173/', { waitUntil: 'networkidle2' });
-await new Promise(r => setTimeout(r, 2000));
-```
-
-For `tcamise-gpsw/draftspace`, owner is `tcamise-gpsw`, repo is `draftspace`.
-
----
-
-## Browser Interaction Patterns
-
-### Open a tab
-```js
-// browser tool: action=open, name="main", url="http://localhost:5173/"
-```
-
-### Click buttons safely
-`tab.click()` can throw when the click triggers a React re-render. Use `evaluate` for all button clicks to avoid tool-level exceptions:
-```js
-await tab.evaluate(() => {
-  const btn = Array.from(document.querySelectorAll('button'))
-    .find(b => b.textContent?.trim() === 'Button Label');
-  btn?.click();
-});
-```
-
-### Click links
-Links in the proposal tree have accessible names like `proposals/api-design.md`. Use `tab.id()` from `tab.observe()`:
-```js
-const obs = await tab.observe();
-const link = obs.elements.find(e => e.role === 'link' && e.name?.includes('api-design'));
-const el = await tab.id(link.id);
-await el.click();
-await new Promise(r => setTimeout(r, 3000));
-```
-
-### Fill a textarea (React-compatible)
-Use `tab.fill()` — this triggers React's synthetic onChange correctly. `element.value = ...` does NOT update React state:
-```js
-await tab.fill('textarea', 'New content here');
-```
-
-### Text selection → comment popover
-Simulate text selection inside `#document-markdown-root` and dispatch `mouseup`
-(the component shows on `mouseup`/`keyup`; `selectionchange` only clears):
-```js
-await tab.evaluate(() => {
-  const root = document.querySelector('#document-markdown-root');
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  const node = walker.nextNode();
-  const range = document.createRange();
-  range.setStart(node, 0);
-  range.setEnd(node, 20);
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(range);
-  document.dispatchEvent(new Event('mouseup'));
-});
-await new Promise(r => setTimeout(r, 300));
-// Then click the Comment button that appeared
-await tab.evaluate(() => {
-  const btn = Array.from(document.querySelectorAll('button'))
-    .find(b => b.textContent?.trim() === 'Comment');
-  btn?.click();
-});
-```
-
-### Wait for GitHub API calls
-GitHub writes take 2–5 seconds. Always wait after submitting forms:
-```js
-await new Promise(r => setTimeout(r, 4000));
-```
-
-Use `timeout: 15` on browser `run` calls that include long waits.
-
-### Capture JS errors from the page
-```js
-await tab.evaluate(() => {
-  window.__errors = [];
-  window.addEventListener('error', e => window.__errors.push(e.message));
-  window.addEventListener('unhandledrejection', e => window.__errors.push(String(e.reason)));
-});
-// ... run actions ...
-const errors = await tab.evaluate(() => window.__errors || []);
-```
-
----
-
-## Test Flows
-
-Test each flow in order. Take a screenshot after each to confirm expected state.
-
-### 1. Auth form (manual flow verification)
-- Clear localStorage, load `http://localhost:5173/`
-- Confirm "Connect to GitHub" form renders
-- Seed auth via `tab.evaluate()` (see pattern above)
-- Reload: confirm proposals tree shows `.md` files
-
-### 2. Proposals tree
-- Verify only `.md` files appear (no `.comments.json` sidecars)
-- Verify directories expand/collapse
-- Check active proposal is highlighted
-
-### 3. View proposal
-- Click a proposal link using `tab.id()` from `tab.observe()`
-- URL should become `#/proposals/<name>.md`
-- Confirm markdown renders (code blocks, headings)
-- Confirm activity indicator shows author + relative time
-- Confirm right sidebar shows empty state or existing comments
-
-### 4. Add comment
-- Select text (see pattern above)
-- Confirm "Comment" popover button appears
-- Click it → CommentForm appears in right sidebar
-- Fill textarea with `tab.fill()`
-- Submit → comment should appear in sidebar **without reload**
-- Verify `.comments.json` was written to GitHub:
-  ```bash
-  gh api repos/<owner>/<repo>/contents/proposals/<name>.comments.json \
-    | python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['content']).decode())"
-  ```
-
-### 5. Reply to thread
-- Click "Reply" button
-- Fill textarea, click "Submit reply"
-- Reply should appear in sidebar immediately (no reload needed)
-
-### 6. Resolve thread
-- Click "Resolve thread"
-- Button label should change to "Re-open thread" without reload
-- Thread card should become slightly dimmed (`opacity-70`)
-
-### 7. Edit proposal
-- Click "Edit" button → navigates to `#/proposals/<name>/edit`
-- Confirm raw markdown in textarea, character count shown
-- Use `tab.fill('textarea', newContent)` — do NOT use `element.value =`
-- Click Save → navigates back to view, new content rendered
-- Activity indicator should update to show the new commit
-
-### 8. Create proposal
-- Click "New Proposal" button
-- Dialog appears with File path and Title fields
-- Fill fields, click "Create proposal"
-- New proposal should appear in sidebar tree immediately (no reload)
-- Navigates to the new proposal's view
-
----
-
-## Bug Verification Checklist
-
-After fixes, verify these regressions don't recur:
-
-| # | Area | Symptom if broken |
-|---|------|-------------------|
-| 2 | CommentsSidebar | Right panel blank with no message when no comments |
-| 3 | MarkdownRenderer | TypeScript error: `onTextSelect` prop doesn't exist |
-| 4 | useComments | Comment/resolve doesn't appear until page reload |
-| 5 | ProposalTree | `.comments.json` files visible in sidebar tree |
-| 7 | ActivityIndicator | Shows old commit message after editing |
-| 8 | ActivityIndicator | Shows "1 hour ago" for a just-saved proposal |
-| 9 | ProposalTree | Newly created proposal missing from sidebar until reload |
-
----
-
-## Fixing Bugs Found
-
-When a bug is found:
-
-1. **Identify the root cause** in the source (don't patch symptoms)
-2. **Check `docs/specs/`** for design intent before deciding on a fix
-3. **Fix at the source file** — not in tests, not with workarounds
-4. **Write a regression test** in the matching `__tests__/` file using Vitest
-5. **Run the test suite** to confirm green: `npx vitest run`
-6. **Run typecheck and lint**: `npx tsc --noEmit && npx eslint src/`
-7. **Commit with a descriptive message** following Conventional Commits format
-
-### Common root causes in this codebase
-
-**UI not updating after GitHub write**
-→ Race condition: `invalidateQueries` refetches before GitHub propagates the change.
-→ Fix: call `queryClient.setQueryData(queryKey, knownNewState)` immediately after the write, then keep `invalidateQueries` for background sync.
-
-**Wrong query key in invalidation**
-→ Verify the key matches exactly what `useQuery` uses. Content key: `['proposal', path, 'content']`, commit key: `['proposal', path, 'commit']`, comments key: `['proposal', path, 'comments']`, tree key: `['proposals', 'tree']`.
-
-**Stale data after navigation**
-→ `staleTime: 30_000` in the QueryClient. If data is < 30s old, TanStack Query won't refetch on remount. Use explicit invalidation or `setQueryData`.
-
----
-
-## Test Commands
+Prefer the repo-owned commands over ad hoc browser driving when the goal is regression coverage.
 
 ```bash
-npx vitest run                    # all unit tests
-npx tsc --noEmit                  # typecheck
-npx eslint src/                   # lint
-npx prettier --check src/         # format check
-npx playwright test               # E2E (requires npm run dev)
-npm run build                     # production build
+npx playwright test
+npx playwright test --project=remote
+npx playwright test --project=local
+npx playwright test e2e/comments.spec.ts --project=remote
+npx vitest run
+npx tsc --noEmit
+npx tsc --noEmit -p server/tsconfig.json
+npx eslint src/ server/
+npx prettier --check src/ server/
+npm run build
+npm run serve -- ./proposals
 ```
 
 ---
 
-## Repository Context
+## Remote mode workflow
 
-- **Repo**: `tcamise-gpsw/draftspace` (public)
-- **Pages URL**: `https://tcamise-gpsw.github.io/draftspace/`
-- **PAT in use**: `gh auth token` (OAuth token with `repo` scope)
-- **Proposals storage**: `proposals/*.md` + `proposals/*.comments.json` sidecars
-- **Test proposals**: `proposals/api-design-v2.md`, `proposals/auth-overhaul.md`
-- **Hash routing**: all routes are `/#/...`
-- **QueryClient staleTime**: 30 seconds
+### What remote mode means here
+- App served by `npm run dev`
+- Playwright points at the Vite app
+- Existing specs intercept/mock GitHub API calls
+- No real repository writes are required for regression coverage
+
+### Preferred verification path
+Run the remote project, not manual browser poking, unless the user explicitly wants an interactive browser investigation.
+
+```bash
+npx playwright test --project=remote
+```
+
+Or for a targeted regression:
+
+```bash
+npx playwright test e2e/auth.spec.ts --project=remote
+npx playwright test e2e/proposals.spec.ts --project=remote
+npx playwright test e2e/comments.spec.ts --project=remote
+npx playwright test e2e/editing.spec.ts --project=remote
+```
+
+### Remote stability rules
+- Keep the remote specs **unchanged** when using them as a regression gate.
+- In this repo, the comments flow was flaky under parallel Playwright execution. `workers: 1` is intentional and should not be “optimized away” casually.
+- If a remote spec fails only in the grouped suite, compare with an isolated run before concluding the app regressed.
+
+---
+
+## Local mode workflow
+
+### What local mode means here
+- App served by the local ReDraft server
+- No PAT prompt; auth is bypassed as `local-user`
+- Browser reads/writes real `.md` and `.comments.json` files
+- Live updates come from filesystem watcher + WebSocket invalidation
+
+### Preferred automated path
+Use the repo’s local Playwright project:
+
+```bash
+npx playwright test --project=local
+```
+
+The local project is expected to:
+- build the frontend first
+- serve a writable filesystem-backed copy of `proposals/`
+- isolate writes from the checked-in repo content
+
+### Local fixture rule
+Do not point destructive tests at the real checked-in `proposals/` tree unless the user explicitly wants that. Prefer a writable copy, e.g. `/tmp/redraft-local-playwright`, seeded from `proposals/`.
+
+This keeps tests honest — real file writes, real watcher events, real server behavior — without leaving dirty repo content behind.
+
+### Local server rule
+The local server serves built assets. If you change frontend code, rebuild before trusting a local-mode browser result.
+
+---
+
+## Startup and isolation rules
+
+### Do not race builds
+Do **not** run `npm run build` concurrently with `npx playwright test` when Playwright’s `webServer` also builds. In this repo, concurrent builds can collide in `dist/` and fail with Vite `ENOTEMPTY` errors while preparing the output directory.
+
+If that happens:
+1. treat it as environmental contention first, not an app regression
+2. rerun Playwright after the standalone build finishes
+
+### Clean server lifecycle
+For manual local smoke tests:
+- start the exact command: `npm run serve -- ./proposals`
+- if port `4200` is occupied, inspect the listener and clear stale ReDraft processes before retrying
+- stop the server when finished so you do not leave orphan listeners behind
+
+---
+
+## Browser-driving patterns
+
+Use these patterns when automated Playwright coverage is not enough and you need a real interactive browser session.
+
+### 1. Observe before acting
+Default to `tab.observe()` to get the current accessible tree. Navigation and mode switches can invalidate old element ids.
+
+### 2. Reload if the initial render looks wrong
+If View/WYSIWYG/Raw state looks inconsistent, or the document render obviously failed on first load, **reload or reopen the page before trusting any result**. One manual smoke session in this repo produced a bad initial render; only the fresh reload gave trustworthy evidence.
+
+### 3. Prefer exact observed elements for mode switches
+For `View`, `WYSIWYG`, `Raw`, and `Save`, prefer:
+- `tab.observe()`
+- locate the exact button by role/name
+- click the observed element via `tab.id(...)`
+
+This was more reliable than loose text selectors during mode transitions.
+
+### 4. Verify the mode change in the DOM
+After clicking `Raw`, confirm the editor actually changed:
+- `Raw` button has `aria-pressed="true"`
+- a `textarea` exists
+- `.ProseMirror` is absent
+
+Do not assume the click worked just because the button was visible.
+
+### 5. Verify writes at the storage boundary
+For local mode, the success toast is not enough. Verify the file on disk.
+
+Examples:
+- markdown save → read the `.md` file and confirm the new text
+- comment save → read or poll the `.comments.json` sidecar
+- external change → write to disk outside the browser and wait for UI update
+
+---
+
+## Local-mode scenarios worth covering
+
+Use these as the default checklist for local E2E coverage.
+
+1. **Auto-authentication**
+   - open the app
+   - confirm no PAT connect form
+   - confirm user is `local-user`
+
+2. **Proposal browsing**
+   - tree shows `.md` files
+   - selecting a proposal renders headings/text correctly
+   - Mermaid content renders, not just raw code fences
+
+3. **Editing and file writeback**
+   - switch to `Raw`
+   - edit markdown
+   - save
+   - read the proposal file from disk to prove writeback
+
+4. **Comment operations**
+   - select text
+   - open comment form
+   - submit a new comment
+   - save
+   - poll the sidecar file on disk until the comment text appears
+
+5. **Live file watching**
+   - mutate the open proposal file outside the browser
+   - verify the UI updates within a short window
+
+6. **Live tree update**
+   - create a new `.md` file on disk
+   - verify it appears in the tree
+
+7. **Optional git convenience**
+   - only if the local git endpoints are in scope
+   - verify status/commit UI against actual repo state
+
+---
+
+## Comment-specific lessons
+
+### Remote mode
+Remote comment tests are primarily regression tests for browser behavior. Keep them deterministic and do not depend on real GitHub propagation.
+
+### Local mode
+The first save of a missing `*.comments.json` file matters. The local server must behave like the frontend’s GitHub client expects. In this repo, that meant supporting create-via-`PUT` with no `sha`, not only create-via-`POST`.
+
+When validating local comments:
+- remove or isolate the sidecar first if the scenario needs first-write behavior
+- save through the UI
+- poll the file on disk instead of relying only on transient dirty/saved banners
+
+---
+
+## When to trust manual browser evidence
+
+Manual browser evidence counts only if:
+- the page was in a clean, trustworthy render state
+- the exact mode under test was confirmed in the DOM
+- the final effect was verified at the real boundary
+  - remote: test assertions / mocked API expectations
+  - local: on-disk file content or watcher-driven UI change
+
+Do not claim success from a visually plausible but unverified browser interaction.
+
+---
+
+## Fixing bugs found during E2E
+
+When the browser shows a real bug:
+1. identify the source file and root cause
+2. fix the implementation, not the symptom
+3. add or update the narrowest regression test that proves the behavior
+4. rerun the specific failing check first
+5. rerun the relevant broader gate (`vitest`, `playwright`, typecheck, lint) before claiming completion
+
+---
+
+## Repository context
+
+- Local server command: `npm run serve -- ./proposals`
+- Dev server command: `npm run dev`
+- Local app default URL: `http://127.0.0.1:4200`
+- Remote dev app URL: `http://127.0.0.1:4173`
+- Proposals live under `proposals/`
+- Comment sidecars live beside proposals as `*.comments.json`
+- Hash routing is in use: routes are `/#/...`
+- Playwright has distinct `remote` and `local` projects

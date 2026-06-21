@@ -54,7 +54,7 @@ describe('AuthGate', () => {
 
   it('renders children when stored auth exists', () => {
     localStorage.setItem(
-      'proposal-review.auth',
+      'redraft.auth',
       JSON.stringify({
         pat: 'ghp_test',
         owner: 'acme',

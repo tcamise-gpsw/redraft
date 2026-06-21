@@ -4,14 +4,14 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { buildDraftspaceApp } from './app.js';
+import { buildReDraftApp } from './app.js';
 
-describe('buildDraftspaceApp', () => {
+describe('buildReDraftApp', () => {
   let basePath: string;
   let uiRoot: string;
 
   beforeEach(async () => {
-    const root = await mkdtemp(join(tmpdir(), 'draftspace-app-'));
+    const root = await mkdtemp(join(tmpdir(), 'redraft-app-'));
     basePath = join(root, 'proposals');
     uiRoot = join(root, 'dist');
 
@@ -20,7 +20,7 @@ describe('buildDraftspaceApp', () => {
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Auth\n', 'utf8');
     await writeFile(
       join(uiRoot, 'index.html'),
-      '<!doctype html><html><head><title>Draftspace</title></head><body><div id="root"></div></body></html>',
+      '<!doctype html><html><head><title>ReDraft</title></head><body><div id="root"></div></body></html>',
       'utf8',
     );
     await writeFile(
@@ -35,7 +35,7 @@ describe('buildDraftspaceApp', () => {
   });
 
   it('mounts the GitHub-style API routes', async () => {
-    const app = buildDraftspaceApp({ basePath, uiRoot });
+    const app = buildReDraftApp({ basePath, uiRoot });
 
     const response = await app.request('http://local.test/api/github/user');
     const body = await response.json();
@@ -45,19 +45,19 @@ describe('buildDraftspaceApp', () => {
   });
 
   it('serves index.html at the root with the local mode meta tag injected', async () => {
-    const app = buildDraftspaceApp({ basePath, uiRoot });
+    const app = buildReDraftApp({ basePath, uiRoot });
 
     const response = await app.request('http://local.test/');
     const body = await response.text();
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/html');
-    expect(body).toContain('<meta name="draftspace-mode" content="local">');
+    expect(body).toContain('<meta name="redraft-mode" content="local">');
     expect(body).toContain('<div id="root"></div>');
   });
 
   it('serves built asset files without rewriting them', async () => {
-    const app = buildDraftspaceApp({ basePath, uiRoot });
+    const app = buildReDraftApp({ basePath, uiRoot });
 
     const response = await app.request('http://local.test/assets/app.js');
 
@@ -67,7 +67,7 @@ describe('buildDraftspaceApp', () => {
   });
 
   it('falls back to index.html for unknown non-api routes', async () => {
-    const app = buildDraftspaceApp({ basePath, uiRoot });
+    const app = buildReDraftApp({ basePath, uiRoot });
 
     const response = await app.request(
       'http://local.test/proposals/auth-overhaul',
@@ -75,6 +75,6 @@ describe('buildDraftspaceApp', () => {
     const body = await response.text();
 
     expect(response.status).toBe(200);
-    expect(body).toContain('<meta name="draftspace-mode" content="local">');
+    expect(body).toContain('<meta name="redraft-mode" content="local">');
   });
 });

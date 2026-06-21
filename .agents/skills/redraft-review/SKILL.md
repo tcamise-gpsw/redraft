@@ -1,24 +1,24 @@
 ---
-name: draftspace-review
-description: Review, answer, and resolve open Draftspace proposal comments in local mode. Use this whenever the user wants to walk through unresolved proposal feedback, draft replies to comment threads, resolve local review threads, or review proposal discussion stored in `.comments.json` sidecars. Also use it for direct `/draftspace-review` requests and for any request to process proposal feedback from a local Draftspace server.
+name: redraft-review
+description: Review, answer, and resolve open ReDraft proposal comments in local mode. Use this whenever the user wants to walk through unresolved proposal feedback, draft replies to comment threads, resolve local review threads, or review proposal discussion stored in `.comments.json` sidecars. Also use it for direct `/redraft-review` requests and for any request to process proposal feedback from a local ReDraft server.
 ---
 
-# Draftspace Review
+# ReDraft Review
 
-Use this skill to work through open proposal comments in a local Draftspace workspace.
+Use this skill to work through open proposal comments in a local ReDraft workspace.
 
 ## What this skill is for
 
-Draftspace has two different data paths:
+ReDraft has two different data paths:
 - **Proposal markdown** lives on disk under `proposals/*.md`
 - **Comment threads** live in sidecar files under `proposals/*.comments.json`
 
-For local Draftspace workflows, read proposal and comment files directly from disk, but write comment mutations through the local Draftspace server so SHA locking and browser updates stay correct.
+For local ReDraft workflows, read proposal and comment files directly from disk, but write comment mutations through the local ReDraft server so SHA locking and browser updates stay correct.
 
 ## Preconditions
 
-1. Confirm the user is working in a Draftspace repo with a `proposals/` directory.
-2. Check whether the local Draftspace server is available at `http://127.0.0.1:4200/api/github/user`.
+1. Confirm the user is working in a ReDraft repo with a `proposals/` directory.
+2. Check whether the local ReDraft server is available at `http://127.0.0.1:4200/api/github/user`.
 3. If the server is not running, ask the user to start it with:
    - `npm run build`
    - `npm run serve -- ./proposals`
@@ -56,11 +56,11 @@ When the user wants a draft:
 - Read the current proposal markdown from disk for context
 - Draft a concrete reply that addresses the feedback directly
 - Show the draft before writing it
-- If the user accepts, write the reply through the local Draftspace API
+- If the user accepts, write the reply through the local ReDraft API
 
 ## Writing comments through the local API
 
-Never write `.comments.json` files directly when mutating threads. Use the local Draftspace API instead.
+Never write `.comments.json` files directly when mutating threads. Use the local ReDraft API instead.
 
 ### Read the current comment file
 
@@ -101,7 +101,7 @@ If the API returns a conflict, tell the user another process modified the commen
 If the user asks you to revise the proposal itself while reviewing comments:
 - edit the `.md` file on disk directly
 - keep comments in the sidecar file unchanged unless the user also wants threads resolved
-- rely on the local Draftspace watcher to refresh the browser UI
+- rely on the local ReDraft watcher to refresh the browser UI
 
 ## Output style
 
@@ -128,6 +128,6 @@ If drafting a reply, label it clearly:
 
 - "Walk me through open proposal comments"
 - "Help me answer all unresolved review threads"
-- "Review feedback on the local Draftspace workspace"
-- "/draftspace-review"
+- "Review feedback on the local ReDraft workspace"
+- "/redraft-review"
 - "Draft replies to the comments in proposals/auth-overhaul.comments.json"

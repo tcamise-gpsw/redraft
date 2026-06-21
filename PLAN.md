@@ -2,7 +2,7 @@
 
 **Goal:** Add a filesystem-backed local server mode so power users and AI agents can work with proposals on disk, with live UI updates and optional git convenience.
 
-**Architecture:** A Hono-based Node.js server (`server/`) mimics the GitHub Contents API shape, serving the same React frontend with a different base URL. File changes are pushed to the UI over WebSocket. An OMP AI skill (`/draftspace-review`) drives comment review workflows through the local server's REST API.
+**Architecture:** A Hono-based Node.js server (`server/`) mimics the GitHub Contents API shape, serving the same React frontend with a different base URL. File changes are pushed to the UI over WebSocket. An OMP AI skill (`/redraft-review`) drives comment review workflows through the local server's REST API.
 
 **Tech Stack:** Hono (HTTP server), chokidar (file watcher), ws (WebSocket), commander (CLI args), tsx (TS execution), existing React + TanStack Query frontend.
 
@@ -12,8 +12,8 @@
 
 **Files:**
 - Create: `server/tsconfig.json` — Node.js-targeted TypeScript config (extends base, target ES2022, module ESNext, moduleResolution NodeNext, types: node)
-- Modify: `package.json` — add dependencies (hono, chokidar, ws, commander), devDependencies (tsx, @types/ws), add `"serve"` script (`tsx server/cli.ts`), add `"bin": { "draftspace": "./bin/draftspace.mjs" }`, add `server/` to eslint and typecheck scope
-- Create: `bin/draftspace.mjs` — thin shebang entry point that loads tsx and runs `server/cli.ts`
+- Modify: `package.json` — add dependencies (hono, chokidar, ws, commander), devDependencies (tsx, @types/ws), add `"serve"` script (`tsx server/cli.ts`), add `"bin": { "redraft": "./bin/redraft.mjs" }`, add `server/` to eslint and typecheck scope
+- Create: `bin/redraft.mjs` — thin shebang entry point that loads tsx and runs `server/cli.ts`
 - Modify: `tsconfig.json` — add project reference to `server/tsconfig.json`
 - Create: `server/` directory structure (empty files as scaffolding)
 
@@ -25,7 +25,7 @@
 **Checklist:**
 - [x] `server/tsconfig.json` compiles independently with `noEmit`
 - [x] `npm run serve -- ./proposals` executes without crash (even if it does nothing useful yet)
-- [x] `bin/draftspace.mjs` shebang works with `node bin/draftspace.mjs serve ./proposals`
+- [x] `bin/redraft.mjs` shebang works with `node bin/redraft.mjs serve ./proposals`
 - [x] ESLint lint command updated to cover `server/` (e.g., `eslint src/ server/`)
 
 **Tests:**
@@ -209,7 +209,7 @@ function startWatcher(basePath: string, onEvent: (event: FileEvent) => void): ()
 
 **Behavior:**
 - `GET /api/git/status` runs `git status --porcelain` on the proposals directory, parses output, returns structured response
-- `POST /api/git/commit` stages all proposal files (`git add proposals/`), commits with the provided message or auto-generates one (e.g., "Update proposals via Draftspace"), returns the commit SHA
+- `POST /api/git/commit` stages all proposal files (`git add proposals/`), commits with the provided message or auto-generates one (e.g., "Update proposals via ReDraft"), returns the commit SHA
 - If the proposals directory is not inside a git repo, both endpoints return 404 with `{ message: "Not a git repository" }`
 - These endpoints are convenience only — no other functionality depends on them
 
@@ -235,12 +235,12 @@ function startWatcher(basePath: string, onEvent: (event: FileEvent) => void): ()
 **Files:**
 - Create: `server/cli.ts` — commander-based CLI with `serve` subcommand
 - Create: `server/app.ts` — Hono app assembly (routes + static serving + WebSocket upgrade)
-- Modify: `bin/draftspace.mjs` — finalize the entry shebang script
+- Modify: `bin/redraft.mjs` — finalize the entry shebang script
 
 **Interface:**
 ```
 CLI usage:
-  draftspace serve <directory> [options]
+  redraft serve <directory> [options]
 
 Options:
   --port <number>   Port to listen on (default: 4200)
@@ -255,7 +255,7 @@ Options:
   2. Mounts GitHub API adapter routes under `/api/github/`
   3. Mounts git convenience routes under `/api/git/`
   4. Handles WebSocket upgrade at `/ws`
-  5. Injects `<meta name="draftspace-mode" content="local">` into the served `index.html`
+  5. Injects `<meta name="redraft-mode" content="local">` into the served `index.html`
 - `server/cli.ts` uses commander to parse args, validates the directory exists, starts the server, starts the file watcher, and wires watcher events → WebSocket hub broadcast
 - If `--open`, opens the browser using `child_process.exec('open')` / platform-appropriate command (no extra dependency)
 - Graceful shutdown on SIGINT/SIGTERM: stop watcher, close WS connections, close server
@@ -264,7 +264,7 @@ Options:
 - [x] `npm run serve -- ./proposals` starts server, prints URL to stdout
 - [x] `curl http://localhost:4200/api/github/user` returns valid JSON
 - [x] Browser can load `http://localhost:4200/` and see the React app
-- [x] The served index.html contains the `draftspace-mode` meta tag
+- [x] The served index.html contains the `redraft-mode` meta tag
 - [x] CTRL+C cleanly stops the server
 - [x] Invalid directory path prints error and exits with code 1
 
@@ -280,7 +280,7 @@ Options:
 ### Task 6: Frontend Local Mode Support
 
 **Files:**
-- Create: `src/lib/mode.ts` — reads `<meta name="draftspace-mode">`, exports `isLocalMode(): boolean` and `getApiBaseUrl(): string`
+- Create: `src/lib/mode.ts` — reads `<meta name="redraft-mode">`, exports `isLocalMode(): boolean` and `getApiBaseUrl(): string`
 - Create: `src/hooks/useFileWatcher.ts` — WebSocket hook that connects in local mode, invalidates queries
 - Modify: `src/lib/github/client.ts` — accept `baseUrl` option in constructor, default to `https://api.github.com`
 - Modify: `src/hooks/useAuth.ts` — in local mode, auto-authenticate with dummy credentials (bypass AuthGate)
@@ -302,7 +302,7 @@ function useFileWatcher(): void
 ```
 
 **Behavior:**
-- `isLocalMode()` reads `document.querySelector('meta[name="draftspace-mode"]')?.content === 'local'`
+- `isLocalMode()` reads `document.querySelector('meta[name="redraft-mode"]')?.content === 'local'`
 - `getApiBaseUrl()` returns `${window.location.origin}/api/github` when `isLocalMode()` is true, otherwise `https://api.github.com`. No separate meta tag needed — the server origin IS the API base.
 - `GitHubClient` constructor gains an optional `baseUrl` parameter; all fetch calls use `${baseUrl}/repos/${owner}/${repo}/...` instead of hardcoded github.com
 - In local mode, `AuthProvider` auto-sets state to authenticated with `{ pat: "local", owner: "local", repo: "proposals", user: { login: "local-user", avatarUrl: "" } }` — no login screen shown
@@ -339,7 +339,7 @@ function useFileWatcher(): void
 
 **Behavior:**
 The README follows this structure (from the spec):
-1. What Draftspace is (one paragraph)
+1. What ReDraft is (one paragraph)
 2. Three modes: Remote WYSIWYG, Remote Markdown, Local + AI
 3. Remote mode quick start (for reviewers and technical contributors)
 4. Local mode quick start (`npm run serve -- ./proposals`)
@@ -370,19 +370,19 @@ AGENTS.md updates:
 
 ---
 
-### Task 8: AI Skill — `/draftspace-review`
+### Task 8: AI Skill — `/redraft-review`
 
 **Approach:** Read `skill://skill-creator` and follow its instructions to author this skill. The skill-creator skill handles file layout, trigger description, and evaluation setup.
 
 **Files:**
-- Create: `.agents/skills/draftspace-review/skill.md` — skill definition authored via skill-creator
-- Create: `.agents/skills/draftspace-review/README.md` — usage documentation (if skill-creator doesn't generate one)
+- Create: `.agents/skills/redraft-review/skill.md` — skill definition authored via skill-creator
+- Create: `.agents/skills/redraft-review/README.md` — usage documentation (if skill-creator doesn't generate one)
 
 **Skill specification (input to skill-creator):**
-- **Name:** `draftspace-review`
-- **Trigger:** Use when the user wants to review, respond to, or resolve open comments across Draftspace proposals. Triggers on phrases like "review comments", "answer proposal feedback", "walk through open threads", "/draftspace-review".
+- **Name:** `redraft-review`
+- **Trigger:** Use when the user wants to review, respond to, or resolve open comments across ReDraft proposals. Triggers on phrases like "review comments", "answer proposal feedback", "walk through open threads", "/redraft-review".
 - **Workflow:**
-  1. Detect or start the local Draftspace server (check if port 4200 responds to `GET /api/github/user`)
+  1. Detect or start the local ReDraft server (check if port 4200 responds to `GET /api/github/user`)
   2. Read all `.comments.json` files from the proposals directory (via file I/O — `find` + `read`)
   3. Filter to unresolved threads
   4. For each unresolved thread (ordered by proposal, then document position):
@@ -399,7 +399,7 @@ AGENTS.md updates:
 
 **Checklist:**
 - [x] Read `skill://skill-creator` and follow its process to create the skill
-- [x] Skill triggers on `/draftspace-review` and related phrases
+- [x] Skill triggers on `/redraft-review` and related phrases
 - [x] Skill finds all unresolved comments across all proposals
 - [x] Skill presents each thread with full context (quote, body, replies)
 - [x] Skill can draft and write a reply via the local server API
@@ -408,7 +408,7 @@ AGENTS.md updates:
 - [x] Run skill-creator evals if available to verify trigger accuracy
 
 **Commit:**
-- [x] `feat(skills): add draftspace-review AI skill for comment walkthrough`
+- [x] `feat(skills): add redraft-review AI skill for comment walkthrough`
 
 ---
 

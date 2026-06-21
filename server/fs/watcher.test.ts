@@ -45,7 +45,7 @@ describe('startWatcher', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
-    basePath = await mkdtemp(join(tmpdir(), 'draftspace-watch-'));
+    basePath = await mkdtemp(join(tmpdir(), 'redraft-watch-'));
   });
 
   afterEach(async () => {

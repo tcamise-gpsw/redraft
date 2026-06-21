@@ -1,6 +1,6 @@
-# Draftspace
+# ReDraft
 
-Draftspace is a proposal review workspace for markdown documents. It lets teams browse proposals, discuss them with inline comment threads, and edit them in either a rich-text editor or raw markdown — backed by GitHub in remote mode or the local filesystem in local mode.
+ReDraft is a proposal review workspace for markdown documents. It lets teams browse proposals, discuss them with inline comment threads, and edit them in either a rich-text editor or raw markdown — backed by GitHub in remote mode or the local filesystem in local mode.
 
 ## What it does
 
@@ -19,14 +19,14 @@ Draftspace is a proposal review workspace for markdown documents. It lets teams 
 
 ## Remote mode — for reviewers and contributors
 
-Remote mode is the hosted GitHub-backed experience. You connect Draftspace to a repository that contains proposal files under `proposals/`.
+Remote mode is the hosted GitHub-backed experience. You connect ReDraft to a repository that contains proposal files under `proposals/`.
 
 ### For non-technical reviewers
 
 Use **View** and **WYSIWYG** modes when you want to read, comment, and make light edits without working directly in markdown syntax.
 
 Typical workflow:
-1. Open the hosted Draftspace site.
+1. Open the hosted ReDraft site.
 2. Enter a fine-grained GitHub PAT and `owner/repo`.
 3. Choose a proposal from the tree.
 4. Read in **View** mode or switch to **WYSIWYG**.
@@ -45,7 +45,7 @@ Typical workflow:
 
 ### Remote mode requirements
 
-Draftspace expects a fine-grained GitHub PAT with:
+ReDraft expects a fine-grained GitHub PAT with:
 - **Contents: Read/Write**
 - **Metadata: Read**
 
@@ -70,7 +70,7 @@ npm run build
 npm run serve -- ./proposals
 ```
 
-This starts a local Draftspace server and serves the app at `http://127.0.0.1:4200` by default.
+This starts a local ReDraft server and serves the app at `http://127.0.0.1:4200` by default.
 
 What local mode gives you:
 - No PAT prompt
@@ -84,8 +84,7 @@ Local mode is the intended environment for AI-assisted proposal workflows.
 
 The design target is:
 - Agents edit proposal markdown directly on disk
-- Agents use the local Draftspace API for structured comment operations
-- The browser UI updates live as the agent writes files or replies to comment threads
+- Agents use the local ReDraft API for structured comment operations
 
 Planned/common AI workflows include:
 - Review unresolved comment threads one by one
@@ -96,9 +95,9 @@ Planned/common AI workflows include:
 
 ---
 
-## How Draftspace works
+## How ReDraft works
 
-Draftspace uses one React frontend across all modes.
+ReDraft uses one React frontend across all modes.
 
 - In **remote mode**, the browser talks to the GitHub REST API.
 - In **local mode**, the browser talks to a local server that mimics the GitHub contents API while reading and writing the filesystem.

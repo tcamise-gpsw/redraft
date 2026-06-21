@@ -25,16 +25,16 @@ describe('Git convenience routes', () => {
   let basePath: string;
 
   beforeEach(async () => {
-    repoRoot = await mkdtemp(join(tmpdir(), 'draftspace-git-'));
+    repoRoot = await mkdtemp(join(tmpdir(), 'redraft-git-'));
     basePath = join(repoRoot, 'proposals');
     await mkdir(basePath, { recursive: true });
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Auth\n', 'utf8');
 
     await execGit('git', ['init'], { cwd: repoRoot });
-    await execGit('git', ['config', 'user.name', 'Draftspace Test'], {
+    await execGit('git', ['config', 'user.name', 'ReDraft Test'], {
       cwd: repoRoot,
     });
-    await execGit('git', ['config', 'user.email', 'draftspace@example.com'], {
+    await execGit('git', ['config', 'user.email', 'redraft@example.com'], {
       cwd: repoRoot,
     });
     await execGit('git', ['add', 'proposals'], { cwd: repoRoot });
@@ -69,22 +69,22 @@ describe('Git convenience routes', () => {
     const response = await app.request('http://local.test/api/git/commit', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ message: 'Update proposals via Draftspace' }),
+      body: JSON.stringify({ message: 'Update proposals via ReDraft' }),
     });
     const body = (await response.json()) as GitCommitResponse;
 
     expect(response.status).toBe(200);
-    expect(body.message).toBe('Update proposals via Draftspace');
+    expect(body.message).toBe('Update proposals via ReDraft');
     expect(body.sha).toMatch(/^[a-f0-9]{40}$/);
 
     const { stdout } = await execGit('git', ['log', '-1', '--pretty=%s'], {
       cwd: repoRoot,
     });
-    expect(stdout.trim()).toBe('Update proposals via Draftspace');
+    expect(stdout.trim()).toBe('Update proposals via ReDraft');
   });
 
   it('returns 404 when the proposals directory is not inside a git repository', async () => {
-    const looseRoot = await mkdtemp(join(tmpdir(), 'draftspace-no-git-'));
+    const looseRoot = await mkdtemp(join(tmpdir(), 'redraft-no-git-'));
     const looseProposals = join(looseRoot, 'proposals');
     await mkdir(looseProposals, { recursive: true });
     await writeFile(join(looseProposals, 'doc.md'), '# Doc\n', 'utf8');
@@ -113,7 +113,7 @@ describe('Git convenience routes', () => {
     const body = (await response.json()) as GitCommitResponse;
 
     expect(response.status).toBe(200);
-    expect(body.message).toMatch(/Update proposals via Draftspace/);
+    expect(body.message).toMatch(/Update proposals via ReDraft/);
 
     const { stdout } = await execGit('git', ['log', '-1', '--pretty=%s'], {
       cwd: repoRoot,

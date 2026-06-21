@@ -1,4 +1,4 @@
-# Proposal Review Workspace — Implementation Plan
+# ReDraft — Implementation Plan
 
 **Goal:** Build a static React app on GitHub Pages that lets a small team create, review, and discuss technical proposals stored as markdown in a GitHub repo, with inline text-selection comments.
 

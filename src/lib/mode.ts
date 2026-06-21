@@ -1,4 +1,4 @@
-const LOCAL_MODE_META = 'draftspace-mode';
+const LOCAL_MODE_META = 'redraft-mode';
 
 function getModeMeta(): HTMLMetaElement | null {
   if (typeof document === 'undefined') {

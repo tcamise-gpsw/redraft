@@ -116,7 +116,7 @@ test('proposal viewing renders Milkdown content and shows the rate-limit banner'
 
   await page.evaluate(() => {
     window.dispatchEvent(
-      new CustomEvent('proposal-review:rate-limit', {
+      new CustomEvent('redraft:rate-limit', {
         detail: {
           limit: 5000,
           remaining: 0,

@@ -20,7 +20,7 @@ function createLocalStorageMock() {
 
 function setStoredAuth() {
   localStorage.setItem(
-    'proposal-review.auth',
+    'redraft.auth',
     JSON.stringify({
       pat: 'ghp_test',
       owner: 'acme',

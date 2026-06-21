@@ -43,7 +43,7 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 
 - A client-facing README for this project still needs a small amount of repo-local setup because local mode is not published yet. The clean split is: README explains the user journey and the minimum commands to get there, while `docs/development.md` keeps contributor-focused build/test/deploy detail.
 
-## Task 8 — AI Skill — `draftspace-review`
+## Task 8 — AI Skill — `redraft-review`
 
 - The repo already had a project-local skill as a single markdown file, but the skill-creator guidance expects a folder with `SKILL.md`. For new skills, following the skill-creator package shape is the safer long-term choice, even if legacy project-local skills use a flatter layout.
 - The skill-creator evaluation workflow is not vendored into this repo, so a full benchmark/reviewer loop is not runnable in-place. Seeding `evals/evals.json` is the practical compromise: the prompts are ready when the external tooling is available, and the implementation is not blocked by missing helper scripts.

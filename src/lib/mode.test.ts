@@ -5,11 +5,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { getApiBaseUrl, isLocalMode } from './mode';
 
 function setModeMeta(content: string | null) {
-  document.head.querySelector('meta[name="draftspace-mode"]')?.remove();
+  document.head.querySelector('meta[name="redraft-mode"]')?.remove();
 
   if (content) {
     const meta = document.createElement('meta');
-    meta.name = 'draftspace-mode';
+    meta.name = 'redraft-mode';
     meta.content = content;
     document.head.appendChild(meta);
   }

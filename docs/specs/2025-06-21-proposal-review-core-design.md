@@ -1,4 +1,4 @@
-# Proposal Review Workspace — Core Design
+# ReDraft — Core Design
 
 This spec covers the full MVP: proposal browsing, markdown viewing, inline comments, document editing, GitHub sync, and project scaffolding.
 

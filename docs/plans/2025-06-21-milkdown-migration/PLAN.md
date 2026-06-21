@@ -481,4 +481,4 @@ Dependency removal:
 - [x] Dev server starts and renders a proposal with comments: `npm run dev`
 - [x] All acceptance criteria from Tasks 1–9 verified end-to-end
 - [x] No references to `react-markdown`, `MarkdownRenderer`, `MarkdownEditor`, `SelectionPopover`, or `ProposalEdit` remain in source
-- [x] The spike worktree (`~/gopro/draftspace-milkdown-spike`) can be removed (branch merged or abandoned)
+- [x] The spike worktree (`~/gopro/redraft-milkdown-spike`) can be removed (branch merged or abandoned)

@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { Command } from 'commander';
 
 import { startWatcher } from './fs/watcher.js';
-import { resolveUiRoot, startDraftspaceServer, verifyUiBuild } from './app.js';
+import { resolveUiRoot, startReDraftServer, verifyUiBuild } from './app.js';
 
 interface ServeOptions {
   port?: number;
@@ -49,7 +49,7 @@ async function runServe(
     await verifyUiBuild(uiRoot);
   }
 
-  const runningServer = await startDraftspaceServer({
+  const runningServer = await startReDraftServer({
     basePath,
     uiRoot,
     noUi: options.noUi,
@@ -61,7 +61,7 @@ async function runServe(
     runningServer.hub.broadcast(event);
   });
 
-  console.log(`Draftspace local server listening at ${runningServer.url}`);
+  console.log(`ReDraft local server listening at ${runningServer.url}`);
 
   if (options.open) {
     triggerBrowserOpen(runningServer.url);
@@ -86,7 +86,7 @@ function registerServeOptions(command: Command): Command {
     .option('--port <number>', 'Port to listen on (default: 4200)', (value) =>
       Number(value),
     )
-    .option('--open', 'Open the Draftspace UI in the default browser', false)
+    .option('--open', 'Open the ReDraft UI in the default browser', false)
     .option('--no-ui', 'Skip serving the static frontend', false)
     .option(
       '--host <string>',
@@ -97,8 +97,8 @@ function registerServeOptions(command: Command): Command {
 
 const program = registerServeOptions(
   new Command()
-    .name('draftspace')
-    .description('Draftspace local tooling')
+    .name('redraft')
+    .description('ReDraft local tooling')
     .argument('[directory]', 'proposal directory for the default serve command')
     .action(async function (this: Command, directory: string | undefined) {
       if (!directory) {

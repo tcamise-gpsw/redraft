@@ -2,7 +2,7 @@
 
 ## Project intent
 
-Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-proposal-review-core-design.md`, extended by the local-mode and AI workflow design in `docs/specs/2026-06-21-local-mode-ai-skills-design.md`.
+Build the ReDraft MVP described in `docs/specs/2025-06-21-proposal-review-core-design.md`, extended by the local-mode and AI workflow design in `docs/specs/2026-06-21-local-mode-ai-skills-design.md`.
 
 ## Commands
 
@@ -55,4 +55,4 @@ Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-prop
 - Do not invent alternate storage paths for proposal content.
 - Do not bypass SHA checks when writing proposal or comment files.
 - Do not bypass the auth/rate-limit event path when changing `GitHubClient` behavior.
-- Do not make git commits a required part of local Draftspace editing; git remains a convenience layer, not a gate.
+- Do not make git commits a required part of local ReDraft editing; git remains a convenience layer, not a gate.

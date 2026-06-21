@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile, rm, writeFile } from 'node:fs/promises';
 
-const LOCAL_PROPOSALS_ROOT = '/tmp/draftspace-local-playwright';
+const LOCAL_PROPOSALS_ROOT = '/tmp/redraft-local-playwright';
 
 test('local mode auto-authenticates and renders proposal content', async ({ page }) => {
   await page.goto('/');

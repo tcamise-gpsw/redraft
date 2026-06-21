@@ -52,7 +52,7 @@ function mapStatus(code: string): 'modified' | 'untracked' | 'deleted' {
 }
 
 function defaultCommitMessage(): string {
-  return `Update proposals via Draftspace (${new Date().toISOString()})`;
+  return `Update proposals via ReDraft (${new Date().toISOString()})`;
 }
 
 export function registerGitRoute(app: Hono, helpers: GitRouteHelpers): void {
@@ -88,9 +88,9 @@ export function registerGitRoute(app: Hono, helpers: GitRouteHelpers): void {
       'git',
       [
         '-c',
-        'user.name=Draftspace',
+        'user.name=ReDraft',
         '-c',
-        'user.email=draftspace@local',
+        'user.email=redraft@local',
         'commit',
         '-m',
         message,

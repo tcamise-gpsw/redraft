@@ -14,7 +14,7 @@ describe('GitHub tree-style routes', () => {
   let basePath: string;
 
   beforeEach(async () => {
-    basePath = await mkdtemp(join(tmpdir(), 'draftspace-tree-'));
+    basePath = await mkdtemp(join(tmpdir(), 'redraft-tree-'));
     await mkdir(join(basePath, 'nested'), { recursive: true });
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Auth\n', 'utf8');
     await writeFile(

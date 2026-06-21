@@ -1,7 +1,7 @@
 import type { User } from '../../types/github';
 
-const STORAGE_KEY = 'proposal-review.auth';
-export const AUTH_ERROR_EVENT = 'proposal-review:auth-error';
+const STORAGE_KEY = 'redraft.auth';
+export const AUTH_ERROR_EVENT = 'redraft:auth-error';
 
 export interface StoredAuth {
   pat: string;

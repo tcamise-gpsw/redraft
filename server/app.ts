@@ -13,18 +13,18 @@ import type { Hono } from 'hono';
 import { buildGitHubApiRouter } from './routes/index.js';
 import { WebSocketHub } from './ws/hub.js';
 
-export interface DraftspaceAppOptions {
+export interface ReDraftAppOptions {
   basePath: string;
   uiRoot: string;
   noUi?: boolean;
 }
 
-export interface DraftspaceServerOptions extends DraftspaceAppOptions {
+export interface ReDraftServerOptions extends ReDraftAppOptions {
   host?: string;
   port?: number;
 }
 
-export interface RunningDraftspaceServer {
+export interface RunningReDraftServer {
   app: Hono;
   hub: WebSocketHub;
   server: HttpServer;
@@ -44,7 +44,7 @@ const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
 };
 
 function injectLocalModeMeta(html: string): string {
-  const metaTag = '<meta name="draftspace-mode" content="local">';
+  const metaTag = '<meta name="redraft-mode" content="local">';
 
   if (html.includes(metaTag)) {
     return html;
@@ -93,7 +93,7 @@ async function loadStaticResponse(
   });
 }
 
-export function buildDraftspaceApp(options: DraftspaceAppOptions): Hono {
+export function buildReDraftApp(options: ReDraftAppOptions): Hono {
   const app = buildGitHubApiRouter(options.basePath);
 
   app.get('*', async (c) => {
@@ -166,12 +166,12 @@ async function sendResponse(
   await promise;
 }
 
-export async function startDraftspaceServer(
-  options: DraftspaceServerOptions,
-): Promise<RunningDraftspaceServer> {
+export async function startReDraftServer(
+  options: ReDraftServerOptions,
+): Promise<RunningReDraftServer> {
   const host = options.host ?? '127.0.0.1';
   const port = options.port ?? 4200;
-  const app = buildDraftspaceApp(options);
+  const app = buildReDraftApp(options);
   const hub = new WebSocketHub();
   const server = createServer(async (request, response) => {
     const honoResponse = await app.fetch(

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Proposal Review Workspace is a static React SPA deployed to GitHub Pages. The UI authenticates with a fine-grained GitHub PAT, reads proposal markdown and sidecar comment JSON files through the GitHub REST API, and writes edits/comments back as commits.
+ReDraft is a static React SPA deployed to GitHub Pages. The UI authenticates with a fine-grained GitHub PAT, reads proposal markdown and sidecar comment JSON files through the GitHub REST API, and writes edits/comments back as commits.
 
 ## High-level structure
 

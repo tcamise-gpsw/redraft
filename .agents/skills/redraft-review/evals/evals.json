@@ -1,0 +1,23 @@
+{
+  "skill_name": "redraft-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm in this ReDraft repo locally and I want to work through every unresolved proposal comment one by one. Draft replies first, then let me decide which ones to post.",
+      "expected_output": "The skill should detect unresolved `.comments.json` threads, present them in order, read proposal markdown for context, and draft replies before posting through the local ReDraft API.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Use ReDraft local mode to review the open comments on auth-overhaul, post a reply where appropriate, and resolve anything that's already addressed in the proposal text.",
+      "expected_output": "The skill should focus on a single proposal, distinguish between reply and resolve actions, and write comment mutations through the local server instead of editing sidecar JSON directly.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "/redraft-review — walk me through the feedback in this repo, but skip threads whose quoted text no longer exists in the markdown and tell me why.",
+      "expected_output": "The skill should validate quote presence against proposal markdown, call out orphaned or stale quote contexts, and avoid blindly drafting replies for unmatched threads.",
+      "files": []
+    }
+  ]
+}

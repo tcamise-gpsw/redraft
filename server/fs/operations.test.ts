@@ -24,7 +24,7 @@ describe('filesystem operations', () => {
   let basePath: string;
 
   beforeEach(async () => {
-    basePath = await mkdtemp(join(tmpdir(), 'draftspace-fs-'));
+    basePath = await mkdtemp(join(tmpdir(), 'redraft-fs-'));
     await mkdir(join(basePath, 'nested'), { recursive: true });
   });
 

@@ -4,8 +4,8 @@ Append-only record of meaningful execution-time decisions.
 
 ## Task 0 — Project Scaffolding
 
-- Kept `npm run serve -- ./proposals` on the root command path by making `server/cli.ts` accept either a direct directory argument or the explicit `serve` subcommand. This preserves the approved plan's script shape (`tsx server/cli.ts`) while still allowing the eventual `draftspace serve <dir>` UX from the CLI.
-- Implemented the `draftspace` bin as a thin ESM wrapper that re-invokes Node with `--import tsx` and `server/cli.ts`. This keeps the package unpublished-friendly and avoids a separate compile step for the CLI during local dogfooding.
+- Kept `npm run serve -- ./proposals` on the root command path by making `server/cli.ts` accept either a direct directory argument or the explicit `serve` subcommand. This preserves the approved plan's script shape (`tsx server/cli.ts`) while still allowing the eventual `redraft serve <dir>` UX from the CLI.
+- Implemented the `redraft` bin as a thin ESM wrapper that re-invokes Node with `--import tsx` and `server/cli.ts`. This keeps the package unpublished-friendly and avoids a separate compile step for the CLI during local dogfooding.
 
 ## Task 1 — Filesystem Operations Layer
 
@@ -15,7 +15,7 @@ Append-only record of meaningful execution-time decisions.
 
 ## Task 2 — GitHub API Adapter Routes
 
-- Kept the local server API deliberately GitHub-shaped instead of introducing a Draftspace-specific REST surface. The frontend can keep using `GitHubClient` semantics later with only a base-URL override, which preserves the approved "same frontend, different backend" architecture.
+- Kept the local server API deliberately GitHub-shaped instead of introducing a ReDraft-specific REST surface. The frontend can keep using `GitHubClient` semantics later with only a base-URL override, which preserves the approved "same frontend, different backend" architecture.
 - The routes treat the configured filesystem root as the logical `proposals/` directory. Tree responses prefix each entry with `proposals/`, while contents/commits routes strip that prefix before touching disk. This preserves frontend expectations without forcing the local server to serve an entire fake repository checkout.
 - Centralized rate-limit headers and error mapping in `server/routes/index.ts` so the individual route files stay focused on transport logic rather than repeating response boilerplate.
 
@@ -28,14 +28,14 @@ Append-only record of meaningful execution-time decisions.
 ## Task 4 — Git Convenience Endpoints
 
 - Kept git as a convenience layer on top of immediate filesystem writes: the routes query and mutate the working tree, but no other server behavior depends on a successful commit. This preserves the spec's “commit button is optional” rule.
-- Scoped `git status` and `git add` to the proposals directory using the repo-relative path returned from `git rev-parse --show-toplevel` + `relative(...)`. That prevents unrelated repository changes from leaking into Draftspace's status view or convenience commits.
-- Forced a fallback git identity (`Draftspace <draftspace@local>`) on the commit command so the endpoint works even in fresh repos without user.name/user.email configured.
+- Scoped `git status` and `git add` to the proposals directory using the repo-relative path returned from `git rev-parse --show-toplevel` + `relative(...)`. That prevents unrelated repository changes from leaking into ReDraft's status view or convenience commits.
+- Forced a fallback git identity (`ReDraft <redraft@local>`) on the commit command so the endpoint works even in fresh repos without user.name/user.email configured.
 
 ## Task 5 — CLI Entry Point & Server Bootstrap
 
 - Kept static asset serving inside `server/app.ts` rather than adding a Hono-specific static middleware package. The server only needs a small, explicit MIME map for the built Vite output, and avoiding another dependency kept the bootstrap path transparent.
-- Split the local server into two layers: `buildDraftspaceApp()` assembles the Hono routes and static responses for tests, while `startDraftspaceServer()` owns the real Node HTTP server, WebSocket upgrade handling, and lifecycle methods. That made the Hono-side behavior unit-testable without spinning up sockets.
-- Preserved both CLI entry shapes from the plan: `npm run serve -- ./proposals` works via the root command path, while `draftspace serve ./proposals` works via the explicit subcommand. The actual option parsing had to use Commander’s action `this` binding for consistency across both shapes.
+- Split the local server into two layers: `buildReDraftApp()` assembles the Hono routes and static responses for tests, while `startReDraftServer()` owns the real Node HTTP server, WebSocket upgrade handling, and lifecycle methods. That made the Hono-side behavior unit-testable without spinning up sockets.
+- Preserved both CLI entry shapes from the plan: `npm run serve -- ./proposals` works via the root command path, while `redraft serve ./proposals` works via the explicit subcommand. The actual option parsing had to use Commander’s action `this` binding for consistency across both shapes.
 
 ## Task 6 — Frontend Local Mode Support
 
@@ -50,16 +50,16 @@ Append-only record of meaningful execution-time decisions.
 - Kept the local-mode quick start in README even though it includes `npm install` and `npm run build`, because in the current dogfooding phase the local server is consumed from this repo rather than an npm release. Those steps are still user-facing for the power-user / AI-agent persona.
 - Updated `AGENTS.md` to acknowledge the new local server and repo-local skills as first-class parts of the codebase. Leaving the old “do not introduce a backend” rule in place would have become actively misleading.
 
-## Task 8 — AI Skill — `draftspace-review`
+## Task 8 — AI Skill — `redraft-review`
 
-- Followed the skill-creator anatomy rather than the earlier lowercase filename sketch: the skill lives at `.agents/skills/draftspace-review/SKILL.md` with a sibling README and eval seed file. This matches the documented skill package shape and is the least surprising structure for future tooling.
-- Kept the skill opinionated about the hybrid workflow boundary: proposal markdown is read and edited directly on disk, while comment mutations go through the local Draftspace API. That prevents the skill from silently bypassing SHA locking or live browser updates.
+- Followed the skill-creator anatomy rather than the earlier lowercase filename sketch: the skill lives at `.agents/skills/redraft-review/SKILL.md` with a sibling README and eval seed file. This matches the documented skill package shape and is the least surprising structure for future tooling.
+- Kept the skill opinionated about the hybrid workflow boundary: proposal markdown is read and edited directly on disk, while comment mutations go through the local ReDraft API. That prevents the skill from silently bypassing SHA locking or live browser updates.
 - Seeded realistic eval prompts in `evals/evals.json` even though the repo does not vendor the full skill-creator benchmark/viewer scripts. That preserves the next step for future trigger/output evaluation without blocking this implementation task on missing local tooling.
 
 ## Task 9 — E2E Tests — Local Mode + Remote Regression
 
 - Added Playwright projects for both remote and local mode instead of a single global environment. Remote tests continue to mock GitHub against the Vite dev server, while the local-mode spec points at a filesystem-backed server on a separate port.
-- The local-mode Playwright server boot command copies `proposals/` into `/tmp/draftspace-local-playwright` before serving it. That gives the tests a writable workspace without mutating the repository’s real proposal files or requiring a second fixture tree to be checked into git.
+- The local-mode Playwright server boot command copies `proposals/` into `/tmp/redraft-local-playwright` before serving it. That gives the tests a writable workspace without mutating the repository’s real proposal files or requiring a second fixture tree to be checked into git.
 - Set Playwright `workers: 1` globally to stabilize the previously flaky remote comments flow. The failure reproduced only under parallel execution, and serializing the suite is the smallest reliability-first change.
 - Updated the local contents route so `PUT /contents/:path` creates a missing file when no `sha` is supplied. That matches the actual Octokit contract used by `GitHubClient.createFile()` and keeps the local server behavior transport-compatible with GitHub instead of requiring frontend special-casing.
 

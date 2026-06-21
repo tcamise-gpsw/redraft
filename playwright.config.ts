@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-const LOCAL_PROPOSALS_ROOT = '/tmp/draftspace-local-playwright';
+const LOCAL_PROPOSALS_ROOT = '/tmp/redraft-local-playwright';
 
 export default defineConfig({
   testDir: './e2e',

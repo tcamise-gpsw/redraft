@@ -40,7 +40,7 @@ describe('GitHub contents-style routes', () => {
   let basePath: string;
 
   beforeEach(async () => {
-    basePath = await mkdtemp(join(tmpdir(), 'draftspace-routes-'));
+    basePath = await mkdtemp(join(tmpdir(), 'redraft-routes-'));
     await mkdir(join(basePath, 'nested'), { recursive: true });
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Auth\n', 'utf8');
   });

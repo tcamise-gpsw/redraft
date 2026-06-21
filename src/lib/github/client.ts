@@ -27,7 +27,7 @@ interface RateLimitHeaders {
   'x-ratelimit-reset'?: string;
 }
 
-export const RATE_LIMIT_EVENT = 'proposal-review:rate-limit';
+export const RATE_LIMIT_EVENT = 'redraft:rate-limit';
 
 export class AuthError extends Error {
   readonly type = 'auth';

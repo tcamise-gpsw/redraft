@@ -1,5 +1,5 @@
 {
-  "name": "proposal-review-workspace",
+  "name": "redraft",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -58,6 +58,6 @@
     "vitest": "^3.2.4"
   },
   "bin": {
-    "draftspace": "./bin/draftspace.mjs"
+    "redraft": "./bin/redraft.mjs"
   }
 }
