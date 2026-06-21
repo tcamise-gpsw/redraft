@@ -86,7 +86,7 @@ listFiles(basePath: string): Promise<TreeEntry[]>
 - [x] Test path traversal rejection
 
 **Commit:**
-- [ ] `feat(server): implement filesystem operations layer`
+- [x] `feat(server): implement filesystem operations layer`
 
 ---
 
@@ -120,20 +120,20 @@ Each route handler receives the Hono context and the resolved `basePath` (propos
 - PUT validates the incoming SHA against the current file hash before writing
 
 **Checklist:**
-- [ ] `GET /api/github/user` returns valid user shape
-- [ ] `GET .../contents/proposals/auth-overhaul.md` returns base64-encoded content + SHA
-- [ ] `PUT .../contents/proposals/auth-overhaul.md` with correct SHA succeeds and returns new SHA
-- [ ] `PUT` with stale SHA returns 409 Conflict
-- [ ] `GET .../git/trees/main?recursive=1` returns all proposal files
-- [ ] `GET .../commits?path=proposals/auth-overhaul.md` returns stat-based metadata
-- [ ] Rate-limit headers are present on all responses
+- [x] `GET /api/github/user` returns valid user shape
+- [x] `GET .../contents/proposals/auth-overhaul.md` returns base64-encoded content + SHA
+- [x] `PUT .../contents/proposals/auth-overhaul.md` with correct SHA succeeds and returns new SHA
+- [x] `PUT` with stale SHA returns 409 Conflict
+- [x] `GET .../git/trees/main?recursive=1` returns all proposal files
+- [x] `GET .../commits?path=proposals/auth-overhaul.md` returns stat-based metadata
+- [x] Rate-limit headers are present on all responses
 
 **Tests:**
-- [ ] Run `npx vitest run server/routes/`
-- [ ] Test contents GET returns proper base64 and sha
-- [ ] Test contents PUT with SHA conflict returns 409
-- [ ] Test contents POST rejects existing file
-- [ ] Test tree endpoint lists only .md and .comments.json files
+- [x] Run `npx vitest run server/routes/`
+- [x] Test contents GET returns proper base64 and sha
+- [x] Test contents PUT with SHA conflict returns 409
+- [x] Test contents POST rejects existing file
+- [x] Test tree endpoint lists only .md and .comments.json files
 
 **Commit:**
 - [ ] `feat(server): implement GitHub Contents API adapter routes`
