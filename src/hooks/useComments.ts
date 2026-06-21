@@ -12,7 +12,7 @@ import type {
 } from '../types/comments';
 
 function commentPath(path: string): string {
-  return path.replace(/\.md$/, '.comments.json');
+  return `.redraft/comments/${path.replace(/\.md$/u, '.comments.json')}`;
 }
 
 function fileName(path: string): string {
@@ -46,7 +46,7 @@ export function useComments(path: string) {
   // One load per path. staleTime: Infinity prevents automatic re-fetches;
   // the local store is the source of truth until a hard reload.
   const commentsQuery = useQuery({
-    queryKey: ['proposal', path, 'comments'],
+    queryKey: ['document', path, 'comments'],
     queryFn: async () => {
       if (!client) throw new Error('Authentication is required');
       return (

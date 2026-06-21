@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import type { ProposalNode } from '../../types/proposals';
+import type { DocumentNode } from '../../types/documents';
 
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
@@ -56,8 +56,8 @@ export function CreateProposalDialog({
         `# ${title.trim()}\n\n<!-- Write your proposal here -->`,
         `Create proposal: ${filename}`,
       );
-      queryClient.setQueryData<ProposalNode[]>(['proposals', 'tree'], (old) => {
-        const newNode: ProposalNode = {
+      queryClient.setQueryData<DocumentNode[]>(['documents', 'tree'], (old) => {
+        const newNode: DocumentNode = {
           name: filename,
           path: fullPath,
           type: 'file',
@@ -67,7 +67,7 @@ export function CreateProposalDialog({
           a.name.localeCompare(b.name),
         );
       });
-      await queryClient.invalidateQueries({ queryKey: ['proposals', 'tree'] });
+      await queryClient.invalidateQueries({ queryKey: ['documents', 'tree'] });
       navigate(`/proposals/${normalizedPath}`);
       setPath('');
       setTitle('');

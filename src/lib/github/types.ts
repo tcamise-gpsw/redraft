@@ -10,4 +10,4 @@ export type {
   TreeItem,
   User,
 } from '../../types/github';
-export type { ProposalNode } from '../../types/proposals';
+export type { DocumentNode, ReviewEntry } from '../../types/documents';

@@ -6,7 +6,7 @@ import { GitHubClient } from '../lib/github';
 import { getApiBaseUrl } from '../lib/mode';
 import type { CommitInfo } from '../lib/github/types';
 
-export function useProposal(path: string) {
+export function useDocument(path: string) {
   const { pat, repo } = useAuth();
 
   const client = useMemo(() => {
@@ -23,7 +23,7 @@ export function useProposal(path: string) {
   }, [pat, repo]);
 
   const contentQuery = useQuery({
-    queryKey: ['proposal', path, 'content'],
+    queryKey: ['document', path, 'content'],
     queryFn: async () => {
       if (!client) {
         throw new Error('Authentication is required');
@@ -35,7 +35,7 @@ export function useProposal(path: string) {
   });
 
   const commitQuery = useQuery({
-    queryKey: ['proposal', path, 'commit'],
+    queryKey: ['document', path, 'commit'],
     queryFn: async () => {
       if (!client) {
         throw new Error('Authentication is required');

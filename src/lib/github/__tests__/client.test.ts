@@ -115,7 +115,7 @@ describe('GitHubClient', () => {
     await expect(client.validateAuth()).rejects.toBeInstanceOf(AuthError);
   });
 
-  it('getTree filters entries to the proposals prefix', async () => {
+  it('getTree filters entries to markdown files and excludes .redraft metadata', async () => {
     const client = new GitHubClient({
       pat: 'ghp_test',
       owner: 'acme',
@@ -126,16 +126,19 @@ describe('GitHubClient', () => {
     octokit.git.getTree.mockResolvedValue({
       data: {
         tree: [
-          { path: 'proposals/auth-overhaul.md', type: 'blob' },
-          { path: 'proposals', type: 'tree' },
+          { path: 'docs/auth-overhaul.md', type: 'blob' },
+          { path: 'docs', type: 'tree' },
           { path: 'README.md', type: 'blob' },
+          { path: '.redraft/comments/docs/auth-overhaul.comments.json', type: 'blob' },
+          { path: 'notes.txt', type: 'blob' },
         ],
       },
       headers: responseHeaders,
     });
 
     await expect(client.getTree()).resolves.toEqual([
-      { path: 'proposals/auth-overhaul.md', type: 'blob' },
+      { path: 'docs/auth-overhaul.md', type: 'blob' },
+      { path: 'README.md', type: 'blob' },
     ]);
   });
 

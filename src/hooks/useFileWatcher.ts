@@ -13,6 +13,14 @@ function websocketUrl(): string {
   return `${protocol}//${window.location.host}/ws`;
 }
 
+function documentPathFromCommentPath(path: string): string {
+  const relativePath = path.startsWith('.redraft/comments/')
+    ? path.slice('.redraft/comments/'.length)
+    : path;
+
+  return relativePath.replace(/\.comments\.json$/u, '.md');
+}
+
 export function useFileWatcher(): void {
   const queryClient = useQueryClient();
 
@@ -43,7 +51,7 @@ export function useFileWatcher(): void {
 
         if (payload.type === 'file:changed' && payload.path?.endsWith('.md')) {
           void queryClient.invalidateQueries({
-            queryKey: ['proposal', payload.path, 'content'],
+            queryKey: ['document', payload.path, 'content'],
           });
           return;
         }
@@ -54,8 +62,8 @@ export function useFileWatcher(): void {
         ) {
           void queryClient.invalidateQueries({
             queryKey: [
-              'proposal',
-              payload.path.replace(/\.comments\.json$/, '.md'),
+              'document',
+              documentPathFromCommentPath(payload.path),
               'comments',
             ],
           });
@@ -67,7 +75,7 @@ export function useFileWatcher(): void {
           payload.type === 'file:deleted'
         ) {
           void queryClient.invalidateQueries({
-            queryKey: ['proposals', 'tree'],
+            queryKey: ['documents', 'tree'],
           });
         }
       };

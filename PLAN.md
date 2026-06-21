@@ -135,7 +135,7 @@ export function startWatcher(
 - [x] Update `server/routes/contents.test.ts` to use root-relative paths (no `proposals/` prefix)
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
+- [x] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
 
 ---
 
@@ -211,23 +211,23 @@ export function useDocuments(): {
 - Return paths as-is (root-relative).
 
 **Checklist:**
-- [ ] `DocumentNode` and `ReviewEntry` types exported from `src/types/documents.ts`
-- [ ] `useDocuments` returns `{ documents, underReview, isLoading, error }`
-- [ ] `useComments` resolves comment path to `.redraft/comments/...`
-- [ ] `useFileWatcher` invalidates `['documents', 'tree']` for create/delete events
-- [ ] `useFileWatcher` strips `.redraft/comments/` prefix when deriving document path from comment events
-- [ ] `getTree()` returns all `.md` files, not just `proposals/`-prefixed ones
-- [ ] `getTree()` excludes `.redraft/` paths
-- [ ] `useProposal` renamed to `useDocument`, query keys updated
-- [ ] Old `src/hooks/useProposals.ts` and `src/types/proposals.ts` deleted
-- [ ] All imports updated (no dangling references to deleted files)
-- [ ] `LOCAL_AUTH.repo` changed to `'redraft'` in `src/hooks/useAuth.ts`
+- [x] `DocumentNode` and `ReviewEntry` types exported from `src/types/documents.ts`
+- [x] `useDocuments` returns `{ documents, underReview, isLoading, error }`
+- [x] `useComments` resolves comment path to `.redraft/comments/...`
+- [x] `useFileWatcher` invalidates `['documents', 'tree']` for create/delete events
+- [x] `useFileWatcher` strips `.redraft/comments/` prefix when deriving document path from comment events
+- [x] `getTree()` returns all `.md` files, not just `proposals/`-prefixed ones
+- [x] `getTree()` excludes `.redraft/` paths
+- [x] `useProposal` renamed to `useDocument`, query keys updated
+- [x] Old `src/hooks/useProposals.ts` and `src/types/proposals.ts` deleted
+- [x] All imports updated (no dangling references to deleted files)
+- [x] `LOCAL_AUTH.repo` changed to `'redraft'` in `src/hooks/useAuth.ts`
 
 **Tests:**
-- [ ] Run `npx vitest run src/`
-- [ ] Update `src/hooks/__tests__/useComments.test.ts` — verify the new comment path resolution
-- [ ] Update `src/hooks/__tests__/useFileWatcher.test.ts` — verify new query keys and path derivation
-- [ ] Verify `getTree` filter logic via `src/lib/github/__tests__/client.test.ts`
+- [x] Run `npx vitest run src/`
+- [x] Update `src/hooks/__tests__/useComments.test.ts` — verify the new comment path resolution
+- [x] Update `src/hooks/__tests__/useFileWatcher.test.ts` — verify new query keys and path derivation
+- [x] Verify `getTree` filter logic via `src/lib/github/__tests__/client.test.ts`
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format

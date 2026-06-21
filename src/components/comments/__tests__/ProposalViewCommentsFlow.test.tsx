@@ -5,14 +5,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-const { documentViewPath, useProposal, useComments } = vi.hoisted(() => ({
+const { documentViewPath, useDocument, useComments } = vi.hoisted(() => ({
   documentViewPath: vi.fn(),
-  useProposal: vi.fn(),
+  useDocument: vi.fn(),
   useComments: vi.fn(),
 }));
 
-vi.mock('../../../hooks/useProposal', () => ({
-  useProposal,
+vi.mock('../../../hooks/useDocument', () => ({
+  useDocument,
 }));
 
 vi.mock('../../../hooks/useComments', () => ({
@@ -84,7 +84,7 @@ import { ProposalView } from '../../../routes/ProposalView';
 describe('ProposalView comment interactions', () => {
   beforeEach(() => {
     documentViewPath.mockReset();
-    useProposal.mockReturnValue({
+    useDocument.mockReturnValue({
       content: 'The camera should initialize lazily when preview starts.',
       sha: '',
       commit: null,

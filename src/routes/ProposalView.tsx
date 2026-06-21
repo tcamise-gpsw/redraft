@@ -6,7 +6,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { DocumentView } from '../components/document/DocumentView';
 import { ProposalTree } from '../components/tree/ProposalTree';
 import { useComments } from '../hooks/useComments';
-import { useProposal } from '../hooks/useProposal';
+import { useDocument } from '../hooks/useDocument';
 
 export function ProposalView() {
   const params = useParams();
@@ -26,7 +26,7 @@ export function ProposalView() {
     saveComments,
   } = useComments(path);
 
-  const { content } = useProposal(path);
+  const { content } = useDocument(path);
 
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<{

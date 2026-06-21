@@ -206,7 +206,7 @@ describe('useComments – saveComments', () => {
     getFileContent.mockResolvedValueOnce(null);
     createFile.mockResolvedValueOnce({ sha: 'new-sha' });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 
@@ -227,7 +227,7 @@ describe('useComments – saveComments', () => {
     });
 
     expect(createFile).toHaveBeenCalledWith(
-      'proposals/doc.comments.json',
+      '.redraft/comments/docs/doc.comments.json',
       expect.stringContaining('"body":"Question"'),
       'Add comments on doc.md',
     );
@@ -242,7 +242,7 @@ describe('useComments – saveComments', () => {
     });
     updateFile.mockResolvedValueOnce({ sha: 'updated-sha' });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 
@@ -257,7 +257,7 @@ describe('useComments – saveComments', () => {
     });
 
     expect(updateFile).toHaveBeenCalledWith(
-      'proposals/doc.comments.json',
+      '.redraft/comments/docs/doc.comments.json',
       expect.stringContaining('"resolved":true'),
       'load-sha',
       'Update comments on doc.md',
@@ -270,7 +270,7 @@ describe('useComments – saveComments', () => {
     createFile.mockResolvedValueOnce({ sha: 'created-sha' });
     updateFile.mockResolvedValueOnce({ sha: 'second-sha' });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 
@@ -292,7 +292,6 @@ describe('useComments – saveComments', () => {
 
     expect(result.current.isDirty).toBe(false);
 
-    // Second mutation + save should use the SHA from the first save
     act(() => {
       result.current.addComment({
         quote: 'b',
@@ -308,7 +307,7 @@ describe('useComments – saveComments', () => {
     });
 
     expect(updateFile).toHaveBeenCalledWith(
-      'proposals/doc.comments.json',
+      '.redraft/comments/docs/doc.comments.json',
       expect.stringContaining('"body":"second"'),
       'created-sha',
       'Update comments on doc.md',
@@ -319,7 +318,7 @@ describe('useComments – saveComments', () => {
     getFileContent.mockResolvedValueOnce(null);
     createFile.mockRejectedValueOnce(new Error('GitHub content SHA conflict'));
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 

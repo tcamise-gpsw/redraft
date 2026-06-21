@@ -7,11 +7,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HashRouter } from 'react-router-dom';
 
 const getTree = vi.hoisted(() => vi.fn());
+const getFileContent = vi.hoisted(() => vi.fn());
 const createFile = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../lib/github/client', () => ({
   GitHubClient: class GitHubClient {
     getTree = getTree;
+    getFileContent = getFileContent;
     createFile = createFile;
   },
 }));
@@ -64,17 +66,17 @@ describe('ProposalTree', () => {
     localStorage.clear();
     setStoredAuth();
     window.location.hash = '#/proposals/media/overview.md';
-    getTree.mockReset();
     createFile.mockReset();
+    getFileContent.mockReset().mockResolvedValue(null);
   });
 
   it('renders a sorted directory tree from proposal entries', async () => {
     getTree.mockResolvedValueOnce([
-      { path: 'proposals/rest.md', type: 'blob' },
-      { path: 'proposals/media/overview.md', type: 'blob' },
-      { path: 'proposals/media', type: 'tree' },
-      { path: 'proposals/api', type: 'tree' },
-      { path: 'proposals/api/graphql.md', type: 'blob' },
+      { path: 'rest.md', type: 'blob' },
+      { path: 'media/overview.md', type: 'blob' },
+      { path: 'media', type: 'tree' },
+      { path: 'api', type: 'tree' },
+      { path: 'api/graphql.md', type: 'blob' },
     ]);
 
     renderTree();
@@ -96,8 +98,8 @@ describe('ProposalTree', () => {
 
   it('highlights the active proposal route', async () => {
     getTree.mockResolvedValueOnce([
-      { path: 'proposals/media', type: 'tree' },
-      { path: 'proposals/media/overview.md', type: 'blob' },
+      { path: 'media', type: 'tree' },
+      { path: 'media/overview.md', type: 'blob' },
     ]);
 
     renderTree();
@@ -108,8 +110,8 @@ describe('ProposalTree', () => {
 
   it('navigates with a file link and exposes the target hash path', async () => {
     getTree.mockResolvedValueOnce([
-      { path: 'proposals/media', type: 'tree' },
-      { path: 'proposals/media/overview.md', type: 'blob' },
+      { path: 'media', type: 'tree' },
+      { path: 'media/overview.md', type: 'blob' },
     ]);
 
     renderTree();
@@ -158,8 +160,8 @@ describe('ProposalTree', () => {
 
   it('does not render .comments.json sidecar files in the tree', async () => {
     getTree.mockResolvedValueOnce([
-      { path: 'proposals/api-design.md', type: 'blob' },
-      { path: 'proposals/api-design.comments.json', type: 'blob' },
+      { path: 'api-design.md', type: 'blob' },
+      { path: 'api-design.comments.json', type: 'blob' },
     ]);
 
     renderTree();

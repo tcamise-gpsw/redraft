@@ -7,14 +7,14 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommentThread } from '../../../types/comments';
 
-const { saveProposal, useProposal, useProposalEdit } = vi.hoisted(() => ({
+const { saveProposal, useDocument, useProposalEdit } = vi.hoisted(() => ({
   saveProposal: vi.fn(),
-  useProposal: vi.fn(),
+  useDocument: vi.fn(),
   useProposalEdit: vi.fn(),
 }));
 
-vi.mock('../../../hooks/useProposal', () => ({
-  useProposal,
+vi.mock('../../../hooks/useDocument', () => ({
+  useDocument,
 }));
 
 vi.mock('../../../hooks/useProposalEdit', () => ({
@@ -71,7 +71,7 @@ describe('DocumentView', () => {
   beforeEach(() => {
     saveProposal.mockReset().mockResolvedValue(undefined);
     useProposalEdit.mockReset().mockReturnValue({ save: saveProposal });
-    useProposal.mockReset().mockReturnValue({
+    useDocument.mockReset().mockReturnValue({
       content: '# Proposal',
       sha: 'current-sha',
       commit: { sha: 'abc123' },
@@ -117,7 +117,7 @@ describe('DocumentView', () => {
   });
 
   it('shows the loading state while the proposal query is pending', () => {
-    useProposal.mockReturnValueOnce({
+    useDocument.mockReturnValueOnce({
       content: '',
       sha: '',
       commit: null,
@@ -140,7 +140,7 @@ describe('DocumentView', () => {
   });
 
   it('shows the error state when loading fails', () => {
-    useProposal.mockReturnValueOnce({
+    useDocument.mockReturnValueOnce({
       content: '',
       sha: '',
       commit: null,

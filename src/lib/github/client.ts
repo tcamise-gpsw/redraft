@@ -166,13 +166,14 @@ export class GitHubClient {
       .filter((item) => {
         return (
           typeof item.path === 'string' &&
-          (item.type === 'blob' || item.type === 'tree') &&
-          item.path.startsWith('proposals/')
+          item.type === 'blob' &&
+          item.path.endsWith('.md') &&
+          !item.path.startsWith('.redraft/')
         );
       })
       .map((item) => ({
         path: item.path,
-        type: item.type as 'blob' | 'tree',
+        type: item.type as 'blob',
       }));
   }
 

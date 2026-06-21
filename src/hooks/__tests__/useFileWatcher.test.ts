@@ -94,26 +94,29 @@ describe('useFileWatcher', () => {
 
     socket.emitMessage({
       type: 'file:changed',
-      path: 'proposals/auth-overhaul.md',
+      path: 'docs/auth-overhaul.md',
       sha: 'abc',
     });
     socket.emitMessage({
       type: 'file:changed',
-      path: 'proposals/auth-overhaul.comments.json',
+      path: '.redraft/comments/docs/auth-overhaul.comments.json',
       sha: 'def',
     });
-    socket.emitMessage({ type: 'file:created', path: 'proposals/new.md' });
-    socket.emitMessage({ type: 'file:deleted', path: 'proposals/old.md' });
-
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['proposal', 'proposals/auth-overhaul.md', 'content'],
+    socket.emitMessage({ type: 'file:created', path: 'docs/new.md' });
+    socket.emitMessage({
+      type: 'file:deleted',
+      path: '.redraft/comments/docs/old.comments.json',
     });
 
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['proposal', 'proposals/auth-overhaul.md', 'comments'],
+      queryKey: ['document', 'docs/auth-overhaul.md', 'content'],
+    });
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['document', 'docs/auth-overhaul.md', 'comments'],
     });
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['proposals', 'tree'],
+      queryKey: ['documents', 'tree'],
     });
   });
 

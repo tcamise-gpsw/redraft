@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { useProposals } from '../../hooks/useProposals';
+import { useDocuments } from '../../hooks/useDocuments';
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { CreateProposalDialog } from './CreateProposalDialog';
 import { TreeNode } from './TreeNode';
 
 export function ProposalTree() {
-  const { tree, isLoading, error } = useProposals();
+  const { documents: tree, isLoading, error } = useDocuments();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (

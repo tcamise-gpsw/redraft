@@ -59,7 +59,7 @@ function toState(auth: StoredAuth | null) {
 const LOCAL_AUTH: StoredAuth = {
   pat: 'local',
   owner: 'local',
-  repo: 'proposals',
+  repo: 'redraft',
   user: {
     login: 'local-user',
     avatarUrl: '',

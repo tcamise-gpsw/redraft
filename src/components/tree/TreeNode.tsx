@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import type { ProposalNode } from '../../types/proposals';
+import type { DocumentNode } from '../../types/documents';
 
-export function TreeNode({ node }: { node: ProposalNode }) {
+export function TreeNode({ node }: { node: DocumentNode }) {
   const location = useLocation();
   const [expanded, setExpanded] = useState(true);
 
