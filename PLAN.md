@@ -408,7 +408,7 @@ AGENTS.md updates:
 - [x] Run skill-creator evals if available to verify trigger accuracy
 
 **Commit:**
-- [ ] `feat(skills): add draftspace-review AI skill for comment walkthrough`
+- [x] `feat(skills): add draftspace-review AI skill for comment walkthrough`
 
 ---
 
@@ -445,16 +445,16 @@ AGENTS.md updates:
 - If any remote-mode test fails, it indicates a regression from the local-mode frontend changes (Task 6)
 
 **Checklist:**
-- [ ] Local mode E2E: all 6-7 scenarios pass with a real local server and real filesystem
-- [ ] Remote mode regression: all existing E2E specs (auth, proposals, comments, editing) pass unchanged
-- [ ] File watcher → WebSocket → UI update verified with real filesystem writes
-- [ ] Comment save → file writeback verified by reading the file in the test
-- [ ] Server starts and stops cleanly in the test lifecycle (no port conflicts, no orphan processes)
+- [x] Local mode E2E: all 6-7 scenarios pass with a real local server and real filesystem
+- [x] Remote mode regression: all existing E2E specs (auth, proposals, comments, editing) pass unchanged
+- [x] File watcher → WebSocket → UI update verified with real filesystem writes
+- [x] Comment save → file writeback verified by reading the file in the test
+- [x] Server starts and stops cleanly in the test lifecycle (no port conflicts, no orphan processes)
 
 **Tests:**
-- [ ] Run `npx playwright test` (all specs: existing remote + new local)
-- [ ] Verify zero regressions in remote-mode specs
-- [ ] Verify all local-mode scenarios pass
+- [x] Run `npx playwright test` (all specs: existing remote + new local)
+- [x] Verify zero regressions in remote-mode specs
+- [x] Verify all local-mode scenarios pass
 
 **Commit:**
 - [ ] `test(e2e): add local mode E2E tests and verify remote mode regression`

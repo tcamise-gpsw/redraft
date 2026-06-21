@@ -55,3 +55,10 @@ Append-only record of meaningful execution-time decisions.
 - Followed the skill-creator anatomy rather than the earlier lowercase filename sketch: the skill lives at `.agents/skills/draftspace-review/SKILL.md` with a sibling README and eval seed file. This matches the documented skill package shape and is the least surprising structure for future tooling.
 - Kept the skill opinionated about the hybrid workflow boundary: proposal markdown is read and edited directly on disk, while comment mutations go through the local Draftspace API. That prevents the skill from silently bypassing SHA locking or live browser updates.
 - Seeded realistic eval prompts in `evals/evals.json` even though the repo does not vendor the full skill-creator benchmark/viewer scripts. That preserves the next step for future trigger/output evaluation without blocking this implementation task on missing local tooling.
+
+## Task 9 — E2E Tests — Local Mode + Remote Regression
+
+- Added Playwright projects for both remote and local mode instead of a single global environment. Remote tests continue to mock GitHub against the Vite dev server, while the local-mode spec points at a filesystem-backed server on a separate port.
+- The local-mode Playwright server boot command copies `proposals/` into `/tmp/draftspace-local-playwright` before serving it. That gives the tests a writable workspace without mutating the repository’s real proposal files or requiring a second fixture tree to be checked into git.
+- Set Playwright `workers: 1` globally to stabilize the previously flaky remote comments flow. The failure reproduced only under parallel execution, and serializing the suite is the smallest reliability-first change.
+- Updated the local contents route so `PUT /contents/:path` creates a missing file when no `sha` is supplied. That matches the actual Octokit contract used by `GitHubClient.createFile()` and keeps the local server behavior transport-compatible with GitHub instead of requiring frontend special-casing.

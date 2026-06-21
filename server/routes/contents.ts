@@ -54,12 +54,25 @@ export function registerContentsRoute(
   app.put('/api/github/repos/:owner/:repo/contents/:path{.+}', async (c) => {
     const localPath = helpers.toLocalPath(requireApiPath(c.req.param('path')));
     const body = (await c.req.json()) as ContentRequestBody;
-    const result = await writeFile(
-      helpers.basePath,
-      localPath,
-      decodeContent(body),
-      body.sha ?? null,
-    );
+    let result: { sha: string };
+    try {
+      result = await writeFile(
+        helpers.basePath,
+        localPath,
+        decodeContent(body),
+        body.sha ?? null,
+      );
+    } catch (error) {
+      if (error instanceof FileOperationError && error.status === 404 && !body.sha) {
+        result = await createFile(
+          helpers.basePath,
+          localPath,
+          decodeContent(body),
+        );
+      } else {
+        throw error;
+      }
+    }
 
     return helpers.json({ content: { sha: result.sha } });
   });

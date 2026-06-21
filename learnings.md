@@ -47,3 +47,9 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 
 - The repo already had a project-local skill as a single markdown file, but the skill-creator guidance expects a folder with `SKILL.md`. For new skills, following the skill-creator package shape is the safer long-term choice, even if legacy project-local skills use a flatter layout.
 - The skill-creator evaluation workflow is not vendored into this repo, so a full benchmark/reviewer loop is not runnable in-place. Seeding `evals/evals.json` is the practical compromise: the prompts are ready when the external tooling is available, and the implementation is not blocked by missing helper scripts.
+
+## Task 9 — E2E Tests — Local Mode + Remote Regression
+
+- The remote comments spec failure was a real concurrency issue, not a deterministic logic regression: it passed consistently on its own and as part of the suite once workers were forced to 1. That is exactly the kind of browser-level flake worth fixing in configuration instead of papering over in the test body.
+- Local-mode browser tests are far easier against a writable copy of `proposals/` than against the real repo tree. Copying into `/tmp` kept the tests honest (real filesystem writes, real watcher events) without leaving behind committed or half-restored proposal edits.
+- The first local comment-save E2E exposed a contract mismatch between the local server and `GitHubClient`: Octokit’s `createOrUpdateFileContents` issues a `PUT` without `sha` for creates, so the local server had to support “PUT creates missing file” instead of assuming creation only happens via `POST`.

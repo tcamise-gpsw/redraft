@@ -125,6 +125,29 @@ describe('GitHub contents-style routes', () => {
     expect(body.message).toMatch(/conflict/i);
   });
 
+  it('creates a missing file when PUT is sent without a sha', async () => {
+    const app = buildGitHubApiRouter(basePath);
+
+    const response = await app.request(
+      'http://local.test/api/github/repos/local/proposals/contents/proposals/auth-overhaul.comments.json',
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          message: 'Add comments',
+          content: Buffer.from('{"version":1,"comments":[]}', 'utf8').toString('base64'),
+        }),
+      },
+    );
+    const body = (await response.json()) as WriteResponse;
+
+    expect(response.status).toBe(200);
+    expect(body.content.sha).toMatch(/^[a-f0-9]{40}$/);
+    await expect(
+      readFile(join(basePath, 'auth-overhaul.comments.json'), 'utf8'),
+    ).resolves.toContain('"comments":[]');
+  });
+
   it('returns 422 when creating a file that already exists', async () => {
     const app = buildGitHubApiRouter(basePath);
 
