@@ -18,7 +18,11 @@ interface FakeEditorView {
       content: {
         size: number;
       };
-      textBetween: (from: number, to: number, blockSeparator?: string) => string;
+      textBetween: (
+        from: number,
+        to: number,
+        blockSeparator?: string,
+      ) => string;
     };
   };
   coordsAtPos: (pos: number) => { left: number; top: number; bottom: number };
@@ -39,7 +43,11 @@ interface HookHarnessProps {
   }) => void;
 }
 
-function HookHarness({ editorGetter, loading, onTextSelect }: HookHarnessProps) {
+function HookHarness({
+  editorGetter,
+  loading,
+  onTextSelect,
+}: HookHarnessProps) {
   useSelectionCapture(editorGetter, loading, onTextSelect);
   return null;
 }
@@ -90,7 +98,10 @@ function createFakeEditor(text: string, selection: SelectionRange) {
 describe('useSelectionCapture', () => {
   it('fires onTextSelect with quote, context, and coordinates for a non-empty selection', () => {
     const onTextSelect = vi.fn();
-    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', { from: 7, to: 11 });
+    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', {
+      from: 7,
+      to: 11,
+    });
 
     render(
       <HookHarness
@@ -120,7 +131,10 @@ describe('useSelectionCapture', () => {
 
   it('does not fire when the selection is empty', () => {
     const onTextSelect = vi.fn();
-    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', { from: 7, to: 7 });
+    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', {
+      from: 7,
+      to: 7,
+    });
 
     render(
       <HookHarness
@@ -139,7 +153,10 @@ describe('useSelectionCapture', () => {
 
   it('returns an empty prefix when the selection starts at the document boundary', () => {
     const onTextSelect = vi.fn();
-    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', { from: 1, to: 6 });
+    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', {
+      from: 1,
+      to: 6,
+    });
 
     render(
       <HookHarness
@@ -164,7 +181,10 @@ describe('useSelectionCapture', () => {
 
   it('returns an empty suffix when the selection ends at the document boundary', () => {
     const onTextSelect = vi.fn();
-    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', { from: 12, to: 17 });
+    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', {
+      from: 12,
+      to: 17,
+    });
 
     render(
       <HookHarness
@@ -190,7 +210,10 @@ describe('useSelectionCapture', () => {
   it('uses the latest callback without reattaching the mouseup listener', () => {
     const firstCallback = vi.fn();
     const secondCallback = vi.fn();
-    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', { from: 7, to: 11 });
+    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', {
+      from: 7,
+      to: 11,
+    });
 
     const { rerender } = render(
       <HookHarness
@@ -218,7 +241,10 @@ describe('useSelectionCapture', () => {
 
   it('removes the mouseup listener on unmount', () => {
     const onTextSelect = vi.fn();
-    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', { from: 7, to: 11 });
+    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', {
+      from: 7,
+      to: 11,
+    });
 
     const { unmount } = render(
       <HookHarness

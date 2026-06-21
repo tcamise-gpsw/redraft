@@ -5,25 +5,29 @@ import '@testing-library/jest-dom/vitest';
 import { waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { codeBlockSchemaNode, defaultNodeView, defaultNodeViewFactory, mockMermaidRender } =
-  vi.hoisted(() => {
-    const fallbackDom = document.createElement('pre');
-    fallbackDom.textContent = 'fallback';
-    const fallbackView = { dom: fallbackDom };
+const {
+  codeBlockSchemaNode,
+  defaultNodeView,
+  defaultNodeViewFactory,
+  mockMermaidRender,
+} = vi.hoisted(() => {
+  const fallbackDom = document.createElement('pre');
+  fallbackDom.textContent = 'fallback';
+  const fallbackView = { dom: fallbackDom };
 
-    return {
-      codeBlockSchemaNode: { id: 'code_block' },
-      defaultNodeView: fallbackView,
-      defaultNodeViewFactory: vi.fn(() => fallbackView),
-      mockMermaidRender: vi.fn(async (_id: string, definition: string) => {
-        if (definition === 'bad syntax') {
-          throw new Error('Parse error');
-        }
+  return {
+    codeBlockSchemaNode: { id: 'code_block' },
+    defaultNodeView: fallbackView,
+    defaultNodeViewFactory: vi.fn(() => fallbackView),
+    mockMermaidRender: vi.fn(async (_id: string, definition: string) => {
+      if (definition === 'bad syntax') {
+        throw new Error('Parse error');
+      }
 
-        return { svg: `<svg data-definition="${definition}"></svg>` };
-      }),
-    };
-  });
+      return { svg: `<svg data-definition="${definition}"></svg>` };
+    }),
+  };
+});
 
 vi.mock('@milkdown/utils', () => ({
   $view: (type: unknown, view: unknown) => ({ type, view }),
@@ -116,7 +120,9 @@ describe('mermaidNodeViewPlugin', () => {
       expect(nodeView.dom.textContent).toContain('Parse error');
     });
 
-    expect(nodeView.dom.querySelector('pre')?.textContent).toContain('bad syntax');
+    expect(nodeView.dom.querySelector('pre')?.textContent).toContain(
+      'bad syntax',
+    );
   });
 
   it('leaves non-mermaid code blocks on the default code block node view', () => {

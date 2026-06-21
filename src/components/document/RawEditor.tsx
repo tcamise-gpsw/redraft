@@ -40,7 +40,10 @@ export function RawEditor({
         <div className="flex items-center gap-3">
           <Button
             onClick={() => {
-              if (!dirty || window.confirm('You have unsaved changes. Discard?')) {
+              if (
+                !dirty ||
+                window.confirm('You have unsaved changes. Discard?')
+              ) {
                 onCancel();
               }
             }}
@@ -49,7 +52,11 @@ export function RawEditor({
           >
             Cancel
           </Button>
-          <Button disabled={isSaving} onClick={() => void onSave(content)} type="button">
+          <Button
+            disabled={isSaving}
+            onClick={() => void onSave(content)}
+            type="button"
+          >
             {isSaving ? 'Saving…' : 'Save'}
           </Button>
         </div>

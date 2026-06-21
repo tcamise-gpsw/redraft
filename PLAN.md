@@ -464,7 +464,7 @@ Dependency removal:
 - [x] No tests needed — documentation only
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -472,13 +472,13 @@ Dependency removal:
 ### Task 10: Final Validation
 
 **Checks:**
-- [ ] Full test suite passes: `npx vitest run`
-- [ ] Type check clean: `npx tsc --noEmit`
-- [ ] Lint clean: `npx eslint src/`
-- [ ] Format check: `npx prettier --check src/`
-- [ ] Build succeeds: `npm run build`
-- [ ] E2E passes: `npx playwright test`
-- [ ] Dev server starts and renders a proposal with comments: `npm run dev`
-- [ ] All acceptance criteria from Tasks 1–9 verified end-to-end
-- [ ] No references to `react-markdown`, `MarkdownRenderer`, `MarkdownEditor`, `SelectionPopover`, or `ProposalEdit` remain in source
-- [ ] The spike worktree (`~/gopro/draftspace-milkdown-spike`) can be removed (branch merged or abandoned)
+- [x] Full test suite passes: `npx vitest run`
+- [x] Type check clean: `npx tsc --noEmit`
+- [x] Lint clean: `npx eslint src/`
+- [x] Format check: `npx prettier --check src/`
+- [x] Build succeeds: `npm run build`
+- [x] E2E passes: `npx playwright test`
+- [x] Dev server starts and renders a proposal with comments: `npm run dev`
+- [x] All acceptance criteria from Tasks 1–9 verified end-to-end
+- [x] No references to `react-markdown`, `MarkdownRenderer`, `MarkdownEditor`, `SelectionPopover`, or `ProposalEdit` remain in source
+- [x] The spike worktree (`~/gopro/draftspace-milkdown-spike`) can be removed (branch merged or abandoned)

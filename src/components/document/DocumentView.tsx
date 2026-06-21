@@ -20,7 +20,8 @@ export function DocumentView({
   }) => void;
 }) {
   const { save } = useProposalEdit(path);
-  const { content, comments, commit, isLoading, error, sha } = useProposal(path);
+  const { content, comments, commit, isLoading, error, sha } =
+    useProposal(path);
   const [isSaving, setIsSaving] = useState(false);
 
   if (isLoading) {

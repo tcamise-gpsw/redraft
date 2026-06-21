@@ -7,8 +7,9 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CrepeEditor, useCrepeInstance } from './CrepeEditor';
+import { CrepeEditor } from './CrepeEditor';
 import type { CrepeEditorHandle } from './CrepeEditor';
+import { useCrepeInstance } from './useCrepeInstance';
 
 const {
   commentPluginKey,
@@ -79,7 +80,13 @@ const {
     markdown: string;
     readonlyState = false;
 
-    constructor({ root, defaultValue = '' }: { root: HTMLElement; defaultValue?: string }) {
+    constructor({
+      root,
+      defaultValue = '',
+    }: {
+      root: HTMLElement;
+      defaultValue?: string;
+    }) {
       this.root = root;
       this.markdown = defaultValue;
       fakeInstances.push(this);
@@ -88,7 +95,10 @@ const {
     create = vi.fn(async () => {
       this.editor.status = 'Created';
       this.editor.view.dom.textContent = this.markdown;
-      this.editor.view.dom.setAttribute('contenteditable', String(!this.readonlyState));
+      this.editor.view.dom.setAttribute(
+        'contenteditable',
+        String(!this.readonlyState),
+      );
       this.root.replaceChildren(this.editor.view.dom);
       return this.editor;
     });
@@ -196,7 +206,14 @@ interface HookHarnessProps {
 
 const HookHarness = forwardRef<HookHarnessHandle, HookHarnessProps>(
   function HookHarness(
-    { content, comments, onMarkdownChange, onSelectComment, onTextSelect, readOnly },
+    {
+      content,
+      comments,
+      onMarkdownChange,
+      onSelectComment,
+      onTextSelect,
+      readOnly,
+    },
     ref,
   ) {
     const { crepeRef, getMarkdown } = useCrepeInstance({
@@ -245,9 +262,7 @@ describe('CrepeEditor and useCrepeInstance', () => {
   });
 
   it('renders without error with minimal content', async () => {
-    render(
-      <CrepeEditor content="# Heading" readOnly={true} comments={[]} />,
-    );
+    render(<CrepeEditor content="# Heading" readOnly={true} comments={[]} />);
 
     await waitFor(() => {
       expect(createdInstances).toHaveLength(1);
@@ -258,9 +273,7 @@ describe('CrepeEditor and useCrepeInstance', () => {
   });
 
   it('renders non-editable content when readOnly is true', async () => {
-    render(
-      <CrepeEditor content="# Heading" readOnly={true} comments={[]} />,
-    );
+    render(<CrepeEditor content="# Heading" readOnly={true} comments={[]} />);
 
     await waitFor(() => {
       expect(screen.getByText('# Heading')).toBeInTheDocument();
@@ -319,9 +332,11 @@ describe('CrepeEditor and useCrepeInstance', () => {
     );
 
     await waitFor(() => {
-      expect(createdInstances[0]?.editor.dispatchedTransactions).toContainEqual({
-        meta: [{ id: 'comment-2', quote: 'Updated' }],
-      });
+      expect(createdInstances[0]?.editor.dispatchedTransactions).toContainEqual(
+        {
+          meta: [{ id: 'comment-2', quote: 'Updated' }],
+        },
+      );
     });
   });
 
@@ -367,7 +382,12 @@ describe('CrepeEditor and useCrepeInstance', () => {
 
     rerender(
       <MilkdownProvider>
-        <HookHarness ref={ref} content="# After" comments={[]} readOnly={true} />
+        <HookHarness
+          ref={ref}
+          content="# After"
+          comments={[]}
+          readOnly={true}
+        />
       </MilkdownProvider>,
     );
 

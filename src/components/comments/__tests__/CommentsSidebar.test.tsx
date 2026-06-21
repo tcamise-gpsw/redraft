@@ -8,7 +8,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommentThread } from '../../../types/comments';
 
 const addComment = vi.hoisted(() => vi.fn());
@@ -210,9 +210,7 @@ describe('CommentsSidebar', () => {
         onClearSelection={vi.fn()}
       />,
     );
-    expect(
-      screen.getByText(/no comments yet/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/no comments yet/i)).toBeInTheDocument();
   });
 
   it('hides the empty-state message when a pending selection is active', () => {
@@ -230,4 +228,3 @@ describe('CommentsSidebar', () => {
     expect(screen.queryByText(/no comments yet/i)).not.toBeInTheDocument();
   });
 });
-

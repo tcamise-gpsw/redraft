@@ -117,5 +117,3 @@ export const CrepeEditor = forwardRef<CrepeEditorHandle, CrepeEditorProps>(
     );
   },
 );
-
-export { useCrepeInstance } from './useCrepeInstance';

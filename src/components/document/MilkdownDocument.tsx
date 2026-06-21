@@ -118,7 +118,11 @@ export function MilkdownDocument({
         </div>
 
         {mode === 'wysiwyg' ? (
-          <Button disabled={isSaving} onClick={() => void handleSave(draftContent)} type="button">
+          <Button
+            disabled={isSaving}
+            onClick={() => void handleSave(draftContent)}
+            type="button"
+          >
             {isSaving ? 'Saving…' : 'Save'}
           </Button>
         ) : null}

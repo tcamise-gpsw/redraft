@@ -11,10 +11,7 @@ import {
   makeCommentPlugin,
   type CommentHighlight,
 } from './commentPlugin';
-import {
-  useSelectionCapture,
-  type TextSelection,
-} from './selectionCapture';
+import { useSelectionCapture, type TextSelection } from './selectionCapture';
 import { mermaidNodeViewPlugin } from './mermaidNodeView';
 
 export interface UseCrepeInstanceOptions {

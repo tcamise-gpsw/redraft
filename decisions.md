@@ -54,3 +54,7 @@
 
 - Updated only the docs named in the plan and cleaned every stale reference to the removed markdown renderer/editor stack within those files. That keeps the migration documentation accurate without reopening unrelated historical plans or notes.
 - Documented `/proposals/:path` as the single active proposal route and treated `/edit` as compatibility behavior in implementation, not as a first-class route in the architecture docs.
+
+## Task 10 — Final Validation
+
+- Ran the full project gates from `AGENTS.md` after the migration landed: Vitest, TypeScript, ESLint, Prettier check, Vite build, and Playwright. The migration is only treated as complete once all of them pass together on the final tree.

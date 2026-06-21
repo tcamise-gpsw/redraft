@@ -54,20 +54,17 @@ export function CreateProposalDialog({
         `# ${title.trim()}\n\n<!-- Write your proposal here -->`,
         `Create proposal: ${filename}`,
       );
-      queryClient.setQueryData<ProposalNode[]>(
-        ['proposals', 'tree'],
-        (old) => {
-          const newNode: ProposalNode = {
-            name: filename,
-            path: fullPath,
-            type: 'file',
-            children: undefined,
-          };
-          return [...(old ?? []), newNode].sort((a, b) =>
-            a.name.localeCompare(b.name),
-          );
-        },
-      );
+      queryClient.setQueryData<ProposalNode[]>(['proposals', 'tree'], (old) => {
+        const newNode: ProposalNode = {
+          name: filename,
+          path: fullPath,
+          type: 'file',
+          children: undefined,
+        };
+        return [...(old ?? []), newNode].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
+      });
       await queryClient.invalidateQueries({ queryKey: ['proposals', 'tree'] });
       navigate(`/proposals/${normalizedPath}`);
       setPath('');

@@ -31,10 +31,7 @@ vi.mock('./milkdown/CrepeEditor', () => ({
       >
         Mutate WYSIWYG
       </button>
-      <button
-        onClick={() => onTextSelect?.(emittedSelection)}
-        type="button"
-      >
+      <button onClick={() => onTextSelect?.(emittedSelection)} type="button">
         Select text
       </button>
     </div>
@@ -45,7 +42,10 @@ import { MilkdownDocument } from './MilkdownDocument';
 
 describe('MilkdownDocument', () => {
   beforeEach(() => {
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
   });
 
   it('switches between view, wysiwyg, and raw modes', () => {

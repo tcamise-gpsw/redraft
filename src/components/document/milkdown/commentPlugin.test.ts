@@ -57,7 +57,9 @@ function createParagraphState(
 ) {
   return EditorState.create({
     schema,
-    doc: schema.node('doc', undefined, [schema.node('paragraph', undefined, content)]),
+    doc: schema.node('doc', undefined, [
+      schema.node('paragraph', undefined, content),
+    ]),
     plugins: [makeCommentPlugin(comments, onSelectComment)],
   });
 }
@@ -156,12 +158,7 @@ describe('commentPlugin', () => {
     expect(highlight).not.toBeNull();
 
     view.someProp('handleClick', (handler) => {
-      handled =
-        handler(
-          view,
-          0,
-          { target: highlight } as MouseEvent,
-        ) === true;
+      handled = handler(view, 0, { target: highlight } as MouseEvent) === true;
       return true;
     });
 

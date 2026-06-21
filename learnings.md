@@ -40,3 +40,7 @@
 ## Task 9 — Documentation Cleanup
 
 - Large markdown edits are safer when done as a few targeted structural replacements instead of broad rewrites. The core design spec had enough duplicated terms that narrow range edits avoided collateral drift.
+
+## Task 10 — Final Validation
+
+- Prettier touched a wider set of `src/` files than the migration directly edited. Running the formatter once at the end was cleaner than carrying formatting drift through the final lint and format gates.

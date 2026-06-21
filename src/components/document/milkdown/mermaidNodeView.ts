@@ -81,7 +81,9 @@ class MermaidCodeBlockView implements NodeView {
 
       const message = document.createElement('p');
       message.textContent =
-        error instanceof Error ? error.message : 'Unable to render mermaid diagram.';
+        error instanceof Error
+          ? error.message
+          : 'Unable to render mermaid diagram.';
 
       fallback.replaceChildren(preview, message);
       this.dom.replaceChildren(fallback);

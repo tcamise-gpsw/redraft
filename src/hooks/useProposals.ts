@@ -84,7 +84,8 @@ export function useProposals() {
       const items = await client.getTree();
       return buildTree(
         items.filter(
-          (item) => item.type !== 'blob' || !item.path?.endsWith('.comments.json'),
+          (item) =>
+            item.type !== 'blob' || !item.path?.endsWith('.comments.json'),
         ),
       );
     },

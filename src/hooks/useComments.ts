@@ -57,10 +57,10 @@ export function useComments(path: string) {
           JSON.stringify(initialFile),
           `Add comment on ${fileName(path)}`,
         );
-        queryClient.setQueryData<FileContent>(
-          ['proposal', path, 'comments'],
-          { content: JSON.stringify(initialFile), sha: writeResult.sha },
-        );
+        queryClient.setQueryData<FileContent>(['proposal', path, 'comments'], {
+          content: JSON.stringify(initialFile),
+          sha: writeResult.sha,
+        });
       } else {
         const parsed = JSON.parse(existing.content) as CommentFile;
         const nextFile: CommentFile = {
@@ -73,10 +73,10 @@ export function useComments(path: string) {
           existing.sha,
           `Add comment on ${fileName(path)}`,
         );
-        queryClient.setQueryData<FileContent>(
-          ['proposal', path, 'comments'],
-          { content: JSON.stringify(nextFile), sha: writeResult.sha },
-        );
+        queryClient.setQueryData<FileContent>(['proposal', path, 'comments'], {
+          content: JSON.stringify(nextFile),
+          sha: writeResult.sha,
+        });
       }
 
       await queryClient.invalidateQueries({
@@ -182,10 +182,10 @@ export function useComments(path: string) {
         existing.sha,
         `Resolve comment on ${fileName(path)}`,
       );
-      queryClient.setQueryData<FileContent>(
-        ['proposal', path, 'comments'],
-        { content: JSON.stringify(nextFile), sha: writeResult.sha },
-      );
+      queryClient.setQueryData<FileContent>(['proposal', path, 'comments'], {
+        content: JSON.stringify(nextFile),
+        sha: writeResult.sha,
+      });
       await queryClient.invalidateQueries({
         queryKey: ['proposal', path, 'comments'],
       });
