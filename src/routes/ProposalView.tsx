@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { CommentsSidebar } from '../components/comments/CommentsSidebar';
 import { AppLayout } from '../components/layout/AppLayout';
 import { DocumentView } from '../components/document/DocumentView';
-import { ProposalTree } from '../components/tree/ProposalTree';
+import { DocumentTree } from '../components/tree/DocumentTree';
 import { useComments } from '../hooks/useComments';
 import { useDocument } from '../hooks/useDocument';
 
@@ -13,7 +13,7 @@ export function ProposalView() {
   const path = useMemo(() => {
     const wildcard = params['*'];
     const cleaned = wildcard?.replace(/\/edit$/, '');
-    return cleaned ? `proposals/${cleaned}` : 'proposals/unknown.md';
+    return cleaned || 'unknown.md';
   }, [params]);
 
   const {
@@ -39,7 +39,7 @@ export function ProposalView() {
 
   return (
     <AppLayout
-      sidebar={<ProposalTree />}
+      sidebar={<DocumentTree />}
       main={
         <DocumentView
           path={path}

@@ -19,8 +19,8 @@ vi.mock('../../../hooks/useComments', () => ({
   useComments,
 }));
 
-vi.mock('../../tree/ProposalTree', () => ({
-  ProposalTree: () => <div>tree</div>,
+vi.mock('../../tree/DocumentTree', () => ({
+  DocumentTree: () => <div>tree</div>,
 }));
 
 vi.mock('../../document/DocumentView', () => ({
@@ -109,9 +109,9 @@ describe('ProposalView comment interactions', () => {
 
   it('scrolls the sidebar thread into view when a highlight is selected', () => {
     render(
-      <MemoryRouter initialEntries={['/proposals/doc.md']}>
+      <MemoryRouter initialEntries={['/d/doc.md']}>
         <Routes>
-          <Route path="/proposals/*" element={<ProposalView />} />
+          <Route path="/d/*" element={<ProposalView />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -123,9 +123,9 @@ describe('ProposalView comment interactions', () => {
 
   it('stores pending selection state so the sidebar can open the comment form', () => {
     render(
-      <MemoryRouter initialEntries={['/proposals/doc.md']}>
+      <MemoryRouter initialEntries={['/d/doc.md']}>
         <Routes>
-          <Route path="/proposals/*" element={<ProposalView />} />
+          <Route path="/d/*" element={<ProposalView />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -137,9 +137,9 @@ describe('ProposalView comment interactions', () => {
 
   it('scrolls the highlighted document anchor into view when a comment is clicked', () => {
     render(
-      <MemoryRouter initialEntries={['/proposals/doc.md']}>
+      <MemoryRouter initialEntries={['/d/doc.md']}>
         <Routes>
-          <Route path="/proposals/*" element={<ProposalView />} />
+          <Route path="/d/*" element={<ProposalView />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -151,15 +151,15 @@ describe('ProposalView comment interactions', () => {
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
 
-  it('strips a trailing edit suffix before loading the proposal', () => {
+  it('strips a trailing edit suffix before loading the document', () => {
     render(
-      <MemoryRouter initialEntries={['/proposals/doc.md/edit']}>
+      <MemoryRouter initialEntries={['/d/doc.md/edit']}>
         <Routes>
-          <Route path="/proposals/*" element={<ProposalView />} />
+          <Route path="/d/*" element={<ProposalView />} />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(documentViewPath).toHaveBeenCalledWith('proposals/doc.md');
+    expect(documentViewPath).toHaveBeenCalledWith('doc.md');
   });
 });

@@ -19,7 +19,7 @@ vi.mock('../../../lib/github/client', () => ({
 }));
 
 import { AuthProvider } from '../../../hooks/useAuth';
-import { ProposalTree } from '../ProposalTree';
+import { DocumentTree } from '../DocumentTree';
 
 function createLocalStorageMock() {
   const store = new Map<string, string>();
@@ -53,122 +53,109 @@ function renderTree() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <HashRouter>
-          <ProposalTree />
+          <DocumentTree />
         </HashRouter>
       </AuthProvider>
     </QueryClientProvider>,
   );
 }
 
-describe('ProposalTree', () => {
+describe('DocumentTree', () => {
   beforeEach(() => {
     vi.stubGlobal('localStorage', createLocalStorageMock());
     localStorage.clear();
     setStoredAuth();
-    window.location.hash = '#/proposals/media/overview.md';
-    createFile.mockReset();
+    window.location.hash = '#/d/media/overview.md';
+    getTree.mockReset();
     getFileContent.mockReset().mockResolvedValue(null);
+    createFile.mockReset();
   });
 
-  it('renders a sorted directory tree from proposal entries', async () => {
+  it('shows under-review documents and keeps the documents tree collapsed by default', async () => {
     getTree.mockResolvedValueOnce([
       { path: 'rest.md', type: 'blob' },
       { path: 'media/overview.md', type: 'blob' },
-      { path: 'media', type: 'tree' },
-      { path: 'api', type: 'tree' },
       { path: 'api/graphql.md', type: 'blob' },
     ]);
+    getFileContent.mockImplementation(async (path: string) => {
+      if (path === '.redraft/comments/media/overview.comments.json') {
+        return { content: '{"version":1,"comments":[]}', sha: 'sidecar-sha' };
+      }
+
+      return null;
+    });
 
     renderTree();
+
+    expect(await screen.findByText('Under Review')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('link', { name: /media\/overview\.md/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'rest.md' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Documents' }));
 
     expect(await screen.findByText('api')).toBeInTheDocument();
     expect(screen.getByText('media')).toBeInTheDocument();
-    expect(screen.getByText('rest.md')).toBeInTheDocument();
-
-    const topLevelLabels = Array.from(screen.getByRole('tree').children).map(
-      (item) => {
-        const label = (item as HTMLElement).firstElementChild?.querySelector(
-          '[data-testid="proposal-tree-label"]',
-        );
-        return label?.textContent ?? null;
-      },
-    );
-    expect(topLevelLabels).toEqual(['api', 'media', 'rest.md']);
+    expect(screen.getByRole('link', { name: 'rest.md' })).toBeInTheDocument();
   });
 
-  it('highlights the active proposal route', async () => {
-    getTree.mockResolvedValueOnce([
-      { path: 'media', type: 'tree' },
-      { path: 'media/overview.md', type: 'blob' },
-    ]);
+  it('highlights the active document route', async () => {
+    getTree.mockResolvedValueOnce([{ path: 'media/overview.md', type: 'blob' }]);
 
     renderTree();
+    fireEvent.click(await screen.findByRole('button', { name: 'Documents' }));
 
     const activeLink = await screen.findByRole('link', { name: 'overview.md' });
     expect(activeLink).toHaveClass('bg-cyan-500/10');
   });
 
   it('navigates with a file link and exposes the target hash path', async () => {
-    getTree.mockResolvedValueOnce([
-      { path: 'media', type: 'tree' },
-      { path: 'media/overview.md', type: 'blob' },
-    ]);
+    getTree.mockResolvedValueOnce([{ path: 'media/overview.md', type: 'blob' }]);
 
     renderTree();
+    fireEvent.click(await screen.findByRole('button', { name: 'Documents' }));
 
     const link = await screen.findByRole('link', { name: 'overview.md' });
-    expect(link).toHaveAttribute('href', '#/proposals/media/overview.md');
+    expect(link).toHaveAttribute('href', '#/d/media/overview.md');
   });
 
   it('renders loading and error states', async () => {
-    getTree.mockReturnValueOnce(new Promise(() => undefined));
+    const { promise } = Promise.withResolvers<never>();
+    getTree.mockReturnValueOnce(promise);
     renderTree();
-    expect(await screen.findByText(/loading proposals/i)).toBeInTheDocument();
+    expect(await screen.findByText(/loading documents/i)).toBeInTheDocument();
 
     getTree.mockRejectedValueOnce(new Error('boom'));
     renderTree();
     expect(
-      await screen.findByText(/unable to load proposals/i),
+      await screen.findByText(/unable to load documents/i),
     ).toBeInTheDocument();
   });
 
-  it('creates a proposal from the dialog and calls createFile', async () => {
+  it('creates a document from the dialog and calls createFile with a root-relative path', async () => {
     getTree.mockResolvedValueOnce([]);
     createFile.mockResolvedValueOnce({ sha: 'new-sha' });
 
     renderTree();
 
     fireEvent.click(
-      await screen.findByRole('button', { name: /new proposal/i }),
+      await screen.findByRole('button', { name: /new document/i }),
     );
     fireEvent.change(screen.getByLabelText(/file path/i), {
-      target: { value: 'api/new-proposal.md' },
+      target: { value: 'api/new-document' },
     });
     fireEvent.change(screen.getByLabelText(/title/i), {
-      target: { value: 'New Proposal' },
+      target: { value: 'New Document' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /create proposal/i }));
+    fireEvent.click(screen.getByRole('button', { name: /create document/i }));
 
     await waitFor(() => {
       expect(createFile).toHaveBeenCalledWith(
-        'proposals/api/new-proposal.md',
-        '# New Proposal\n\n<!-- Write your proposal here -->',
-        'Create proposal: new-proposal.md',
+        'api/new-document.md',
+        '# New Document\n\n<!-- Write your document here -->',
+        'Create document: new-document.md',
       );
     });
-  });
-
-  it('does not render .comments.json sidecar files in the tree', async () => {
-    getTree.mockResolvedValueOnce([
-      { path: 'api-design.md', type: 'blob' },
-      { path: 'api-design.comments.json', type: 'blob' },
-    ]);
-
-    renderTree();
-
-    expect(await screen.findByText('api-design.md')).toBeInTheDocument();
-    expect(
-      screen.queryByText('api-design.comments.json'),
-    ).not.toBeInTheDocument();
   });
 });

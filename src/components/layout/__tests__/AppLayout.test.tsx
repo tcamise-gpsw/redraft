@@ -58,13 +58,13 @@ describe('AppLayout', () => {
     );
   });
 
-  it('routes to ProposalView for hash proposal paths', () => {
+  it('routes to ProposalView for hash document paths', () => {
     setStoredAuth();
-    window.location.hash = '#/proposals/test';
+    window.location.hash = '#/d/test';
 
     render(<App />);
 
-    expect(screen.getByText('Loading proposal…')).toBeInTheDocument();
+    expect(screen.getByText('Loading document…')).toBeInTheDocument();
   });
 
   it('routes to Settings for the settings hash path', () => {

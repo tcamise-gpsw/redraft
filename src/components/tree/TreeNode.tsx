@@ -3,7 +3,13 @@ import { Link, useLocation } from 'react-router-dom';
 
 import type { DocumentNode } from '../../types/documents';
 
-export function TreeNode({ node }: { node: DocumentNode }) {
+export function TreeNode({
+  node,
+  reviewPaths,
+}: {
+  node: DocumentNode;
+  reviewPaths: Set<string>;
+}) {
   const location = useLocation();
   const [expanded, setExpanded] = useState(true);
 
@@ -16,12 +22,12 @@ export function TreeNode({ node }: { node: DocumentNode }) {
           className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm font-medium text-slate-200 hover:bg-slate-800"
         >
           <span aria-hidden="true">{expanded ? '▾' : '▸'}</span>
-          <span data-testid="proposal-tree-label">{node.name}</span>
+          <span data-testid="document-tree-label">{node.name}</span>
         </button>
         {expanded && node.children?.length ? (
           <ul className="space-y-1 border-l border-slate-800 pl-3">
             {node.children.map((child) => (
-              <TreeNode key={child.path} node={child} />
+              <TreeNode key={child.path} node={child} reviewPaths={reviewPaths} />
             ))}
           </ul>
         ) : null}
@@ -29,7 +35,7 @@ export function TreeNode({ node }: { node: DocumentNode }) {
     );
   }
 
-  const routePath = `/proposals/${node.path.replace(/^proposals\//, '')}`;
+  const routePath = `/d/${node.path}`;
   const active = location.pathname === routePath;
 
   return (
@@ -43,7 +49,12 @@ export function TreeNode({ node }: { node: DocumentNode }) {
         ].join(' ')}
       >
         <span aria-hidden="true">•</span>
-        <span data-testid="proposal-tree-label">{node.name}</span>
+        <span data-testid="document-tree-label">{node.name}</span>
+        {reviewPaths.has(node.path) ? (
+          <span className="text-cyan-300" title="Under review">
+            •
+          </span>
+        ) : null}
       </Link>
     </li>
   );

@@ -16,3 +16,8 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 
 - `lsp rename_file` moved the hook/type files cleanly but did not rewrite the import sites in this workspace. A follow-up search for the old module paths was still necessary to get the frontend compiling again.
 - The remote `underReview` story is trickier than local mode because the repo tree alone does not expose unresolved counts cheaply. For the POC, checking for optional `.redraft/comments/...` files per document and setting `unresolvedCount: 0` is enough to light up the review bucket without introducing a second GitHub tree API contract.
+
+## Task 4 - Frontend Document UI & Routing
+
+- Under-review badges become part of a link's accessible name, so role/name assertions need to match the path loosely (regex) instead of assuming the visible filename is the full accessible label.
+- Renaming a tree/query model from a flat list to a structured payload is a good place to remove optimistic cache writes. The extra latency is negligible compared with the risk of keeping the two sections out of sync.

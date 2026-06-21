@@ -7,7 +7,7 @@ import { getApiBaseUrl } from '../lib/mode';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
 
-export function useProposalEdit(path: string) {
+export function useDocumentEdit(path: string) {
   const { pat, repo } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -36,16 +36,16 @@ export function useProposalEdit(path: string) {
         path,
         content,
         sha,
-        `Update proposal: ${path.split('/').at(-1) ?? path}`,
+        `Update: ${path.split('/').at(-1) ?? path}`,
       );
       await queryClient.invalidateQueries({
-        queryKey: ['proposal', path, 'content'],
+        queryKey: ['document', path, 'content'],
       });
       await queryClient.invalidateQueries({
-        queryKey: ['proposal', path, 'commit'],
+        queryKey: ['document', path, 'commit'],
       });
-      navigate(`/${path.replace(/^proposals\//, 'proposals/')}`);
-      showToast({ tone: 'info', title: 'Proposal saved' });
+      navigate(`/d/${path}`);
+      showToast({ tone: 'info', title: 'Document saved' });
     } catch (error) {
       if (
         error instanceof ConflictError ||
@@ -62,7 +62,7 @@ export function useProposalEdit(path: string) {
       showToast({
         tone: 'error',
         title:
-          error instanceof Error ? error.message : 'Unable to save proposal',
+          error instanceof Error ? error.message : 'Unable to save document',
       });
     }
   }

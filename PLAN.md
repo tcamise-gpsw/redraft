@@ -230,7 +230,7 @@ export function useDocuments(): {
 - [x] Verify `getTree` filter logic via `src/lib/github/__tests__/client.test.ts`
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
+- [x] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
 
 ---
 
@@ -307,21 +307,21 @@ export function CreateDocumentDialog(props: {
 - Update welcome text from "proposal" language to "document" language.
 
 **Checklist:**
-- [ ] "Under Review" section always visible, shows documents with unresolved counts
-- [ ] "Documents" section collapsed by default, expandable
-- [ ] Clicking a document in either section navigates correctly
-- [ ] "New Document" creates a file at the specified root-relative path
-- [ ] Route `/d/docs/arch.md` correctly resolves to document path `docs/arch.md`
-- [ ] `useDocumentEdit` navigates to `/d/${path}` after save
-- [ ] No references to `ProposalTree`, `CreateProposalDialog`, `ProposalNode`, `useProposal`, or `useProposalEdit` remain
-- [ ] All `proposals/`-prefixed route logic removed
+- [x] "Under Review" section always visible, shows documents with unresolved counts
+- [x] "Documents" section collapsed by default, expandable
+- [x] Clicking a document in either section navigates correctly
+- [x] "New Document" creates a file at the specified root-relative path
+- [x] Route `/d/docs/arch.md` correctly resolves to document path `docs/arch.md`
+- [x] `useDocumentEdit` navigates to `/d/${path}` after save
+- [x] No references to `ProposalTree`, `CreateProposalDialog`, `ProposalNode`, `useProposal`, or `useProposalEdit` remain
+- [x] All `proposals/`-prefixed route logic removed
 
 **Tests:**
-- [ ] Run `npx vitest run src/`
-- [ ] Rename and update `src/components/tree/__tests__/ProposalTree.test.tsx` → `DocumentTree.test.tsx`
-- [ ] Test: Under Review section renders entries from `underReview` data
-- [ ] Test: Documents section is collapsed by default
-- [ ] Test: New Document dialog validates and creates with correct path
+- [x] Run `npx vitest run src/`
+- [x] Rename and update `src/components/tree/__tests__/ProposalTree.test.tsx` → `DocumentTree.test.tsx`
+- [x] Test: Under Review section renders entries from `underReview` data
+- [x] Test: Documents section is collapsed by default
+- [x] Test: New Document dialog validates and creates with correct path
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format

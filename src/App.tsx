@@ -34,7 +34,7 @@ function AppBody({ rateLimit }: { rateLimit: RateLimitInfo | null }) {
       <Header rateLimit={rateLimit} />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/proposals/*" element={<ProposalRoute />} />
+        <Route path="/d/*" element={<ProposalRoute />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </HashRouter>

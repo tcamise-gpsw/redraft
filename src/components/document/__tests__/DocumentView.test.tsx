@@ -7,18 +7,18 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommentThread } from '../../../types/comments';
 
-const { saveProposal, useDocument, useProposalEdit } = vi.hoisted(() => ({
-  saveProposal: vi.fn(),
+const { saveDocument, useDocument, useDocumentEdit } = vi.hoisted(() => ({
+  saveDocument: vi.fn(),
   useDocument: vi.fn(),
-  useProposalEdit: vi.fn(),
+  useDocumentEdit: vi.fn(),
 }));
 
 vi.mock('../../../hooks/useDocument', () => ({
   useDocument,
 }));
 
-vi.mock('../../../hooks/useProposalEdit', () => ({
-  useProposalEdit,
+vi.mock('../../../hooks/useDocumentEdit', () => ({
+  useDocumentEdit,
 }));
 
 vi.mock('../ActivityIndicator', () => ({
@@ -69,8 +69,8 @@ const COMMENT_THREAD: CommentThread = {
 
 describe('DocumentView', () => {
   beforeEach(() => {
-    saveProposal.mockReset().mockResolvedValue(undefined);
-    useProposalEdit.mockReset().mockReturnValue({ save: saveProposal });
+    saveDocument.mockReset().mockResolvedValue(undefined);
+    useDocumentEdit.mockReset().mockReturnValue({ save: saveDocument });
     useDocument.mockReset().mockReturnValue({
       content: '# Proposal',
       sha: 'current-sha',
@@ -80,11 +80,11 @@ describe('DocumentView', () => {
     });
   });
 
-  it('renders MilkdownDocument with proposal content and comments', () => {
+  it('renders MilkdownDocument with document content and comments', () => {
     render(
       <MemoryRouter>
         <DocumentView
-          path="proposals/doc.md"
+          path="doc.md"
           comments={[COMMENT_THREAD]}
           onSelectComment={vi.fn()}
           onTextSelect={vi.fn()}
@@ -97,11 +97,11 @@ describe('DocumentView', () => {
     expect(screen.queryByRole('link', { name: 'Edit' })).toBeNull();
   });
 
-  it('saves through useProposalEdit with the current sha', async () => {
+  it('saves through useDocumentEdit with the current sha', async () => {
     render(
       <MemoryRouter>
         <DocumentView
-          path="proposals/doc.md"
+          path="doc.md"
           comments={[]}
           onSelectComment={vi.fn()}
           onTextSelect={vi.fn()}
@@ -112,11 +112,11 @@ describe('DocumentView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save from document' }));
 
     await waitFor(() => {
-      expect(saveProposal).toHaveBeenCalledWith('# Updated', 'current-sha');
+      expect(saveDocument).toHaveBeenCalledWith('# Updated', 'current-sha');
     });
   });
 
-  it('shows the loading state while the proposal query is pending', () => {
+  it('shows the loading state while the document query is pending', () => {
     useDocument.mockReturnValueOnce({
       content: '',
       sha: '',
@@ -128,7 +128,7 @@ describe('DocumentView', () => {
     render(
       <MemoryRouter>
         <DocumentView
-          path="proposals/doc.md"
+          path="doc.md"
           comments={[]}
           onSelectComment={vi.fn()}
           onTextSelect={vi.fn()}
@@ -136,7 +136,7 @@ describe('DocumentView', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Loading proposal…')).toBeInTheDocument();
+    expect(screen.getByText('Loading document…')).toBeInTheDocument();
   });
 
   it('shows the error state when loading fails', () => {
@@ -151,7 +151,7 @@ describe('DocumentView', () => {
     render(
       <MemoryRouter>
         <DocumentView
-          path="proposals/doc.md"
+          path="doc.md"
           comments={[]}
           onSelectComment={vi.fn()}
           onTextSelect={vi.fn()}
@@ -159,7 +159,7 @@ describe('DocumentView', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Unable to load proposal')).toBeInTheDocument();
+    expect(screen.getByText('Unable to load document')).toBeInTheDocument();
     expect(screen.getByText('Boom')).toBeInTheDocument();
   });
 });

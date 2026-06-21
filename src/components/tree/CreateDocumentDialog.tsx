@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import type { DocumentNode } from '../../types/documents';
 
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
@@ -9,7 +8,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { GitHubClient } from '../../lib/github';
 import { getApiBaseUrl } from '../../lib/mode';
 
-export function CreateProposalDialog({
+export function CreateDocumentDialog({
   open,
   onClose,
 }: {
@@ -27,8 +26,9 @@ export function CreateProposalDialog({
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!path.trim().endsWith('.md')) {
-      setError('File path must end with .md');
+    const normalizedPath = path.trim().replace(/^\/+/, '');
+    if (!normalizedPath) {
+      setError('File path is required.');
       return;
     }
 
@@ -37,9 +37,11 @@ export function CreateProposalDialog({
       return;
     }
 
-    const normalizedPath = path.trim().replace(/^\/+/, '');
-    const fullPath = `proposals/${normalizedPath}`;
-    const filename = normalizedPath.split('/').at(-1) ?? normalizedPath;
+    const fullPath = normalizedPath.endsWith('.md')
+      ? normalizedPath
+      : `${normalizedPath}.md`;
+    const filename = fullPath.split('/').at(-1) ?? fullPath;
+    const documentTitle = title.trim() || filename.replace(/\.md$/u, '');
 
     setError(null);
     setSubmitting(true);
@@ -53,22 +55,11 @@ export function CreateProposalDialog({
       });
       await client.createFile(
         fullPath,
-        `# ${title.trim()}\n\n<!-- Write your proposal here -->`,
-        `Create proposal: ${filename}`,
+        `# ${documentTitle}\n\n<!-- Write your document here -->`,
+        `Create document: ${filename}`,
       );
-      queryClient.setQueryData<DocumentNode[]>(['documents', 'tree'], (old) => {
-        const newNode: DocumentNode = {
-          name: filename,
-          path: fullPath,
-          type: 'file',
-          children: undefined,
-        };
-        return [...(old ?? []), newNode].sort((a, b) =>
-          a.name.localeCompare(b.name),
-        );
-      });
       await queryClient.invalidateQueries({ queryKey: ['documents', 'tree'] });
-      navigate(`/proposals/${normalizedPath}`);
+      navigate(`/d/${fullPath}`);
       setPath('');
       setTitle('');
       onClose();
@@ -76,7 +67,7 @@ export function CreateProposalDialog({
       setError(
         createError instanceof Error
           ? createError.message
-          : 'Unable to create proposal',
+          : 'Unable to create document',
       );
     } finally {
       setSubmitting(false);
@@ -84,38 +75,32 @@ export function CreateProposalDialog({
   };
 
   return (
-    <Dialog open={open} title="New proposal" onClose={onClose}>
+    <Dialog open={open} title="New document" onClose={onClose}>
       <form className="space-y-4" onSubmit={handleCreate}>
-        <label
-          className="block space-y-2 text-sm font-medium"
-          htmlFor="proposal-path"
-        >
+        <label className="block space-y-2 text-sm font-medium" htmlFor="document-path">
           <span>File path</span>
           <input
-            id="proposal-path"
+            id="document-path"
             value={path}
             onChange={(event) => setPath(event.target.value)}
-            placeholder="api/new-proposal.md"
+            placeholder="docs/new-document"
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50"
           />
         </label>
-        <label
-          className="block space-y-2 text-sm font-medium"
-          htmlFor="proposal-title"
-        >
+        <label className="block space-y-2 text-sm font-medium" htmlFor="document-title">
           <span>Title</span>
           <input
-            id="proposal-title"
+            id="document-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="New Proposal"
+            placeholder="New Document"
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50"
           />
         </label>
         {error ? <p className="text-sm text-rose-200">{error}</p> : null}
         <div className="flex items-center gap-3">
           <Button disabled={submitting} type="submit">
-            {submitting ? 'Creating…' : 'Create proposal'}
+            {submitting ? 'Creating…' : 'Create document'}
           </Button>
           <Button onClick={onClose} type="button" variant="secondary">
             Cancel
