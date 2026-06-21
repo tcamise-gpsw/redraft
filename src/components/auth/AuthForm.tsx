@@ -51,11 +51,11 @@ export function AuthForm() {
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-16 text-slate-50">
       <div className="mx-auto max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl shadow-black/30">
-        <div className="mb-8 space-y-2 text-center">
-          <h1 className="text-2xl font-semibold">Connect to GitHub</h1>
+        <div className="mb-8 flex flex-col items-center gap-3 text-center">
+          <img src="/logo.png" alt="ReDraft" className="h-10 rounded bg-white px-2 py-0.5" />
           <p className="text-sm text-slate-300">
-            Enter a fine-grained GitHub PAT and the target repository to unlock
-            proposal review.
+            Enter a GitHub PAT and the target repository to unlock proposal
+            review.
           </p>
         </div>
 

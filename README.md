@@ -1,3 +1,5 @@
+<img src="public/logo.png" alt="ReDraft" height="48" />
+
 # ReDraft
 
 ReDraft is a proposal review workspace for markdown documents. It lets teams browse proposals, discuss them with inline comment threads, and edit them in either a rich-text editor or raw markdown — backed by GitHub in remote mode or the local filesystem in local mode.
