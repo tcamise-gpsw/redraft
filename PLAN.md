@@ -73,7 +73,7 @@ export function makeCommentPlugin(
 - [x] Test: `tr.mapping` shifts decoration positions after text insert
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -112,18 +112,18 @@ export function useSelectionCapture(
 - Cleans up the event listener on unmount or when `loading` transitions
 
 **Checklist:**
-- [ ] Selection captured from ProseMirror state, not `window.getSelection()`
-- [ ] Prefix/suffix bounded to 100 chars from doc boundaries
-- [ ] Empty selections (collapsed cursor) produce no callback
-- [ ] Callback ref pattern prevents stale closures
-- [ ] Listener cleaned up on unmount
+- [x] Selection captured from ProseMirror state, not `window.getSelection()`
+- [x] Prefix/suffix bounded to 100 chars from doc boundaries
+- [x] Empty selections (collapsed cursor) produce no callback
+- [x] Callback ref pattern prevents stale closures
+- [x] Listener cleaned up on unmount
 
 **Tests:**
-- [ ] Run `npx vitest run src/components/document/milkdown/selectionCapture` to verify
-- [ ] Test: non-empty selection fires `onTextSelect` with correct quote and context
-- [ ] Test: empty selection (from === to) does not fire
-- [ ] Test: selection at doc start has empty prefix
-- [ ] Test: selection at doc end has empty suffix
+- [x] Run `npx vitest run src/components/document/milkdown/selectionCapture` to verify
+- [x] Test: non-empty selection fires `onTextSelect` with correct quote and context
+- [x] Test: empty selection (from === to) does not fire
+- [x] Test: selection at doc start has empty prefix
+- [x] Test: selection at doc end has empty suffix
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit
