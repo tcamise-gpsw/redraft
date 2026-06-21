@@ -26,3 +26,9 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 
 - macOS temp paths can appear under both `/var/...` and `/private/var/...`. Git reports the repository root using the realpath, so computing a repo-relative scope from the unresolved temp path produced an "outside repository" error. `realpath()` on both values fixes that class of bug.
 - Plain-text 404 bodies from Hono make route-registration misses obvious: a `response.json()` parse failure in tests is often a strong signal that the route never matched, not that the JSON payload shape is wrong.
+
+## Task 5 — CLI Entry Point & Server Bootstrap
+
+- Commander’s root command action and subcommand action do not hand you the same second argument shape. Treating the second argument as parsed options worked in one path and failed in the other. Using the action callback’s `this: Command` binding was the stable cross-path fix.
+- The CLI verification exposed that problem immediately because the subcommand silently ignored `--port` and tried to bind the default 4200. A cheap manual smoke test on a second port is worth running before wiring E2E around a new CLI.
+- For Node-side Hono use, `app.fetch()` plus a small `IncomingMessage` → `Request` bridge is enough. A dedicated adapter package was not necessary for the current server scope.

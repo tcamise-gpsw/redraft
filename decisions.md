@@ -30,3 +30,9 @@ Append-only record of meaningful execution-time decisions.
 - Kept git as a convenience layer on top of immediate filesystem writes: the routes query and mutate the working tree, but no other server behavior depends on a successful commit. This preserves the spec's “commit button is optional” rule.
 - Scoped `git status` and `git add` to the proposals directory using the repo-relative path returned from `git rev-parse --show-toplevel` + `relative(...)`. That prevents unrelated repository changes from leaking into Draftspace's status view or convenience commits.
 - Forced a fallback git identity (`Draftspace <draftspace@local>`) on the commit command so the endpoint works even in fresh repos without user.name/user.email configured.
+
+## Task 5 — CLI Entry Point & Server Bootstrap
+
+- Kept static asset serving inside `server/app.ts` rather than adding a Hono-specific static middleware package. The server only needs a small, explicit MIME map for the built Vite output, and avoiding another dependency kept the bootstrap path transparent.
+- Split the local server into two layers: `buildDraftspaceApp()` assembles the Hono routes and static responses for tests, while `startDraftspaceServer()` owns the real Node HTTP server, WebSocket upgrade handling, and lifecycle methods. That made the Hono-side behavior unit-testable without spinning up sockets.
+- Preserved both CLI entry shapes from the plan: `npm run serve -- ./proposals` works via the root command path, while `draftspace serve ./proposals` works via the explicit subcommand. The actual option parsing had to use Commander’s action `this` binding for consistency across both shapes.

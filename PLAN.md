@@ -226,7 +226,7 @@ function startWatcher(basePath: string, onEvent: (event: FileEvent) => void): ()
 - [x] Test non-git directory returns appropriate error
 
 **Commit:**
-- [ ] `feat(server): add git status and commit convenience endpoints`
+- [x] `feat(server): add git status and commit convenience endpoints`
 
 ---
 
@@ -261,16 +261,16 @@ Options:
 - Graceful shutdown on SIGINT/SIGTERM: stop watcher, close WS connections, close server
 
 **Checklist:**
-- [ ] `npm run serve -- ./proposals` starts server, prints URL to stdout
-- [ ] `curl http://localhost:4200/api/github/user` returns valid JSON
-- [ ] Browser can load `http://localhost:4200/` and see the React app
-- [ ] The served index.html contains the `draftspace-mode` meta tag
-- [ ] CTRL+C cleanly stops the server
-- [ ] Invalid directory path prints error and exits with code 1
+- [x] `npm run serve -- ./proposals` starts server, prints URL to stdout
+- [x] `curl http://localhost:4200/api/github/user` returns valid JSON
+- [x] Browser can load `http://localhost:4200/` and see the React app
+- [x] The served index.html contains the `draftspace-mode` meta tag
+- [x] CTRL+C cleanly stops the server
+- [x] Invalid directory path prints error and exits with code 1
 
 **Tests:**
-- [ ] No automated tests for CLI itself (tested via E2E in Task 9)
-- [ ] Verify `server/app.ts` route assembly with a Hono test client (supertest-style)
+- [x] No automated tests for CLI itself (tested via E2E in Task 9)
+- [x] Verify `server/app.ts` route assembly with a Hono test client (supertest-style)
 
 **Commit:**
 - [ ] `feat(server): implement CLI and server bootstrap`
