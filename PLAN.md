@@ -293,7 +293,7 @@ Routing setup in `App.tsx`:
 - [x] Create proposal: dialog validates inputs, calls createFile
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -343,20 +343,20 @@ Routing setup in `App.tsx`:
 - When a user selects text, the prefix/suffix context is extracted from the rendered text content (not the raw markdown) to enable anchor matching
 
 **Checklist:**
-- [ ] Markdown renders correctly with GFM support
-- [ ] Comment highlights appear on text that has anchored comments (using simple indexOf matching; full anchoring engine is Task 7)
-- [ ] Clicking a highlight calls onSelectComment with the correct ID
-- [ ] Text selection captures quote + surrounding context
-- [ ] Activity indicator shows last editor and relative time
-- [ ] Edit button navigates to the edit route
-- [ ] Loading and error states display properly
-- [ ] 404 on .comments.json is handled gracefully (empty comments)
+- [x] Markdown renders correctly with GFM support
+- [x] Comment highlights appear on text that has anchored comments (using simple indexOf matching; full anchoring engine is Task 7)
+- [x] Clicking a highlight calls onSelectComment with the correct ID
+- [x] Text selection captures quote + surrounding context
+- [x] Activity indicator shows last editor and relative time
+- [x] Edit button navigates to the edit route
+- [x] Loading and error states display properly
+- [x] 404 on .comments.json is handled gracefully (empty comments)
 
 **Tests:**
-- [ ] `npx vitest run src/components/document src/hooks`
-- [ ] MarkdownRenderer: renders basic markdown, GFM tables, code blocks
-- [ ] useProposal: handles successful fetch, 404 on comments, network error
-- [ ] ActivityIndicator: renders commit info, handles null
+- [x] `npx vitest run src/components/document src/hooks`
+- [x] MarkdownRenderer: renders basic markdown, GFM tables, code blocks
+- [x] useProposal: handles successful fetch, 404 on comments, network error
+- [x] ActivityIndicator: renders commit info, handles null
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`

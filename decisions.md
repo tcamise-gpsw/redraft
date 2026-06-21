@@ -14,3 +14,6 @@
 
 - 2026-06-21 — Task 5: Built the proposal tree directly from the flat Git tree API response inside `useProposals()` instead of inventing an intermediate service layer. The hook is the only consumer right now, so the tree normalization stays close to the query boundary and remains easy to replace if GitHub path semantics need to change.
 - 2026-06-21 — Task 5: Kept folder nodes expanded by default so nested proposals are immediately visible in the sidebar. The recursive `TreeNode` still owns expand/collapse state per directory, so the UX can be tightened later without changing the hook contract.
+
+- 2026-06-21 — Task 6: For the first viewer slice, comment highlighting uses simple quote replacement plus raw-markdown rendering instead of a DOM-range overlay system. That matches the plan’s temporary exact-match requirement and keeps the real anchoring complexity isolated to Task 7.
+- 2026-06-21 — Task 6: `useProposal()` loads content, optional comments, and latest commit as separate queries so later invalidation can stay surgical. The viewer only depends on the merged shape, not on how many underlying requests produced it.

@@ -1,17 +1,21 @@
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+
 import { AppLayout } from '../components/layout/AppLayout';
+import { DocumentView } from '../components/document/DocumentView';
+import { ProposalTree } from '../components/tree/ProposalTree';
 
 export function ProposalView() {
+  const params = useParams();
+  const path = useMemo(() => {
+    const wildcard = params['*'];
+    return wildcard ? `proposals/${wildcard}` : 'proposals/unknown.md';
+  }, [params]);
+
   return (
     <AppLayout
-      sidebar={<div className="text-sm text-slate-300">Proposal tree placeholder</div>}
-      main={
-        <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-          <h1 className="text-3xl font-semibold">Proposal view placeholder</h1>
-          <p className="text-sm text-slate-300">
-            Markdown rendering and file loading arrive in Task 6.
-          </p>
-        </div>
-      }
+      sidebar={<ProposalTree />}
+      main={<DocumentView path={path} />}
       aside={<div className="text-sm text-slate-300">Comments sidebar placeholder</div>}
     />
   );

@@ -14,3 +14,6 @@
 
 - 2026-06-21 — Task 5: Testing tree sort order against a flattened list was misleading once expanded child nodes were visible. The reliable assertion was to inspect only the immediate children of the root tree container.
 - 2026-06-21 — Task 5: The create-proposal flow is easiest to test at the component level by mocking `GitHubClient` and asserting the exact normalized repo path and commit message. That keeps the hook contract simple and still proves the write behavior end to end.
+
+- 2026-06-21 — Task 6: `react-markdown` escaped the injected `<mark>` tags until `rehype-raw` was added. For this MVP phase, raw HTML is intentional because the viewer is temporarily using HTML substitution instead of DOM-range highlights.
+- 2026-06-21 — Task 6: TanStack Query treats `undefined` as an invalid query result, even for optional resources. The optional comments query had to normalize missing data to `null` to keep the test output clean and avoid runtime warnings.
