@@ -17,7 +17,6 @@ A small engineering team can create, review, discuss, and evolve technical propo
 ## Non-Goals
 
 - Realtime collaboration (beyond activity indicators)
-- Rich text / WYSIWYG editing
 - Notifications
 - User management / access control beyond GitHub PAT
 - AI assistants
@@ -69,7 +68,7 @@ A small engineering team can create, review, discuss, and evolve technical propo
 | Styling | Tailwind CSS |
 | Routing | React Router (hash-based for GitHub Pages SPA compatibility) |
 | Data fetching | TanStack Query |
-| Markdown | react-markdown + remark/rehype plugins |
+| Markdown | Milkdown Crepe (`@milkdown/crepe`, `@milkdown/react`, `@milkdown/kit`) |
 | GitHub API | Octokit REST client (@octokit/rest) |
 
 ### Routing
@@ -79,8 +78,7 @@ Hash-based routing is required because GitHub Pages doesn't support SPA fallback
 | Route | View |
 |-------|------|
 | `/#/` | Proposal tree (root) |
-| `/#/proposals/:path` | View a specific proposal |
-| `/#/proposals/:path/edit` | Edit a specific proposal |
+| `/#/proposals/:path` | View and edit a specific proposal |
 | `/#/settings` | PAT and repository configuration |
 
 ---
@@ -224,9 +222,11 @@ App
 │   │   ├── TreeNode          — Recursive file/folder node
 │   │   └── CreateProposalBtn — New proposal action
 │   ├── DocumentView          — Center panel
-│   │   ├── MarkdownRenderer  — Rendered markdown with comment highlights
-│   │   │   └── CommentHighlight — Highlighted span for anchored comments
-│   │   └── MarkdownEditor    — Raw markdown textarea (edit mode toggle)
+│   │   ├── ActivityIndicator — Latest commit summary
+│   │   └── MilkdownDocument  — View / WYSIWYG / Raw document surface
+│   │       ├── CrepeEditor   — Milkdown-backed renderer/editor
+│   │       ├── RawEditor     — Plain textarea fallback
+│   │       └── milkdown/     — ProseMirror plugins and node views
 │   └── CommentsSidebar       — Right panel
 │       ├── CommentThread     — One thread with replies
 │       │   ├── CommentBody   — Single comment display
@@ -242,7 +242,6 @@ App
 |--------|---------------|
 | `lib/github/` | GitHub API client: auth validation, file CRUD, tree listing, commits, user info. Wraps @octokit/rest. |
 | `lib/comments/` | Comment anchoring: create anchors from text selection, resolve anchors to document positions, fuzzy matching, orphan detection. |
-| `lib/markdown/` | Markdown processing: parse markdown to identify anchor targets in the rendered output, map comment anchors to DOM positions. |
 
 ---
 
@@ -253,14 +252,14 @@ App
 1. User selects a proposal from the **ProposalTree**
 2. App navigates to `/#/proposals/:path`
 3. TanStack Query fetches the `.md` file content and `.comments.json` (if it exists) from GitHub API
-4. **MarkdownRenderer** renders the markdown with highlight overlays on text that has anchored comments
+4. **MilkdownDocument** renders the proposal in read-only mode with comment highlights
 5. **CommentsSidebar** shows all comment threads, ordered by their position in the document
 6. Clicking a comment in the sidebar scrolls to and highlights the anchored text
 7. Clicking a highlight in the document scrolls to the corresponding comment in the sidebar
 
 ### Adding a Comment
 
-1. User selects text in the rendered markdown
+1. User selects text in the document surface
 2. A small **"Comment" popover** appears near the selection
 3. User clicks the popover → **CommentForm** opens in the sidebar, pre-filled with the selected text as the anchor quote
 4. User types their comment and clicks **Submit**
@@ -274,13 +273,12 @@ App
 
 ### Editing a Proposal
 
-1. User clicks the **"Edit"** button on a proposal
-2. App navigates to `/#/proposals/:path/edit`
-3. The **MarkdownRenderer** is replaced by the **MarkdownEditor** — a full-width raw markdown textarea
-4. User edits the markdown content
-5. User clicks **"Save"**
-6. App commits the updated `.md` file to GitHub via the Contents API
-7. App navigates back to the view route, which re-fetches and renders the updated content
+1. User opens a proposal at `/#/proposals/:path`
+2. User switches between **View**, **WYSIWYG**, and **Raw** tabs inside **MilkdownDocument**
+3. WYSIWYG edits happen in Milkdown; raw edits happen in a textarea fallback
+4. User clicks **Save**
+5. App commits the updated `.md` file to GitHub via the Contents API
+6. The proposal view re-renders the saved content without leaving the route
 
 ### Creating a Proposal
 
@@ -378,9 +376,9 @@ All commits are made to the repository's default branch.
 
 ### Text Selection → Comment Popover
 
-When the user selects text in the rendered markdown:
+When the user selects text in the document surface:
 
-1. A floating popover appears near the selection with a **"💬 Comment"** button
+1. A floating popover appears near the selection with a **"Comment"** button
 2. Clicking it opens the comment form in the sidebar, scrolled into view
 3. The selected text is captured and shown as a quote preview in the form
 4. If the user clicks elsewhere (deselects), the popover disappears
@@ -407,13 +405,12 @@ When the user selects text in the rendered markdown:
 
 - **Comment anchoring** — exact match, context match, fuzzy match, orphan detection
 - **GitHub API client** — request construction, error handling, SHA conflict detection (mocked responses)
-- **Markdown processing** — anchor-to-DOM mapping, highlight range calculation
 
 ### Integration Tests (Vitest + React Testing Library)
 
 - **AuthGate** — PAT validation flow, invalid PAT handling, logout
 - **ProposalTree** — renders directory structure, navigation
-- **DocumentView** — renders markdown, shows comment highlights, edit toggle
+- **DocumentView** — renders MilkdownDocument, save wiring, route compatibility
 - **CommentsSidebar** — displays threads, reply flow, resolve/unresolve
 
 ### E2E Tests (Playwright)
@@ -470,13 +467,12 @@ src/
 │   ├── auth/          — AuthGate, AuthForm
 │   ├── layout/        — AppLayout, Header
 │   ├── tree/          — ProposalTree, TreeNode
-│   ├── document/      — DocumentView, MarkdownRenderer, MarkdownEditor
+│   ├── document/      — DocumentView, MilkdownDocument, RawEditor
 │   ├── comments/      — CommentsSidebar, CommentThread, CommentForm
 │   └── ui/            — Shared UI primitives (Button, Dialog, Toast, etc.)
 ├── lib/
 │   ├── github/        — API client, types
-│   ├── comments/      — Anchoring logic, reconciliation
-│   └── markdown/      — Processing, anchor mapping
+│   └── comments/      — Anchoring logic, reconciliation
 ├── hooks/             — Shared React hooks
 ├── routes/            — Route components
 ├── types/             — Shared TypeScript types

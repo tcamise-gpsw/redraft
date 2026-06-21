@@ -36,3 +36,7 @@
 ## Task 8 — Update E2E Tests
 
 - Reusing an already-running Vite server can leave Playwright pointed at a stale dev process after large file deletions. Restarting the server before re-running the suite eliminated a blank-page false failure.
+
+## Task 9 — Documentation Cleanup
+
+- Large markdown edits are safer when done as a few targeted structural replacements instead of broad rewrites. The core design spec had enough duplicated terms that narrow range edits avoided collateral drift.

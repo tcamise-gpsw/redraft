@@ -49,3 +49,8 @@
 - Kept the Playwright suite GitHub-API mocked and updated the assertions to target the new Milkdown surface instead of the removed `/edit` route and renderer DOM. That preserved deterministic end-to-end coverage while matching the new UI contract.
 - Tested comment creation through real DOM selection inside `.ProseMirror` rather than bypassing the UI. This keeps the browser test aligned with the ProseMirror-based selection flow that replaced the old global selection popover.
 - Used raw mode for persistence/conflict coverage and WYSIWYG mode for editability/mode-switch coverage. That split keeps the suite stable while still exercising both editing surfaces end to end.
+
+## Task 9 — Documentation Cleanup
+
+- Updated only the docs named in the plan and cleaned every stale reference to the removed markdown renderer/editor stack within those files. That keeps the migration documentation accurate without reopening unrelated historical plans or notes.
+- Documented `/proposals/:path` as the single active proposal route and treated `/edit` as compatibility behavior in implementation, not as a first-class route in the architecture docs.

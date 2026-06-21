@@ -9,11 +9,10 @@ Proposal Review Workspace is a static React SPA deployed to GitHub Pages. The UI
 - `src/components/auth/` — authentication gate and settings
 - `src/components/layout/` — shell, header, shared layout
 - `src/components/tree/` — proposal navigation tree
-- `src/components/document/` — markdown view and editing surface
+- `src/components/document/` — Milkdown view/WYSIWYG/raw editing surface
 - `src/components/comments/` — sidebar comment threads and forms
 - `src/lib/github/` — typed GitHub API client
 - `src/lib/comments/` — anchor resolution and comment-side logic
-- `src/lib/markdown/` — markdown text extraction and DOM range mapping
 - `src/hooks/` — TanStack Query hooks and local UI state
 - `src/types/` — shared domain interfaces
 
@@ -38,6 +37,5 @@ Proposal Review Workspace is a static React SPA deployed to GitHub Pages. The UI
 Hash routing is required for GitHub Pages:
 
 - `/#/` — tree root
-- `/#/proposals/:path` — proposal view
-- `/#/proposals/:path/edit` — proposal edit
+- `/#/proposals/:path` — proposal view and editing
 - `/#/settings` — PAT and repository configuration

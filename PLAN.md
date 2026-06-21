@@ -436,7 +436,7 @@ Dependency removal:
 - [x] Run `npx playwright test` to verify all E2E specs pass
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -455,13 +455,13 @@ Dependency removal:
 - Remove the `src/lib/markdown/` entry from structure since it's deleted
 
 **Checklist:**
-- [ ] `AGENTS.md` reflects the current file structure accurately
-- [ ] Architecture docs mention Milkdown, not react-markdown
-- [ ] Core design spec's Non-Goals updated (WYSIWYG is now a goal)
-- [ ] No references to deleted files remain in documentation
+- [x] `AGENTS.md` reflects the current file structure accurately
+- [x] Architecture docs mention Milkdown, not react-markdown
+- [x] Core design spec's Non-Goals updated (WYSIWYG is now a goal)
+- [x] No references to deleted files remain in documentation
 
 **Tests:**
-- [ ] No tests needed — documentation only
+- [x] No tests needed — documentation only
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit
