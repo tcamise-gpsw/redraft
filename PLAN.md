@@ -26,7 +26,7 @@
 - [x] `npx tsc --noEmit` passes (no regressions from adding packages)
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 ---
 
@@ -58,19 +58,19 @@ export function makeCommentPlugin(
 - Edge cases: Empty quotes are skipped. Quotes not found in the document produce no decoration (no error). Multiple occurrences of the same quote text produce decorations only for the first match.
 
 **Checklist:**
-- [ ] Multi-node text search implemented (flat string → char offset → ProseMirror pos)
-- [ ] Decorations rebuild on meta-transaction without editor remount
-- [ ] Decorations map through edits (position drift handled)
-- [ ] Click on decoration fires `onSelectComment(id)`
-- [ ] Empty/missing quotes produce no decorations (no crash)
+- [x] Multi-node text search implemented (flat string → char offset → ProseMirror pos)
+- [x] Decorations rebuild on meta-transaction without editor remount
+- [x] Decorations map through edits (position drift handled)
+- [x] Click on decoration fires `onSelectComment(id)`
+- [x] Empty/missing quotes produce no decorations (no crash)
 
 **Tests:**
-- [ ] Run `npx vitest run src/components/document/milkdown/commentPlugin` to verify
-- [ ] Test: single-node quote produces correct decoration positions
-- [ ] Test: quote spanning bold/link boundary (multi-node) produces correct positions
-- [ ] Test: quote not found in doc produces empty decoration set
-- [ ] Test: `setMeta` with new comments rebuilds decorations
-- [ ] Test: `tr.mapping` shifts decoration positions after text insert
+- [x] Run `npx vitest run src/components/document/milkdown/commentPlugin` to verify
+- [x] Test: single-node quote produces correct decoration positions
+- [x] Test: quote spanning bold/link boundary (multi-node) produces correct positions
+- [x] Test: quote not found in doc produces empty decoration set
+- [x] Test: `setMeta` with new comments rebuilds decorations
+- [x] Test: `tr.mapping` shifts decoration positions after text insert
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit
