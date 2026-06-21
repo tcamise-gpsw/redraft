@@ -156,11 +156,12 @@ describe('commentPlugin', () => {
     expect(highlight).not.toBeNull();
 
     view.someProp('handleClick', (handler) => {
-      handled = handler(
-        view,
-        0,
-        { target: highlight } as MouseEvent,
-      );
+      handled =
+        handler(
+          view,
+          0,
+          { target: highlight } as MouseEvent,
+        ) === true;
       return true;
     });
 

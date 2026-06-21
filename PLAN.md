@@ -126,7 +126,7 @@ export function useSelectionCapture(
 - [x] Test: selection at doc end has empty suffix
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -184,21 +184,21 @@ export function useCrepeInstance(options: UseCrepeInstanceOptions): {
 - Imports Crepe theme CSS: `@milkdown/crepe/theme/common/style.css` and `@milkdown/crepe/theme/frame-dark.css`
 
 **Checklist:**
-- [ ] Single Crepe instance shared between View and WYSIWYG modes (toggle via `setReadonly`)
-- [ ] Comment plugin registered before creation
-- [ ] Live comment updates via setMeta dispatch
-- [ ] Selection capture wired to mouseup hook
-- [ ] `getMarkdown()` returns current editor content synchronously
-- [ ] `onMarkdownChange` fires on every edit in WYSIWYG mode
-- [ ] Crepe theme CSS imported correctly
-- [ ] Error boundary wraps Crepe: on init failure, renders `<pre>` with raw markdown + error banner
-- [ ] Content sync: `replaceAll` fires when `content` prop changes in View mode
+- [x] Single Crepe instance shared between View and WYSIWYG modes (toggle via `setReadonly`)
+- [x] Comment plugin registered before creation
+- [x] Live comment updates via setMeta dispatch
+- [x] Selection capture wired to mouseup hook
+- [x] `getMarkdown()` returns current editor content synchronously
+- [x] `onMarkdownChange` fires on every edit in WYSIWYG mode
+- [x] Crepe theme CSS imported correctly
+- [x] Error boundary wraps Crepe: on init failure, renders `<pre>` with raw markdown + error banner
+- [x] Content sync: `replaceAll` fires when `content` prop changes in View mode
 
 **Tests:**
-- [ ] Run `npx vitest run src/components/document/milkdown/CrepeEditor` to verify
-- [ ] Test: renders without error with minimal content prop
-- [ ] Test: `readOnly=true` renders non-editable content
-- [ ] Test: toggling readOnly does not remount (check that editor instance ref is stable)
+- [x] Run `npx vitest run src/components/document/milkdown/CrepeEditor` to verify
+- [x] Test: renders without error with minimal content prop
+- [x] Test: `readOnly=true` renders non-editable content
+- [x] Test: toggling readOnly does not remount (check that editor instance ref is stable)
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit

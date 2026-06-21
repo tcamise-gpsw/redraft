@@ -78,7 +78,7 @@ function createFakeEditor(text: string, selection: SelectionRange) {
     action<T>(callback: (ctx: { get: () => FakeEditorView }) => T): T {
       return callback({ get: () => view });
     },
-  } as Editor;
+  } as unknown as Editor;
 
   return {
     dom,

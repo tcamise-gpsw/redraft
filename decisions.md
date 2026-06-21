@@ -14,3 +14,9 @@
 
 - Kept selection capture view-local by listening on `view.dom` instead of document-level events. That avoids cross-editor bleed and makes cleanup deterministic when the Milkdown instance mounts or unmounts.
 - Read the ProseMirror selection and document text directly through `editor.action(...editorViewCtx)`. This preserves exact editor state without depending on DOM selection normalization.
+
+## Task 3 — Crepe Editor Wrapper and Instance Hook
+
+- Kept the Crepe instance stable by giving `useEditor` an empty dependency list and moving mutable behavior into effects. `readOnly`, comment updates, and external view-mode content sync now update the existing instance instead of recreating the editor.
+- Registered the comment plugin and markdown listener during Crepe construction, before React's Milkdown wrapper calls `create()`. That guarantees decorations and change notifications exist from the first render.
+- Added a forwarded `CrepeEditorHandle` with `getMarkdown()` so later document-mode controls can save from the live editor without coupling to Milkdown internals.
