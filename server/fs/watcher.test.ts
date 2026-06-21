@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -80,9 +80,17 @@ describe('startWatcher', () => {
     stop();
   });
 
-  it('emits file:created and file:deleted events for tracked files', async () => {
+  it('emits file events for markdown files and centralized comment sidecars', async () => {
     const filePath = join(basePath, 'proposal.md');
+    const commentPath = join(
+      basePath,
+      '.redraft',
+      'comments',
+      'proposal.comments.json',
+    );
+    await mkdir(join(basePath, '.redraft', 'comments'), { recursive: true });
     await writeFile(filePath, '# Proposal\n', 'utf8');
+    await writeFile(commentPath, '{"version":1,"comments":[]}', 'utf8');
     const firstEvent = Promise.withResolvers<{
       type: string;
       path: string;
@@ -93,19 +101,24 @@ describe('startWatcher', () => {
       path: string;
       sha?: string;
     }>();
+    const thirdEvent = Promise.withResolvers<{
+      type: string;
+      path: string;
+      sha?: string;
+    }>();
     let eventCount = 0;
-    const onEvent = vi.fn(
-      (event: { type: string; path: string; sha?: string }) => {
-        if (eventCount === 0) {
-          firstEvent.resolve(event);
-        } else {
-          secondEvent.resolve(event);
-        }
-        eventCount += 1;
-      },
-    );
 
-    const stop = startWatcher(basePath, onEvent);
+    const stop = startWatcher(basePath, (event) => {
+      if (eventCount === 0) {
+        firstEvent.resolve(event);
+      } else if (eventCount === 1) {
+        secondEvent.resolve(event);
+      } else {
+        thirdEvent.resolve(event);
+      }
+      eventCount += 1;
+    });
+
     getWatcher()?.emit('add', filePath);
     await vi.advanceTimersByTimeAsync(100);
     await expect(firstEvent.promise).resolves.toMatchObject({
@@ -114,23 +127,54 @@ describe('startWatcher', () => {
       sha: expect.stringMatching(/^[a-f0-9]{40}$/),
     });
 
-    getWatcher()?.emit('unlink', filePath);
+    getWatcher()?.emit('change', commentPath);
     await vi.advanceTimersByTimeAsync(100);
-    await expect(secondEvent.promise).resolves.toEqual({
+    await expect(secondEvent.promise).resolves.toMatchObject({
+      type: 'file:changed',
+      path: '.redraft/comments/proposal.comments.json',
+      sha: expect.stringMatching(/^[a-f0-9]{40}$/),
+    });
+
+    getWatcher()?.emit('unlink', commentPath);
+    await vi.advanceTimersByTimeAsync(100);
+    await expect(thirdEvent.promise).resolves.toEqual({
       type: 'file:deleted',
-      path: 'proposal.md',
+      path: '.redraft/comments/proposal.comments.json',
     });
 
     stop();
   });
 
-  it('ignores non proposal files', async () => {
-    const filePath = join(basePath, 'notes.txt');
-    await writeFile(filePath, 'ignore me', 'utf8');
+  it('ignores non-document files and markdown inside excluded directories', async () => {
+    const textPath = join(basePath, 'notes.txt');
+    const nodeModulesPath = join(basePath, 'node_modules', 'pkg', 'README.md');
+    const redraftMarkdownPath = join(basePath, '.redraft', 'notes.md');
+    await mkdir(join(basePath, 'node_modules', 'pkg'), { recursive: true });
+    await mkdir(join(basePath, '.redraft'), { recursive: true });
+    await writeFile(textPath, 'ignore me', 'utf8');
+    await writeFile(nodeModulesPath, '# Package\n', 'utf8');
+    await writeFile(redraftMarkdownPath, '# Metadata\n', 'utf8');
     const onEvent = vi.fn();
 
     const stop = startWatcher(basePath, onEvent);
-    getWatcher()?.emit('change', filePath);
+    getWatcher()?.emit('change', textPath);
+    getWatcher()?.emit('change', nodeModulesPath);
+    getWatcher()?.emit('change', redraftMarkdownPath);
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(onEvent).not.toHaveBeenCalled();
+    stop();
+  });
+
+  it('ignores markdown files excluded by gitignore rules', async () => {
+    const hiddenPath = join(basePath, 'ignored', 'hidden.md');
+    await mkdir(join(basePath, 'ignored'), { recursive: true });
+    await writeFile(join(basePath, '.gitignore'), 'ignored/\n', 'utf8');
+    await writeFile(hiddenPath, '# Hidden\n', 'utf8');
+    const onEvent = vi.fn();
+
+    const stop = startWatcher(basePath, onEvent);
+    getWatcher()?.emit('change', hiddenPath);
     await vi.advanceTimersByTimeAsync(100);
 
     expect(onEvent).not.toHaveBeenCalled();

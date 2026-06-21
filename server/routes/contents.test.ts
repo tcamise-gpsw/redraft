@@ -62,11 +62,11 @@ describe('GitHub contents-style routes', () => {
     expect(response.headers.get('x-ratelimit-remaining')).toBe('999999');
   });
 
-  it('returns base64-encoded file content and sha for proposal files', async () => {
+  it('returns base64-encoded file content and sha for root-relative files', async () => {
     const app = buildGitHubApiRouter(basePath);
 
     const response = await app.request(
-      'http://local.test/api/github/repos/local/proposals/contents/proposals/auth-overhaul.md',
+      'http://local.test/api/github/repos/local/redraft/contents/auth-overhaul.md',
     );
     const body = (await response.json()) as FileResponse;
 
@@ -78,20 +78,20 @@ describe('GitHub contents-style routes', () => {
     expect(body.sha).toMatch(/^[a-f0-9]{40}$/);
   });
 
-  it('updates proposal content when the incoming sha matches', async () => {
+  it('updates root-relative content when the incoming sha matches', async () => {
     const app = buildGitHubApiRouter(basePath);
     const existing = await app.request(
-      'http://local.test/api/github/repos/local/proposals/contents/proposals/auth-overhaul.md',
+      'http://local.test/api/github/repos/local/redraft/contents/auth-overhaul.md',
     );
     const existingBody = (await existing.json()) as FileResponse;
 
     const response = await app.request(
-      'http://local.test/api/github/repos/local/proposals/contents/proposals/auth-overhaul.md',
+      'http://local.test/api/github/repos/local/redraft/contents/auth-overhaul.md',
       {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          message: 'Update proposal',
+          message: 'Update document',
           sha: existingBody.sha,
           content: Buffer.from('# Updated\n', 'utf8').toString('base64'),
         }),
@@ -110,12 +110,12 @@ describe('GitHub contents-style routes', () => {
     const app = buildGitHubApiRouter(basePath);
 
     const response = await app.request(
-      'http://local.test/api/github/repos/local/proposals/contents/proposals/auth-overhaul.md',
+      'http://local.test/api/github/repos/local/redraft/contents/auth-overhaul.md',
       {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          message: 'Update proposal',
+          message: 'Update document',
           sha: 'stale-sha',
           content: Buffer.from('# Updated\n', 'utf8').toString('base64'),
         }),
@@ -127,11 +127,12 @@ describe('GitHub contents-style routes', () => {
     expect(body.message).toMatch(/conflict/i);
   });
 
-  it('creates a missing file when PUT is sent without a sha', async () => {
+  it('creates a missing comment file under .redraft/comments when PUT is sent without a sha', async () => {
     const app = buildGitHubApiRouter(basePath);
+    await mkdir(join(basePath, '.redraft', 'comments'), { recursive: true });
 
     const response = await app.request(
-      'http://local.test/api/github/repos/local/proposals/contents/proposals/auth-overhaul.comments.json',
+      'http://local.test/api/github/repos/local/redraft/contents/.redraft/comments/auth-overhaul.comments.json',
       {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
@@ -148,7 +149,10 @@ describe('GitHub contents-style routes', () => {
     expect(response.status).toBe(200);
     expect(body.content.sha).toMatch(/^[a-f0-9]{40}$/);
     await expect(
-      readFile(join(basePath, 'auth-overhaul.comments.json'), 'utf8'),
+      readFile(
+        join(basePath, '.redraft', 'comments', 'auth-overhaul.comments.json'),
+        'utf8',
+      ),
     ).resolves.toContain('"comments":[]');
   });
 
@@ -156,12 +160,12 @@ describe('GitHub contents-style routes', () => {
     const app = buildGitHubApiRouter(basePath);
 
     const response = await app.request(
-      'http://local.test/api/github/repos/local/proposals/contents/proposals/auth-overhaul.md',
+      'http://local.test/api/github/repos/local/redraft/contents/auth-overhaul.md',
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          message: 'Create proposal',
+          message: 'Create document',
           content: Buffer.from('# Duplicate\n', 'utf8').toString('base64'),
         }),
       },
@@ -172,11 +176,11 @@ describe('GitHub contents-style routes', () => {
     expect(body.message).toMatch(/exists/i);
   });
 
-  it('returns commit metadata from file stats', async () => {
+  it('returns commit metadata from file stats for root-relative paths', async () => {
     const app = buildGitHubApiRouter(basePath);
 
     const response = await app.request(
-      'http://local.test/api/github/repos/local/proposals/commits?path=proposals/auth-overhaul.md',
+      'http://local.test/api/github/repos/local/redraft/commits?path=auth-overhaul.md',
     );
     const body = (await response.json()) as CommitResponse[];
 

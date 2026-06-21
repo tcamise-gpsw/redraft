@@ -106,8 +106,7 @@ export function buildReDraftApp(options: ReDraftAppOptions): Hono {
     if (directFile) {
       return directFile;
     }
-
-    if (extname(pathname) !== '') {
+    if (extname(pathname) !== '' && !pathname.startsWith('/d/')) {
       return c.notFound();
     }
 

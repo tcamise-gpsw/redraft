@@ -1,7 +1,13 @@
 import chokidar from 'chokidar';
+import { readdirSync, readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 
+import ignore, { type Ignore } from 'ignore';
+
 import { readFile } from './operations.js';
+
+const COMMENTS_ROOT = '.redraft/comments';
+const BUILT_IN_EXCLUDES = ['.git/', '.redraft/', 'node_modules/'];
 
 export interface FileEvent {
   type: 'file:changed' | 'file:created' | 'file:deleted';
@@ -11,8 +17,81 @@ export interface FileEvent {
 
 type PendingEventType = FileEvent['type'];
 
-function isTrackedProposalFile(path: string): boolean {
-  return path.endsWith('.md') || path.endsWith('.comments.json');
+function isWatchedMarkdownFile(path: string): boolean {
+  return path.endsWith('.md') && !path.startsWith('.redraft/');
+}
+
+function isCommentFile(path: string): boolean {
+  return path.startsWith(`${COMMENTS_ROOT}/`) && path.endsWith('.comments.json');
+}
+
+function scopeGitignorePattern(currentPath: string, pattern: string): string {
+  if (!currentPath || !pattern || pattern.startsWith('#')) {
+    return pattern;
+  }
+
+  const negated = pattern.startsWith('!');
+  const body = negated ? pattern.slice(1) : pattern;
+  if (!body) {
+    return pattern;
+  }
+
+  const normalized = body.startsWith('/') ? body.slice(1) : body;
+  return `${negated ? '!' : ''}${currentPath}/${normalized}`;
+}
+
+function addGitignoreRules(
+  basePath: string,
+  currentPath: string,
+  matcher: Ignore,
+): void {
+  try {
+    const content = readFileSync(resolve(basePath, currentPath, '.gitignore'), 'utf8');
+    matcher.add(
+      content
+        .split(/\r?\n/u)
+        .map((pattern) => scopeGitignorePattern(currentPath, pattern)),
+    );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw error;
+    }
+  }
+}
+
+function loadIgnoreMatcher(
+  basePath: string,
+  currentPath = '',
+  matcher = ignore(),
+): Ignore {
+  if (!currentPath) {
+    matcher.add(BUILT_IN_EXCLUDES);
+  }
+
+  addGitignoreRules(basePath, currentPath, matcher);
+  const directoryPath = resolve(basePath, currentPath || '.');
+  const entries = readdirSync(directoryPath, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const nextRelativePath = currentPath
+      ? `${currentPath}/${entry.name}`
+      : entry.name;
+
+    if (
+      matcher.ignores(nextRelativePath) ||
+      matcher.ignores(`${nextRelativePath}/`)
+    ) {
+      continue;
+    }
+
+    loadIgnoreMatcher(basePath, nextRelativePath, matcher);
+  }
+
+  return matcher;
 }
 
 function toRelativePath(basePath: string, filePath: string): string | null {
@@ -35,13 +114,24 @@ export function startWatcher(
     ignoreInitial: true,
     persistent: true,
   });
+  const ignoreMatcher = loadIgnoreMatcher(basePath);
 
   const pendingEvents = new Map<string, PendingEventType>();
   let flushTimer: NodeJS.Timeout | undefined;
 
   const queueEvent = (type: PendingEventType, filePath: string) => {
     const relativePath = toRelativePath(basePath, filePath);
-    if (!relativePath || !isTrackedProposalFile(relativePath)) {
+    if (!relativePath) {
+      return;
+    }
+
+    const tracked = isCommentFile(relativePath)
+      ? true
+      : isWatchedMarkdownFile(relativePath) &&
+        !ignoreMatcher.ignores(relativePath) &&
+        !ignoreMatcher.ignores(`${relativePath}/`);
+
+    if (!tracked) {
       return;
     }
 

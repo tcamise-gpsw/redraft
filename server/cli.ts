@@ -38,7 +38,7 @@ function triggerBrowserOpen(url: string): void {
 }
 
 async function runServe(
-  directory = './proposals',
+  directory = '.',
   options: ServeOptions = {},
 ): Promise<void> {
   const basePath = resolve(directory);
@@ -99,15 +99,10 @@ const program = registerServeOptions(
   new Command()
     .name('redraft')
     .description('ReDraft local tooling')
-    .argument('[directory]', 'proposal directory for the default serve command')
+    .argument('[directory]', 'directory to serve (default: current working directory)')
     .action(async function (this: Command, directory: string | undefined) {
-      if (!directory) {
-        program.help();
-        return;
-      }
-
       try {
-        await runServe(directory, this.optsWithGlobals<ServeOptions>());
+        await runServe(directory ?? '.', this.optsWithGlobals<ServeOptions>());
       } catch (error) {
         console.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -118,13 +113,10 @@ const program = registerServeOptions(
 registerServeOptions(
   program
     .command('serve')
-    .argument('[directory]', 'proposal directory')
+    .argument('[directory]', 'directory to serve')
     .action(async function (this: Command, directory: string | undefined) {
       try {
-        await runServe(
-          directory ?? './proposals',
-          this.optsWithGlobals<ServeOptions>(),
-        );
+        await runServe(directory ?? '.', this.optsWithGlobals<ServeOptions>());
       } catch (error) {
         console.error(error instanceof Error ? error.message : String(error));
         process.exit(1);

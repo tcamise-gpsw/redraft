@@ -14,15 +14,11 @@ const RATE_LIMIT_HEADERS = {
 };
 
 function toLocalPath(apiPath: string): string {
-  if (!apiPath.startsWith('proposals/')) {
-    throw new FileOperationError(404, `Unsupported path: ${apiPath}`);
-  }
-
-  return apiPath.slice('proposals/'.length);
+  return apiPath;
 }
 
 function toApiPath(localPath: string): string {
-  return `proposals/${localPath}`;
+  return localPath;
 }
 
 export function buildGitHubApiRouter(basePath: string): Hono {

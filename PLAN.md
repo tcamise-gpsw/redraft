@@ -67,7 +67,7 @@ Remove the old `isTrackedProposalFile` function (no longer needed by this module
 - [x] Test: `listReviewEntries` handles missing `.redraft/comments/` gracefully
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
+- [x] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
 
 ---
 
@@ -120,19 +120,19 @@ export function startWatcher(
 - Update command description/help text to say "directory to serve" instead of "proposal directory".
 
 **Checklist:**
-- [ ] `toLocalPath` / `toApiPath` are identity (no `proposals/` prefix logic)
-- [ ] Tree endpoint returns `{ documents: [...], underReview: [...] }`
-- [ ] Watcher emits events for `.md` changes and `.redraft/comments/` changes
-- [ ] Watcher ignores `.git/`, `node_modules/`, and gitignored paths
-- [ ] CLI defaults to `.` when no arg given and starts the server (no help screen)
-- [ ] Existing `contents` routes still work — they just receive root-relative paths now
+- [x] `toLocalPath` / `toApiPath` are identity (no `proposals/` prefix logic)
+- [x] Tree endpoint returns `{ documents: [...], underReview: [...] }`
+- [x] Watcher emits events for `.md` changes and `.redraft/comments/` changes
+- [x] Watcher ignores `.git/`, `node_modules/`, and gitignored paths
+- [x] CLI defaults to `.` when no arg given and starts the server (no help screen)
+- [x] Existing `contents` routes still work — they just receive root-relative paths now
 
 **Tests:**
-- [ ] Run `npx vitest run server/`
-- [ ] Update `server/routes/tree.test.ts` for new response shape
-- [ ] Update `server/fs/watcher.test.ts` to verify the split filter logic
-- [ ] Update `server/app.test.ts` if it references `proposals/` paths
-- [ ] Update `server/routes/contents.test.ts` to use root-relative paths (no `proposals/` prefix)
+- [x] Run `npx vitest run server/`
+- [x] Update `server/routes/tree.test.ts` for new response shape
+- [x] Update `server/fs/watcher.test.ts` to verify the split filter logic
+- [x] Update `server/app.test.ts` if it references `proposals/` paths
+- [x] Update `server/routes/contents.test.ts` to use root-relative paths (no `proposals/` prefix)
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
