@@ -64,7 +64,17 @@ export function AuthForm() {
             className="block space-y-2 text-sm font-medium"
             htmlFor="github-pat"
           >
-            <span>GitHub PAT</span>
+            <div className="flex items-baseline justify-between">
+              <span>GitHub PAT</span>
+              <a
+                href="https://github.com/settings/tokens/new?scopes=repo&description=Proposal+Review+Workspace"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-normal text-cyan-400 hover:text-cyan-300"
+              >
+                Create a token →
+              </a>
+            </div>
             <input
               id="github-pat"
               name="pat"
