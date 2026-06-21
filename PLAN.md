@@ -52,18 +52,18 @@
 - AGENTS.md covers: project structure, module responsibilities, coding conventions (TS strict, Tailwind utility classes, TanStack Query patterns), how to add components/routes/API calls, testing patterns, commands, common mistakes
 
 **Checklist:**
-- [ ] `npm run dev` starts and renders the app in a browser
-- [ ] `npm run build` produces valid output
-- [ ] TypeScript compiles with no errors
-- [ ] Tailwind CSS is working (a utility class renders correctly)
-- [ ] ESLint and Prettier configs are valid
-- [ ] GitHub Actions deploy workflow is syntactically valid
-- [ ] README.md links to docs/ for detailed architecture and development guides
-- [ ] docs/architecture.md and docs/development.md contain all required sections
-- [ ] AGENTS.md contains all required sections
+- [x] `npm run dev` starts and renders the app in a browser
+- [x] `npm run build` produces valid output
+- [x] TypeScript compiles with no errors
+- [x] Tailwind CSS is working (a utility class renders correctly)
+- [x] ESLint and Prettier configs are valid
+- [x] GitHub Actions deploy workflow is syntactically valid
+- [x] README.md links to docs/ for detailed architecture and development guides
+- [x] docs/architecture.md and docs/development.md contain all required sections
+- [x] AGENTS.md contains all required sections
 
 **Tests:**
-- [ ] No tests needed for this task — scaffolding only
+- [x] No tests needed for this task — scaffolding only
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
