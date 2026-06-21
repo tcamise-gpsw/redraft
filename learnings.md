@@ -17,3 +17,6 @@
 
 - 2026-06-21 — Task 6: `react-markdown` escaped the injected `<mark>` tags until `rehype-raw` was added. For this MVP phase, raw HTML is intentional because the viewer is temporarily using HTML substitution instead of DOM-range highlights.
 - 2026-06-21 — Task 6: TanStack Query treats `undefined` as an invalid query result, even for optional resources. The optional comments query had to normalize missing data to `null` to keep the test output clean and avoid runtime warnings.
+
+- 2026-06-21 — Task 7: The apparent “wrong index” failure in the duplicate-quote test came from my own miscounting, not from the resolver. Re-checking the literal string before changing code saved unnecessary churn.
+- 2026-06-21 — Task 7: Longest-common-substring alone was too brittle for fuzzy anchor recovery because inserted words collapse the score too far. A subsequence-based score matched the intended “lightly edited” behavior much better for proposal text.

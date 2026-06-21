@@ -17,3 +17,6 @@
 
 - 2026-06-21 — Task 6: For the first viewer slice, comment highlighting uses simple quote replacement plus raw-markdown rendering instead of a DOM-range overlay system. That matches the plan’s temporary exact-match requirement and keeps the real anchoring complexity isolated to Task 7.
 - 2026-06-21 — Task 6: `useProposal()` loads content, optional comments, and latest commit as separate queries so later invalidation can stay surgical. The viewer only depends on the merged shape, not on how many underlying requests produced it.
+
+- 2026-06-21 — Task 7: Kept anchor resolution as a pure text engine with no DOM dependencies. The viewer and sidebar can both consume the same `resolveAnchor()` result later, which keeps anchoring behavior consistent across rendering and comment ordering.
+- 2026-06-21 — Task 7: Fuzzy matching uses subsequence-based similarity with the existing substring helper as a lower-level signal. That is permissive enough to survive small inserted words while still rejecting unrelated text below the 0.7 threshold.

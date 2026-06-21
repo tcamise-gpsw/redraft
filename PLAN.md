@@ -359,7 +359,7 @@ Routing setup in `App.tsx`:
 - [x] ActivityIndicator: renders commit info, handles null
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -407,23 +407,23 @@ Routing setup in `App.tsx`:
 - Very long quotes (>500 chars) → exact match still works, fuzzy may be slow but acceptable for MVP
 
 **Checklist:**
-- [ ] Exact match finds quote at correct position
-- [ ] Context match finds quote when prefix/suffix have minor changes
-- [ ] Fuzzy match finds quote when text has been lightly edited (≥70% similarity)
-- [ ] Orphaned status returned when no match above threshold
-- [ ] createAnchor extracts correct prefix/suffix from document
-- [ ] Multiple identical quotes disambiguated by context
-- [ ] Edge cases handled: empty quote, empty document, line breaks in quote
+- [x] Exact match finds quote at correct position
+- [x] Context match finds quote when prefix/suffix have minor changes
+- [x] Fuzzy match finds quote when text has been lightly edited (≥70% similarity)
+- [x] Orphaned status returned when no match above threshold
+- [x] createAnchor extracts correct prefix/suffix from document
+- [x] Multiple identical quotes disambiguated by context
+- [x] Edge cases handled: empty quote, empty document, line breaks in quote
 
 **Tests:**
-- [ ] `npx vitest run src/lib/comments`
-- [ ] Exact match: quote exists verbatim in document
-- [ ] Exact match with multiple occurrences: context disambiguates
-- [ ] Context match: quote present but prefix/suffix slightly changed
-- [ ] Fuzzy match: quote text has been edited (word added/removed), similarity ≥0.7
-- [ ] Fuzzy match rejected: similarity <0.7 → orphaned
-- [ ] createAnchor: extracts prefix/suffix correctly, respects word boundaries
-- [ ] Edge cases: empty inputs, line breaks, very long quotes
+- [x] `npx vitest run src/lib/comments`
+- [x] Exact match: quote exists verbatim in document
+- [x] Exact match with multiple occurrences: context disambiguates
+- [x] Context match: quote present but prefix/suffix slightly changed
+- [x] Fuzzy match: quote text has been edited (word added/removed), similarity ≥0.7
+- [x] Fuzzy match rejected: similarity <0.7 → orphaned
+- [x] createAnchor: extracts prefix/suffix correctly, respects word boundaries
+- [x] Edge cases: empty inputs, line breaks, very long quotes
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
