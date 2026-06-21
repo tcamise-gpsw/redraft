@@ -32,3 +32,7 @@
 ## Task 7 — Styling and Dependency Cleanup
 
 - `npm run build` emits large-chunk warnings once mermaid and the rest of Milkdown are bundled, but the build still succeeds. The warning is real, but it is a follow-up optimization concern rather than a blocker for the migration itself.
+
+## Task 8 — Update E2E Tests
+
+- Reusing an already-running Vite server can leave Playwright pointed at a stale dev process after large file deletions. Restarting the server before re-running the suite eliminated a blank-page false failure.

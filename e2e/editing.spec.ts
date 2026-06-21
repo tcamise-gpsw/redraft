@@ -7,7 +7,7 @@ const headers = {
   'content-type': 'application/json',
 };
 
-test('edit flow saves markdown and conflict handling shows a toast', async ({ page }) => {
+test('editing flows save markdown and conflict handling shows a toast', async ({ page }) => {
   let content = '# Camera Session\n\nThe camera should initialize lazily.';
   let sha = 'doc-sha';
   let conflict = false;
@@ -18,17 +18,34 @@ test('edit flow saves markdown and conflict handling shows a toast', async ({ pa
     const method = route.request().method();
 
     if (url.endsWith('/user')) {
-      await route.fulfill({ status: 200, headers, body: JSON.stringify({ login: 'jdoe', avatar_url: 'https://example.com/avatar.png' }) });
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({
+          login: 'jdoe',
+          avatar_url: 'https://example.com/avatar.png',
+        }),
+      });
       return;
     }
 
     if (url.includes('/git/trees/')) {
-      await route.fulfill({ status: 200, headers, body: JSON.stringify({ tree: [{ path: 'proposals/camera-session.md', type: 'blob' }] }) });
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({
+          tree: [{ path: 'proposals/camera-session.md', type: 'blob' }],
+        }),
+      });
       return;
     }
 
     if (decodedUrl.includes('/contents/proposals/camera-session.comments.json')) {
-      await route.fulfill({ status: 404, headers, body: JSON.stringify({ message: 'Not Found' }) });
+      await route.fulfill({
+        status: 404,
+        headers,
+        body: JSON.stringify({ message: 'Not Found' }),
+      });
       return;
     }
 
@@ -36,21 +53,41 @@ test('edit flow saves markdown and conflict handling shows a toast', async ({ pa
       await route.fulfill({
         status: 200,
         headers,
-        body: JSON.stringify({ type: 'file', sha, content: Buffer.from(content).toString('base64') }),
+        body: JSON.stringify({
+          type: 'file',
+          sha,
+          content: Buffer.from(content).toString('base64'),
+        }),
       });
       return;
     }
 
     if (decodedUrl.includes('/contents/proposals/camera-session.md') && method === 'PUT') {
       if (conflict) {
-        await route.fulfill({ status: 422, headers, body: JSON.stringify({ message: 'sha does not match' }) });
+        await route.fulfill({
+          status: 422,
+          headers,
+          body: JSON.stringify({ message: 'sha does not match' }),
+        });
         return;
       }
 
-      const body = JSON.parse(route.request().postData() ?? '{}');
-      content = Buffer.from(body.content, 'base64').toString('utf8');
+      const requestBody = route.request().postData() ?? '{}';
+      const parsedBody: unknown = JSON.parse(requestBody);
+      const encodedContent =
+        parsedBody && typeof parsedBody === 'object' && 'content' in parsedBody
+          ? parsedBody.content
+          : '';
+      content = Buffer.from(
+        typeof encodedContent === 'string' ? encodedContent : '',
+        'base64',
+      ).toString('utf8');
       sha = 'doc-sha-2';
-      await route.fulfill({ status: 200, headers, body: JSON.stringify({ content: { sha } }) });
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({ content: { sha } }),
+      });
       return;
     }
 
@@ -67,15 +104,43 @@ test('edit flow saves markdown and conflict handling shows a toast', async ({ pa
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
   await page.getByRole('link', { name: 'camera-session.md' }).click();
-  await page.getByRole('link', { name: 'Edit' }).click();
 
-  await page.getByLabel('Markdown editor').fill('# Camera Session\n\nUpdated content');
+  await page.getByRole('button', { name: 'WYSIWYG' }).click();
+  const editable = page.locator('.ProseMirror[contenteditable="true"]').first();
+  await expect(editable).toBeVisible();
+
+  await editable.evaluate((root) => {
+    const paragraphs = root.querySelectorAll('p');
+    const paragraph = paragraphs.item(paragraphs.length - 1);
+    if (!(paragraph instanceof HTMLElement)) {
+      return;
+    }
+
+    const textNode = paragraph.lastChild;
+    if (!(textNode instanceof Text)) {
+      return;
+    }
+
+    const length = textNode.textContent?.length ?? 0;
+    const range = document.createRange();
+    range.setStart(textNode, length);
+    range.setEnd(textNode, length);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    root.focus();
+  });
+  await page.keyboard.type(' Updated in WYSIWYG');
+  await expect(editable).toBeVisible();
+
+  await page.getByRole('button', { name: 'Raw' }).click();
+  await page.getByLabel('Markdown editor').fill('# Camera Session\n\nSaved from raw mode');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText('Proposal saved')).toBeVisible();
-  await expect(page.getByText('Updated content')).toBeVisible();
+  await expect(content).toContain('Saved from raw mode');
 
   conflict = true;
-  await page.getByRole('link', { name: 'Edit' }).click();
+  await page.getByRole('button', { name: 'Raw' }).click();
   await page.getByLabel('Markdown editor').fill('# Camera Session\n\nConflict content');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText(/refresh and re-apply/i)).toBeVisible();

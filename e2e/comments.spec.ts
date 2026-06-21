@@ -8,7 +8,27 @@ const headers = {
 };
 
 test('comment flow selects text, opens the form, and writes a sidecar file', async ({ page }) => {
-  let commentsFile: string | null = null;
+  let commentsFile = JSON.stringify({
+    version: 1,
+    comments: [
+      {
+        id: 'thread-1',
+        quote: 'initialize lazily',
+        quoteContext: {
+          prefix: 'The camera should ',
+          suffix: ' when preview starts.',
+        },
+        author: {
+          login: 'jdoe',
+          avatarUrl: 'https://example.com/avatar.png',
+        },
+        body: 'Existing note',
+        createdAt: '2026-06-21T05:00:00Z',
+        resolved: false,
+        replies: [],
+      },
+    ],
+  });
 
   await page.route('https://api.github.com/**', async (route) => {
     const url = route.request().url();
@@ -16,48 +36,79 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
     const method = route.request().method();
 
     if (url.endsWith('/user')) {
-      await route.fulfill({ status: 200, headers, body: JSON.stringify({ login: 'jdoe', avatar_url: 'https://example.com/avatar.png' }) });
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({
+          login: 'jdoe',
+          avatar_url: 'https://example.com/avatar.png',
+        }),
+      });
       return;
     }
 
     if (url.includes('/git/trees/')) {
-      await route.fulfill({ status: 200, headers, body: JSON.stringify({ tree: [{ path: 'proposals/camera-session.md', type: 'blob' }] }) });
-      return;
-    }
-
-    if (decodedUrl.includes('/contents/proposals/camera-session.comments.json') && method === 'GET') {
-      if (!commentsFile) {
-        await route.fulfill({ status: 404, headers, body: JSON.stringify({ message: 'Not Found' }) });
-        return;
-      }
-
       await route.fulfill({
         status: 200,
         headers,
-        body: JSON.stringify({ type: 'file', sha: 'comments-sha', content: Buffer.from(commentsFile).toString('base64') }),
+        body: JSON.stringify({
+          tree: [{ path: 'proposals/camera-session.md', type: 'blob' }],
+        }),
       });
       return;
     }
 
-    if (decodedUrl.includes('/contents/proposals/camera-session.comments.json') && method === 'PUT') {
-      const body = JSON.parse(route.request().postData() ?? '{}');
-      commentsFile = Buffer.from(body.content, 'base64').toString('utf8');
+    if (
+      decodedUrl.includes('/contents/proposals/camera-session.comments.json') &&
+      method === 'GET'
+    ) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({
+          type: 'file',
+          sha: 'comments-sha',
+          content: Buffer.from(commentsFile).toString('base64'),
+        }),
+      });
+      return;
+    }
+
+    if (
+      decodedUrl.includes('/contents/proposals/camera-session.comments.json') &&
+      method === 'PUT'
+    ) {
+      const requestBody = route.request().postData() ?? '{}';
+      const parsedBody: unknown = JSON.parse(requestBody);
+      const encodedContent =
+        parsedBody && typeof parsedBody === 'object' && 'content' in parsedBody
+          ? parsedBody.content
+          : '';
+      commentsFile = Buffer.from(
+        typeof encodedContent === 'string' ? encodedContent : '',
+        'base64',
+      ).toString('utf8');
       await route.fulfill({
         status: 201,
         headers,
-        body: JSON.stringify({ content: { sha: 'comments-sha' } }),
+        body: JSON.stringify({ content: { sha: 'comments-sha-2' } }),
       });
       return;
     }
 
-    if (decodedUrl.includes('/contents/proposals/camera-session.md') && method === 'GET') {
+    if (
+      decodedUrl.includes('/contents/proposals/camera-session.md') &&
+      method === 'GET'
+    ) {
       await route.fulfill({
         status: 200,
         headers,
         body: JSON.stringify({
           type: 'file',
           sha: 'doc-sha',
-          content: Buffer.from('# Camera Session\n\nThe camera should initialize lazily when preview starts.').toString('base64'),
+          content: Buffer.from(
+            '# Camera Session\n\nThe camera should initialize lazily when preview starts.',
+          ).toString('base64'),
         }),
       });
       return;
@@ -77,16 +128,35 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
   await page.getByRole('button', { name: 'Connect' }).click();
   await page.getByRole('link', { name: 'camera-session.md' }).click();
 
-  await page.locator('#document-markdown-root p').evaluate((paragraph) => {
+  await expect(page.getByText('Existing note')).toBeVisible();
+
+  await page.locator('.ProseMirror').evaluate((root) => {
+    const paragraph = root.querySelector('p');
+    if (!(paragraph instanceof HTMLElement)) {
+      return;
+    }
+
+    const textNode = paragraph.firstChild;
+    if (!(textNode instanceof Text)) {
+      return;
+    }
+
+    const text = textNode.textContent ?? '';
+    const quote = 'initialize lazily';
+    const start = text.indexOf(quote);
+    if (start < 0) {
+      return;
+    }
+
     const range = document.createRange();
-    const textNode = paragraph.firstChild as Text;
-    const start = textNode.textContent!.indexOf('initialize lazily');
     range.setStart(textNode, start);
-    range.setEnd(textNode, start + 'initialize lazily'.length);
+    range.setEnd(textNode, start + quote.length);
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
-    document.dispatchEvent(new Event('mouseup'));
+    root.focus();
+    document.dispatchEvent(new Event('selectionchange'));
+    root.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
   });
 
   await page.getByRole('button', { name: 'Comment' }).click();

@@ -43,3 +43,9 @@
 
 - Kept the theme work in `src/index.css` and limited it to CSS variables plus a few explicit selectors. That integrates with Crepe's shipped styles without introducing another styling layer or component-local overrides everywhere.
 - Removed the legacy markdown-rendering packages only after the old renderer, editor, and selection components were deleted. That kept dependency cleanup tightly coupled to actual source removal and made `tsc` a reliable check for missed imports.
+
+## Task 8 — Update E2E Tests
+
+- Kept the Playwright suite GitHub-API mocked and updated the assertions to target the new Milkdown surface instead of the removed `/edit` route and renderer DOM. That preserved deterministic end-to-end coverage while matching the new UI contract.
+- Tested comment creation through real DOM selection inside `.ProseMirror` rather than bypassing the UI. This keeps the browser test aligned with the ProseMirror-based selection flow that replaced the old global selection popover.
+- Used raw mode for persistence/conflict coverage and WYSIWYG mode for editability/mode-switch coverage. That split keeps the suite stable while still exercising both editing surfaces end to end.

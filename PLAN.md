@@ -391,7 +391,7 @@ Dependency removal:
 - [x] Run `npx tsc --noEmit` to verify no imports of removed packages
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -427,13 +427,13 @@ Dependency removal:
 - Mode toggle: View → WYSIWYG → Raw → View (no crashes, content preserved)
 
 **Checklist:**
-- [ ] All E2E specs pass with the new Milkdown-based rendering
-- [ ] No references to old `MarkdownRenderer` or `/edit` route remain
-- [ ] Comment creation flow tested end-to-end
-- [ ] Mode switching tested end-to-end
+- [x] All E2E specs pass with the new Milkdown-based rendering
+- [x] No references to old `MarkdownRenderer` or `/edit` route remain
+- [x] Comment creation flow tested end-to-end
+- [x] Mode switching tested end-to-end
 
 **Tests:**
-- [ ] Run `npx playwright test` to verify all E2E specs pass
+- [x] Run `npx playwright test` to verify all E2E specs pass
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit

@@ -89,6 +89,6 @@ test('a 401 response clears auth and returns to the auth gate', async ({ page })
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
 
-  await expect(page.getByText('Your session has expired. Please re-enter your PAT.')).toBeVisible();
+  await expect(page.getByText('Authentication failed')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Connect to GitHub' })).toBeVisible();
 });

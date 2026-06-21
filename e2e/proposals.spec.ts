@@ -7,7 +7,28 @@ const headers = {
   'content-type': 'application/json',
 };
 
-test('proposal viewing renders markdown and shows the rate-limit banner', async ({ page }) => {
+const proposalContent = `# Camera Session
+
+## Checklist
+
+- initialize lazily
+- keep preview warm
+
+| Mode | Behavior |
+| --- | --- |
+| Preview | Lazy |
+
+\`\`\`ts
+const ready = true;
+\`\`\`
+
+\`\`\`mermaid
+graph TD
+  Camera --> Preview
+\`\`\`
+`;
+
+test('proposal viewing renders Milkdown content and shows the rate-limit banner', async ({ page }) => {
   await page.route('https://api.github.com/**', async (route) => {
     const url = route.request().url();
     const decodedUrl = decodeURIComponent(url);
@@ -16,7 +37,10 @@ test('proposal viewing renders markdown and shows the rate-limit banner', async 
       await route.fulfill({
         status: 200,
         headers,
-        body: JSON.stringify({ login: 'jdoe', avatar_url: 'https://example.com/avatar.png' }),
+        body: JSON.stringify({
+          login: 'jdoe',
+          avatar_url: 'https://example.com/avatar.png',
+        }),
       });
       return;
     }
@@ -25,13 +49,19 @@ test('proposal viewing renders markdown and shows the rate-limit banner', async 
       await route.fulfill({
         status: 200,
         headers,
-        body: JSON.stringify({ tree: [{ path: 'proposals/camera-session.md', type: 'blob' }] }),
+        body: JSON.stringify({
+          tree: [{ path: 'proposals/camera-session.md', type: 'blob' }],
+        }),
       });
       return;
     }
 
     if (decodedUrl.includes('/contents/proposals/camera-session.comments.json')) {
-      await route.fulfill({ status: 404, headers, body: JSON.stringify({ message: 'Not Found' }) });
+      await route.fulfill({
+        status: 404,
+        headers,
+        body: JSON.stringify({ message: 'Not Found' }),
+      });
       return;
     }
 
@@ -42,7 +72,7 @@ test('proposal viewing renders markdown and shows the rate-limit banner', async 
         body: JSON.stringify({
           type: 'file',
           sha: 'doc-sha',
-          content: Buffer.from('# Camera Session\n\nThe camera should initialize lazily.').toString('base64'),
+          content: Buffer.from(proposalContent).toString('base64'),
         }),
       });
       return;
@@ -54,8 +84,14 @@ test('proposal viewing renders markdown and shows the rate-limit banner', async 
         headers,
         body: JSON.stringify([
           {
-            commit: { message: 'Update proposal', author: { date: '2026-06-21T05:00:00Z' } },
-            author: { login: 'jdoe', avatar_url: 'https://example.com/avatar.png' },
+            commit: {
+              message: 'Update proposal',
+              author: { date: '2026-06-21T05:00:00Z' },
+            },
+            author: {
+              login: 'jdoe',
+              avatar_url: 'https://example.com/avatar.png',
+            },
           },
         ]),
       });
@@ -71,8 +107,12 @@ test('proposal viewing renders markdown and shows the rate-limit banner', async 
   await page.getByRole('button', { name: 'Connect' }).click();
   await page.getByRole('link', { name: 'camera-session.md' }).click();
 
+  await expect(page.locator('.milkdown-document-wrapper')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Camera Session' })).toBeVisible();
-  await expect(page.getByText('The camera should initialize lazily.')).toBeVisible();
+  await expect(page.getByText('initialize lazily')).toBeVisible();
+  await expect(page.getByText('Preview', { exact: true })).toBeVisible();
+  await expect(page.getByText('const ready = true;')).toBeVisible();
+  await expect(page.locator('.milkdown-mermaid-block svg')).toBeVisible();
 
   await page.evaluate(() => {
     window.dispatchEvent(
@@ -86,5 +126,5 @@ test('proposal viewing renders markdown and shows the rate-limit banner', async 
     );
   });
 
-  await expect(page.getByText(/API rate limit exceeded/i)).toBeVisible();
+  await expect(page.getByText(/GitHub rate limit hit/i)).toBeVisible();
 });
