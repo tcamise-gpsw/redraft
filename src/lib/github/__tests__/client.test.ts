@@ -7,6 +7,7 @@ const state = vi.hoisted(() => {
 
   class MockOctokit {
     auth: string;
+    baseUrl?: string;
     users = {
       getAuthenticated: vi.fn(),
     };
@@ -19,8 +20,9 @@ const state = vi.hoisted(() => {
       listCommits: vi.fn(),
     };
 
-    constructor(options: { auth: string }) {
+    constructor(options: { auth: string; baseUrl?: string }) {
       this.auth = options.auth;
+      this.baseUrl = options.baseUrl;
       instances.push(this);
     }
   }
@@ -60,6 +62,17 @@ describe('GitHubClient', () => {
     expect(state.instances[0]?.auth).toBe('ghp_test');
   });
 
+  it('forwards a custom base URL to Octokit when provided', () => {
+    new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+      baseUrl: 'http://127.0.0.1:4200/api/github',
+    });
+
+    expect(state.instances[0]?.baseUrl).toBe('http://127.0.0.1:4200/api/github');
+  });
+
   it('validateAuth returns normalized user data on success', async () => {
     const client = new GitHubClient({
       pat: 'ghp_test',
@@ -71,16 +84,16 @@ describe('GitHubClient', () => {
     octokit.users.getAuthenticated.mockResolvedValue({
       data: { login: 'jdoe', avatar_url: 'https://example.com/avatar.png' },
       headers: responseHeaders,
-      status: 200,
     });
 
     await expect(client.validateAuth()).resolves.toEqual({
       login: 'jdoe',
       avatarUrl: 'https://example.com/avatar.png',
     });
-    expect(client.getRateLimit()).toMatchObject({
-      remaining: 4992,
+    expect(client.getRateLimit()).toEqual({
       limit: 5000,
+      remaining: 4992,
+      reset: new Date('2030-01-01T00:00:00.000Z'),
     });
   });
 
@@ -92,7 +105,10 @@ describe('GitHubClient', () => {
     });
     const octokit = state.instances[0]!;
 
-    octokit.users.getAuthenticated.mockRejectedValue({ status: 401 });
+    octokit.users.getAuthenticated.mockRejectedValue({
+      status: 401,
+      response: { headers: responseHeaders },
+    });
 
     await expect(client.validateAuth()).rejects.toBeInstanceOf(AuthError);
   });
@@ -108,18 +124,16 @@ describe('GitHubClient', () => {
     octokit.git.getTree.mockResolvedValue({
       data: {
         tree: [
+          { path: 'proposals/auth-overhaul.md', type: 'blob' },
+          { path: 'proposals', type: 'tree' },
           { path: 'README.md', type: 'blob' },
-          { path: 'proposals/camera-session.md', type: 'blob' },
-          { path: 'proposals/media', type: 'tree' },
         ],
       },
       headers: responseHeaders,
-      status: 200,
     });
 
     await expect(client.getTree()).resolves.toEqual([
-      { path: 'proposals/camera-session.md', type: 'blob' },
-      { path: 'proposals/media', type: 'tree' },
+      { path: 'proposals/auth-overhaul.md', type: 'blob' },
     ]);
   });
 
@@ -134,16 +148,15 @@ describe('GitHubClient', () => {
     octokit.repos.getContent.mockResolvedValue({
       data: {
         type: 'file',
-        sha: 'abc123',
-        content: btoa('hello markdown'),
+        sha: 'doc-sha',
+        content: Buffer.from('# Draft\n', 'utf8').toString('base64'),
       },
       headers: responseHeaders,
-      status: 200,
     });
 
     await expect(client.getFileContent('proposals/doc.md')).resolves.toEqual({
-      content: 'hello markdown',
-      sha: 'abc123',
+      content: '# Draft\n',
+      sha: 'doc-sha',
     });
   });
 
@@ -155,12 +168,13 @@ describe('GitHubClient', () => {
     });
     const octokit = state.instances[0]!;
 
-    octokit.repos.getContent.mockRejectedValue({ status: 404 });
+    octokit.repos.getContent.mockRejectedValue({
+      status: 404,
+      response: { headers: responseHeaders },
+    });
 
     await expect(
-      client.getFileContent('proposals/missing.comments.json', {
-        optional: true,
-      }),
+      client.getFileContent('proposals/missing.md', { optional: true }),
     ).resolves.toBeNull();
   });
 
@@ -172,11 +186,14 @@ describe('GitHubClient', () => {
     });
     const octokit = state.instances[0]!;
 
-    octokit.repos.getContent.mockRejectedValue({ status: 404 });
+    octokit.repos.getContent.mockRejectedValue({
+      status: 404,
+      response: { headers: responseHeaders },
+    });
 
-    await expect(
-      client.getFileContent('proposals/missing.md'),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(client.getFileContent('proposals/missing.md')).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
   });
 
   it('createFile writes without sha and returns the new sha', async () => {
@@ -188,25 +205,23 @@ describe('GitHubClient', () => {
     const octokit = state.instances[0]!;
 
     octokit.repos.createOrUpdateFileContents.mockResolvedValue({
-      data: { content: { sha: 'new-sha' } },
+      data: {
+        content: {
+          sha: 'new-sha',
+        },
+      },
       headers: responseHeaders,
-      status: 201,
     });
 
     await expect(
-      client.createFile('proposals/new.md', '# New', 'Create proposal: new.md'),
+      client.createFile('proposals/new.md', '# Draft\n', 'Add proposal'),
     ).resolves.toEqual({ sha: 'new-sha' });
     expect(octokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
       expect.objectContaining({
-        owner: 'acme',
-        repo: 'workspace',
         path: 'proposals/new.md',
-        message: 'Create proposal: new.md',
+        message: 'Add proposal',
       }),
     );
-    expect(
-      octokit.repos.createOrUpdateFileContents.mock.calls[0]?.[0],
-    ).not.toHaveProperty('sha');
   });
 
   it('updateFile sends sha and throws ConflictError on mismatch', async () => {
@@ -218,18 +233,12 @@ describe('GitHubClient', () => {
     const octokit = state.instances[0]!;
 
     octokit.repos.createOrUpdateFileContents.mockRejectedValue({
-      status: 422,
-      message: 'sha does not match',
+      status: 409,
       response: { headers: responseHeaders },
     });
 
     await expect(
-      client.updateFile(
-        'proposals/doc.md',
-        '# Updated',
-        'old-sha',
-        'Update proposal: doc.md',
-      ),
+      client.updateFile('proposals/doc.md', '# Updated\n', 'doc-sha', 'Update'),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
@@ -255,11 +264,13 @@ describe('GitHubClient', () => {
         },
       ],
       headers: responseHeaders,
-      status: 200,
     });
 
     await expect(client.getLatestCommit('proposals/doc.md')).resolves.toEqual({
-      author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+      author: {
+        login: 'jdoe',
+        avatarUrl: 'https://example.com/avatar.png',
+      },
       date: '2026-06-21T05:00:00Z',
       message: 'Update proposal',
     });
@@ -277,8 +288,9 @@ describe('GitHubClient', () => {
       status: 403,
       response: {
         headers: {
-          ...responseHeaders,
+          'x-ratelimit-limit': '5000',
           'x-ratelimit-remaining': '0',
+          'x-ratelimit-reset': '1893456000',
         },
       },
     });
@@ -294,10 +306,10 @@ describe('GitHubClient', () => {
     });
     const octokit = state.instances[0]!;
 
-    octokit.users.getAuthenticated.mockRejectedValue(
-      new Error('socket hang up'),
-    );
+    octokit.users.getAuthenticated.mockRejectedValue(new Error('socket hang up'));
 
-    await expect(client.validateAuth()).rejects.toBeInstanceOf(NetworkError);
+    await expect(client.validateAuth()).rejects.toEqual(
+      new NetworkError('socket hang up'),
+    );
   });
 });

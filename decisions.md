@@ -36,3 +36,10 @@ Append-only record of meaningful execution-time decisions.
 - Kept static asset serving inside `server/app.ts` rather than adding a Hono-specific static middleware package. The server only needs a small, explicit MIME map for the built Vite output, and avoiding another dependency kept the bootstrap path transparent.
 - Split the local server into two layers: `buildDraftspaceApp()` assembles the Hono routes and static responses for tests, while `startDraftspaceServer()` owns the real Node HTTP server, WebSocket upgrade handling, and lifecycle methods. That made the Hono-side behavior unit-testable without spinning up sockets.
 - Preserved both CLI entry shapes from the plan: `npm run serve -- ./proposals` works via the root command path, while `draftspace serve ./proposals` works via the explicit subcommand. The actual option parsing had to use Commander’s action `this` binding for consistency across both shapes.
+
+## Task 6 — Frontend Local Mode Support
+
+- Kept local-mode detection in a tiny DOM-based `src/lib/mode.ts` helper rather than threading environment flags through React context. The local server already injects the authoritative meta tag, so the frontend can stay stateless about how it was launched.
+- Passed `baseUrl: getApiBaseUrl()` at each `GitHubClient` construction site instead of hiding mode detection inside the client itself. That keeps the client a transport wrapper, not a browser-environment inspector, and makes the base URL explicit in the code paths that choose a backend.
+- Implemented local auth bypass inside `AuthProvider` by seeding a fixed `LOCAL_AUTH` state and turning logout/updateRepo into no-ops in local mode. That preserves the existing `AuthGate` contract and avoids a separate branching component tree for local mode.
+- Mounted `useFileWatcher()` inside a new `AppBody` child under `QueryClientProvider`. That preserves the hook’s access to `useQueryClient()` without forcing the watcher logic into every route component.

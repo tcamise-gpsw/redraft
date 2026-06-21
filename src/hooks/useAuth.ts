@@ -17,6 +17,7 @@ import {
   setStoredAuth,
   type StoredAuth,
 } from '../lib/auth';
+import { getApiBaseUrl, isLocalMode } from '../lib/mode';
 import type { User } from '../types/github';
 
 interface RepoConfig {
@@ -55,18 +56,46 @@ function toState(auth: StoredAuth | null) {
   } satisfies Pick<AuthContextValue, 'user' | 'pat' | 'repo'>;
 }
 
+const LOCAL_AUTH: StoredAuth = {
+  pat: 'local',
+  owner: 'local',
+  repo: 'proposals',
+  user: {
+    login: 'local-user',
+    avatarUrl: '',
+  },
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState(() => toState(getStoredAuth()));
+  const localMode = isLocalMode();
+  const [state, setState] = useState(() =>
+    toState(localMode ? LOCAL_AUTH : getStoredAuth()),
+  );
 
   const logout = useCallback(() => {
+    if (localMode) {
+      setState(toState(LOCAL_AUTH));
+      return;
+    }
+
     clearStoredAuth();
     setState(toState(null));
-  }, []);
+  }, [localMode]);
 
   const login = useCallback(
     async (pat: string, owner: string, repo: string) => {
+      if (localMode) {
+        setState(toState(LOCAL_AUTH));
+        return;
+      }
+
       try {
-        const client = new GitHubClient({ pat, owner, repo });
+        const client = new GitHubClient({
+          pat,
+          owner,
+          repo,
+          baseUrl: getApiBaseUrl(),
+        });
         const user = await client.validateAuth();
         const stored = { pat, owner, repo, user } satisfies StoredAuth;
 
@@ -78,12 +107,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [],
+    [localMode],
   );
 
   const updateRepo = useCallback(
     (owner: string, repo: string) => {
-      if (!state.pat || !state.user) {
+      if (localMode || !state.pat || !state.user) {
         return;
       }
 
@@ -96,10 +125,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStoredAuth(stored);
       setState(toState(stored));
     },
-    [state.pat, state.user],
+    [localMode, state.pat, state.user],
   );
 
   useEffect(() => {
+    if (localMode) {
+      return;
+    }
+
     const handleAuthError = () => {
       logout();
     };
@@ -109,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener(AUTH_ERROR_EVENT, handleAuthError);
     };
-  }, [logout]);
+  }, [localMode, logout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

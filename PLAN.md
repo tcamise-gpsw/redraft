@@ -273,7 +273,7 @@ Options:
 - [x] Verify `server/app.ts` route assembly with a Hono test client (supertest-style)
 
 **Commit:**
-- [ ] `feat(server): implement CLI and server bootstrap`
+- [x] `feat(server): implement CLI and server bootstrap`
 
 ---
 
@@ -314,17 +314,17 @@ function useFileWatcher(): void
 - In remote mode (no meta tag), all local-mode code paths are inert (no WebSocket opened, no auth bypass)
 
 **Checklist:**
-- [ ] In local mode, app loads without showing the PAT login screen
-- [ ] `GitHubClient` uses the local server URL for API calls
-- [ ] File changes on disk appear in the UI within 1 second (WebSocket → query invalidation → re-render)
-- [ ] In remote mode (deployed to GitHub Pages), behavior is completely unchanged
-- [ ] WebSocket disconnect + reconnect doesn't crash the app
+- [x] In local mode, app loads without showing the PAT login screen
+- [x] `GitHubClient` uses the local server URL for API calls
+- [x] File changes on disk appear in the UI within 1 second (WebSocket → query invalidation → re-render)
+- [x] In remote mode (deployed to GitHub Pages), behavior is completely unchanged
+- [x] WebSocket disconnect + reconnect doesn't crash the app
 
 **Tests:**
-- [ ] Run `npx vitest run src/hooks/__tests__/useFileWatcher.test.ts src/lib/mode.test.ts`
-- [ ] Test `isLocalMode()` with and without meta tag
-- [ ] Test `useFileWatcher` invalidates correct query keys for each event type
-- [ ] Test WebSocket reconnect logic
+- [x] Run `npx vitest run src/hooks/__tests__/useFileWatcher.test.ts src/lib/mode.test.ts`
+- [x] Test `isLocalMode()` with and without meta tag
+- [x] Test `useFileWatcher` invalidates correct query keys for each event type
+- [x] Test WebSocket reconnect logic
 
 **Commit:**
 - [ ] `feat(github): add local mode detection, auth bypass, and file watcher hook`

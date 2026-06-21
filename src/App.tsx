@@ -13,8 +13,10 @@ import {
 } from './lib/github/client';
 import { AuthGate } from './components/auth/AuthGate';
 import { Header } from './components/layout/Header';
+import { useFileWatcher } from './hooks/useFileWatcher';
 import { AuthProvider } from './hooks/useAuth';
 import { ToastProvider, useToast } from './hooks/useToast';
+import { isLocalMode } from './lib/mode';
 import { Home } from './routes/Home';
 import { ProposalView } from './routes/ProposalView';
 import { Settings } from './routes/Settings';
@@ -24,11 +26,30 @@ function ProposalRoute() {
   return <ProposalView />;
 }
 
+function AppBody({ rateLimit }: { rateLimit: RateLimitInfo | null }) {
+  useFileWatcher();
+
+  return (
+    <HashRouter>
+      <Header rateLimit={rateLimit} />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/proposals/*" element={<ProposalRoute />} />
+        <Route path="/settings" element={<Settings />} />
+      </Routes>
+    </HashRouter>
+  );
+}
+
 function AppShell() {
   const { showToast } = useToast();
   const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
 
   useEffect(() => {
+    if (isLocalMode()) {
+      return;
+    }
+
     const handleRateLimit = (event: Event) => {
       const customEvent = event as CustomEvent<RateLimitInfo>;
       setRateLimit(customEvent.detail);
@@ -89,14 +110,7 @@ function AppShell() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <HashRouter>
-        <Header rateLimit={rateLimit} />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/proposals/*" element={<ProposalRoute />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </HashRouter>
+      <AppBody rateLimit={rateLimit} />
     </QueryClientProvider>
   );
 }

@@ -7,6 +7,7 @@ import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { GitHubClient } from '../../lib/github';
+import { getApiBaseUrl } from '../../lib/mode';
 
 export function CreateProposalDialog({
   open,
@@ -48,6 +49,7 @@ export function CreateProposalDialog({
         pat,
         owner: repo.owner,
         repo: repo.repo,
+        baseUrl: getApiBaseUrl(),
       });
       await client.createFile(
         fullPath,

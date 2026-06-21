@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 
 import { ConflictError, GitHubClient } from '../lib/github';
+import { getApiBaseUrl } from '../lib/mode';
 import { useAuth } from './useAuth';
 import type {
   CommentFile,
@@ -32,7 +33,7 @@ export function useComments(path: string) {
 
   const client = useMemo(() => {
     if (!pat || !repo) return null;
-    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo });
+    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo, baseUrl: getApiBaseUrl() });
   }, [pat, repo]);
 
   const commentsPath = commentPath(path);

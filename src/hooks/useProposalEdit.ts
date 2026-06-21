@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { ConflictError, GitHubClient } from '../lib/github';
+import { getApiBaseUrl } from '../lib/mode';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
 
@@ -17,7 +18,7 @@ export function useProposalEdit(path: string) {
       return null;
     }
 
-    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo });
+    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo, baseUrl: getApiBaseUrl() });
   }, [pat, repo]);
 
   async function save(content: string, sha: string): Promise<void> {

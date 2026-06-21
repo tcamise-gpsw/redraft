@@ -32,3 +32,9 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 - Commander’s root command action and subcommand action do not hand you the same second argument shape. Treating the second argument as parsed options worked in one path and failed in the other. Using the action callback’s `this: Command` binding was the stable cross-path fix.
 - The CLI verification exposed that problem immediately because the subcommand silently ignored `--port` and tried to bind the default 4200. A cheap manual smoke test on a second port is worth running before wiring E2E around a new CLI.
 - For Node-side Hono use, `app.fetch()` plus a small `IncomingMessage` → `Request` bridge is enough. A dedicated adapter package was not necessary for the current server scope.
+
+## Task 6 — Frontend Local Mode Support
+
+- When the local server serves from `dist/`, any local-mode UI verification is meaningless until the bundle is rebuilt. I initially verified against stale assets and only saw the auth bypass once `npm run build` was rerun.
+- Playwright/browser verification against a live local server is useful even before the formal E2E task. It quickly proved the absence of the PAT form and confirmed that filesystem-created proposal files appeared in the tree through the WebSocket invalidation path.
+- The existing remote comments Playwright spec passed in isolation but timed out when grouped with the rest of the remote suite. That points to a pre-existing parallelism/timing sensitivity rather than a clear local-mode regression; it needs stabilization in Task 9 before the final validation pass.

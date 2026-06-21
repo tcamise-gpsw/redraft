@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from './useAuth';
 import { GitHubClient } from '../lib/github';
+import { getApiBaseUrl } from '../lib/mode';
 import type { ProposalNode } from '../types/proposals';
 import type { TreeItem } from '../types/github';
 
@@ -71,7 +72,7 @@ export function useProposals() {
       return null;
     }
 
-    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo });
+    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo, baseUrl: getApiBaseUrl() });
   }, [pat, repo]);
 
   const query = useQuery({

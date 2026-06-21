@@ -13,6 +13,7 @@ interface GitHubClientOptions {
   pat: string;
   owner: string;
   repo: string;
+  baseUrl?: string;
 }
 
 interface GetFileOptions {
@@ -126,8 +127,8 @@ export class GitHubClient {
     reset: new Date(0),
   };
 
-  constructor({ pat, owner, repo }: GitHubClientOptions) {
-    this.octokit = new Octokit({ auth: pat });
+  constructor({ pat, owner, repo, baseUrl }: GitHubClientOptions) {
+    this.octokit = new Octokit({ auth: pat, baseUrl });
     this.owner = owner;
     this.repo = repo;
   }
