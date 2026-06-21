@@ -82,7 +82,11 @@ export function useProposals() {
       }
 
       const items = await client.getTree();
-      return buildTree(items);
+      return buildTree(
+        items.filter(
+          (item) => item.type !== 'blob' || !item.path?.endsWith('.comments.json'),
+        ),
+      );
     },
     enabled: Boolean(client),
   });

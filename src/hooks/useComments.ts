@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 
 import { ConflictError, GitHubClient } from '../lib/github';
+import type { FileContent } from '../lib/github';
 import { useAuth } from './useAuth';
 import type {
   CommentFile,
@@ -51,10 +52,14 @@ export function useComments(path: string) {
 
       if (!existing) {
         const initialFile: CommentFile = { version: 1, comments: [nextThread] };
-        await client.createFile(
+        const writeResult = await client.createFile(
           pathToComments,
           JSON.stringify(initialFile),
           `Add comment on ${fileName(path)}`,
+        );
+        queryClient.setQueryData<FileContent>(
+          ['proposal', path, 'comments'],
+          { content: JSON.stringify(initialFile), sha: writeResult.sha },
         );
       } else {
         const parsed = JSON.parse(existing.content) as CommentFile;
@@ -62,11 +67,15 @@ export function useComments(path: string) {
           ...parsed,
           comments: [...parsed.comments, nextThread],
         };
-        await client.updateFile(
+        const writeResult = await client.updateFile(
           pathToComments,
           JSON.stringify(nextFile),
           existing.sha,
           `Add comment on ${fileName(path)}`,
+        );
+        queryClient.setQueryData<FileContent>(
+          ['proposal', path, 'comments'],
+          { content: JSON.stringify(nextFile), sha: writeResult.sha },
         );
       }
 
@@ -167,11 +176,15 @@ export function useComments(path: string) {
         ),
       };
 
-      await client.updateFile(
+      const writeResult = await client.updateFile(
         pathToComments,
         JSON.stringify(nextFile),
         existing.sha,
         `Resolve comment on ${fileName(path)}`,
+      );
+      queryClient.setQueryData<FileContent>(
+        ['proposal', path, 'comments'],
+        { content: JSON.stringify(nextFile), sha: writeResult.sha },
       );
       await queryClient.invalidateQueries({
         queryKey: ['proposal', path, 'comments'],

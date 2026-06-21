@@ -2,12 +2,11 @@ import type { CommitInfo } from '../../types/github';
 
 function formatRelativeTime(date: string): string {
   const diffMs = Date.now() - new Date(date).getTime();
-  const diffHours = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)));
-
-  if (diffHours < 24) {
-    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-  }
-
+  const diffMinutes = Math.round(diffMs / (1000 * 60));
+  if (diffMinutes < 1) return 'just now';
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
   const diffDays = Math.round(diffHours / 24);
   return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 }

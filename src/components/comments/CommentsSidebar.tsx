@@ -147,6 +147,11 @@ export function CommentsSidebar({
           });
         }}
       />
+      {!pendingSelection && ordered.length === 0 && orphaned.length === 0 ? (
+        <p className="text-sm text-slate-400">
+          No comments yet. Select text in the document to add the first comment.
+        </p>
+      ) : null}
     </section>
   );
 }

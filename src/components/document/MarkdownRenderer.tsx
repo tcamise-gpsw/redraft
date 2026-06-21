@@ -10,10 +10,6 @@ interface MarkdownRendererProps {
   content: string;
   comments: CommentThread[];
   onSelectComment: (id: string) => void;
-  onTextSelect: (selection: {
-    quote: string;
-    context: { prefix: string; suffix: string };
-  }) => void;
 }
 
 export function MarkdownRenderer({

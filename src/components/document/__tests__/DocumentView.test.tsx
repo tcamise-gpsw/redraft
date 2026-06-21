@@ -75,7 +75,6 @@ describe('Markdown document viewer', () => {
         }
         comments={[]}
         onSelectComment={vi.fn()}
-        onTextSelect={vi.fn()}
       />,
     );
 
@@ -164,7 +163,6 @@ describe('Markdown document viewer', () => {
           },
         ]}
         onSelectComment={onSelectComment}
-        onTextSelect={vi.fn()}
       />,
     );
 

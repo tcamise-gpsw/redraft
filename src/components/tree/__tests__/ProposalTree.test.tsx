@@ -155,4 +155,18 @@ describe('ProposalTree', () => {
       );
     });
   });
+
+  it('does not render .comments.json sidecar files in the tree', async () => {
+    getTree.mockResolvedValueOnce([
+      { path: 'proposals/api-design.md', type: 'blob' },
+      { path: 'proposals/api-design.comments.json', type: 'blob' },
+    ]);
+
+    renderTree();
+
+    expect(await screen.findByText('api-design.md')).toBeInTheDocument();
+    expect(
+      screen.queryByText('api-design.comments.json'),
+    ).not.toBeInTheDocument();
+  });
 });

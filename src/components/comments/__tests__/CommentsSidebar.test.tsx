@@ -198,6 +198,38 @@ describe('CommentsSidebar', () => {
       );
     });
   });
+
+  it('shows an empty-state message when there are no comments and no pending selection', () => {
+    render(
+      <CommentsSidebar
+        path="proposals/doc.md"
+        comments={[]}
+        documentText="Any text."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByText(/no comments yet/i),
+    ).toBeInTheDocument();
+  });
+
+  it('hides the empty-state message when a pending selection is active', () => {
+    render(
+      <CommentsSidebar
+        path="proposals/doc.md"
+        comments={[]}
+        documentText="Any text."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={{ quote: 'Any', context: { prefix: '', suffix: '' } }}
+        onClearSelection={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/no comments yet/i)).not.toBeInTheDocument();
+  });
 });
 
 describe('SelectionPopover', () => {

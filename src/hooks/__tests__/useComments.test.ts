@@ -5,6 +5,7 @@ import { renderHook, act } from '@testing-library/react';
 import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import type { FileContent } from '../../lib/github';
 
 const getFileContent = vi.hoisted(() => vi.fn());
 const createFile = vi.hoisted(() => vi.fn());
@@ -45,14 +46,17 @@ function setStoredAuth() {
   );
 }
 
+// Shared queryClient so tests can inspect cache state after mutations
+let sharedQueryClient: QueryClient;
+
 function wrapper({ children }: { children: ReactNode }) {
-  const queryClient = new QueryClient({
+  sharedQueryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
   return createElement(
     QueryClientProvider,
-    { client: queryClient },
+    { client: sharedQueryClient },
     createElement(AuthProvider, null, children),
   );
 }
@@ -196,5 +200,129 @@ describe('useComments', () => {
         resolved: false,
       }),
     ).rejects.toThrow(/refresh and re-apply/i);
+  });
+});
+
+describe('useComments – optimistic cache updates', () => {
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', createLocalStorageMock());
+    localStorage.clear();
+    setStoredAuth();
+    getFileContent.mockReset();
+    createFile.mockReset();
+    updateFile.mockReset();
+  });
+
+  it('sets query cache immediately after addComment creates a new file', async () => {
+    getFileContent.mockResolvedValueOnce(null);
+    createFile.mockResolvedValueOnce({ sha: 'created-sha' });
+
+    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+      wrapper,
+    });
+
+    await act(async () => {
+      await result.current.addComment({
+        quote: 'lazy init',
+        quoteContext: { prefix: '', suffix: '' },
+        author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+        body: 'First comment',
+        resolved: false,
+      });
+    });
+
+    const cached = sharedQueryClient.getQueryData<FileContent>([
+      'proposal',
+      'proposals/doc.md',
+      'comments',
+    ]);
+    expect(cached).toBeDefined();
+    expect(cached?.sha).toBe('created-sha');
+    expect(cached?.content).toContain('"body":"First comment"');
+  });
+
+  it('sets query cache immediately after addComment appends to existing file', async () => {
+    const existing = {
+      sha: 'old-sha',
+      content: JSON.stringify({
+        version: 1,
+        comments: [
+          {
+            id: 'thread-1',
+            quote: 'existing',
+            quoteContext: { prefix: '', suffix: '' },
+            author: { login: 'jdoe', avatarUrl: '' },
+            body: 'Old comment',
+            createdAt: '2026-06-01T00:00:00Z',
+            resolved: false,
+            replies: [],
+          },
+        ],
+      }),
+    };
+    getFileContent.mockResolvedValueOnce(existing);
+    updateFile.mockResolvedValueOnce({ sha: 'updated-sha' });
+
+    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+      wrapper,
+    });
+
+    await act(async () => {
+      await result.current.addComment({
+        quote: 'new selection',
+        quoteContext: { prefix: '', suffix: '' },
+        author: { login: 'jdoe', avatarUrl: '' },
+        body: 'Second comment',
+        resolved: false,
+      });
+    });
+
+    const cached = sharedQueryClient.getQueryData<FileContent>([
+      'proposal',
+      'proposals/doc.md',
+      'comments',
+    ]);
+    expect(cached?.sha).toBe('updated-sha');
+    expect(cached?.content).toContain('"body":"Old comment"');
+    expect(cached?.content).toContain('"body":"Second comment"');
+  });
+
+  it('sets query cache immediately after resolveThread toggles resolved state', async () => {
+    const existingFile = {
+      sha: 'resolve-sha',
+      content: JSON.stringify({
+        version: 1,
+        comments: [
+          {
+            id: 'thread-1',
+            quote: 'text',
+            quoteContext: { prefix: '', suffix: '' },
+            author: { login: 'jdoe', avatarUrl: '' },
+            body: 'Q',
+            createdAt: '2026-06-01T00:00:00Z',
+            resolved: false,
+            replies: [],
+          },
+        ],
+      }),
+    };
+    getFileContent.mockResolvedValueOnce(existingFile);
+    updateFile.mockResolvedValueOnce({ sha: 'resolved-sha' });
+
+    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+      wrapper,
+    });
+
+    await act(async () => {
+      await result.current.resolveThread('thread-1');
+    });
+
+    const cached = sharedQueryClient.getQueryData<FileContent>([
+      'proposal',
+      'proposals/doc.md',
+      'comments',
+    ]);
+    expect(cached?.sha).toBe('resolved-sha');
+    expect(cached?.content).toContain('"resolved":true');
   });
 });

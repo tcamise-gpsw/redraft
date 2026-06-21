@@ -63,7 +63,6 @@ export function DocumentView({
           content={content}
           comments={comments?.comments ?? []}
           onSelectComment={onSelectComment}
-          onTextSelect={onTextSelect}
         />
       </div>
       <SelectionPopover

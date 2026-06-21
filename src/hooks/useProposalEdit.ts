@@ -35,6 +35,9 @@ export function useProposalEdit(path: string) {
       await queryClient.invalidateQueries({
         queryKey: ['proposal', path, 'content'],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['proposal', path, 'commit'],
+      });
       navigate(`/${path.replace(/^proposals\//, 'proposals/')}`);
       showToast({ tone: 'info', title: 'Proposal saved' });
     } catch (error) {
