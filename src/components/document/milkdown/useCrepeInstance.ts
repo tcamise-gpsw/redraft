@@ -15,6 +15,7 @@ import {
   useSelectionCapture,
   type TextSelection,
 } from './selectionCapture';
+import { mermaidNodeViewPlugin } from './mermaidNodeView';
 
 export interface UseCrepeInstanceOptions {
   content: string;
@@ -68,6 +69,7 @@ export function useCrepeInstance(
         }),
       ),
     );
+    crepe.editor.use(mermaidNodeViewPlugin());
     crepe.on((api) => {
       api.markdownUpdated((_ctx, markdown) => {
         onMarkdownChangeRef.current?.(markdown);

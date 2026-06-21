@@ -163,6 +163,7 @@ vi.mock('@milkdown/kit/core', () => ({
 
 vi.mock('@milkdown/utils', () => ({
   $prose: (factory: unknown) => ({ factory }),
+  $view: (type: unknown, view: unknown) => ({ type, view }),
   replaceAll: mockReplaceAll,
 }));
 

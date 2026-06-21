@@ -20,3 +20,7 @@
 ## Task 4 — MilkdownDocument and RawEditor
 
 - The plan's discard prompt means unsaved mode switches cannot blindly carry edits across modes. Tracking draft state in the parent made that tradeoff explicit and kept both raw and WYSIWYG flows consistent.
+
+## Task 5 — Mermaid Node View
+
+- Milkdown `$view` plugins expose their final `NodeViewConstructor` on `.view` after initialization. Reusing `codeBlockView.view` was enough for fallback behavior; there was no need to recreate CodeMirror configuration manually.

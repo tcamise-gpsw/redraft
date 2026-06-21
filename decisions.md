@@ -26,3 +26,9 @@
 - Kept one shared `baselineContent` and `draftContent` in `MilkdownDocument` so mode switches, save flows, and discard prompts all reason about the same markdown source of truth.
 - Extended `RawEditor` with an optional `onChange` callback. That lets the parent enforce cross-mode dirty-state prompts without changing the textarea-focused save/cancel behavior that already existed in `MarkdownEditor`.
 - Handled selection confirmation in `MilkdownDocument` instead of a separate global popover component. The document now owns both the captured selection payload and the viewport positioning needed to place the inline comment button.
+
+## Task 5 — Mermaid Node View
+
+- Reused Milkdown's existing code block node view for non-mermaid languages and overrode only the `mermaid` language case. That keeps standard code blocks on the established CodeMirror path instead of introducing a second generic renderer.
+- Rendered diagrams asynchronously inside a dedicated node view and guarded updates with a render token. That prevents stale async mermaid results from overwriting newer node content.
+- Registered the mermaid node view from `useCrepeInstance` alongside the comment plugin so the editor is fully configured before React triggers Milkdown creation.

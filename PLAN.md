@@ -263,7 +263,7 @@ type Mode = 'view' | 'wysiwyg' | 'raw';
 - [x] Test: unsaved-changes guard fires confirm dialog on mode switch
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -291,18 +291,18 @@ export function mermaidNodeViewPlugin(): MilkdownPlugin;
 - `mermaid.initialize()` called once with `{ startOnLoad: false, theme: 'dark' }` at module level
 
 **Checklist:**
-- [ ] `mermaid` package added to `dependencies` in `package.json`
-- [ ] Mermaid code blocks render as SVG diagrams
-- [ ] Invalid mermaid syntax shows error state (not blank, not crash)
-- [ ] Non-mermaid code blocks unaffected (still use CodeMirror)
-- [ ] Dark theme mermaid diagrams (readable on slate-900 background)
-- [ ] Node view registered in CrepeEditor before `.create()`
+- [x] `mermaid` package added to `dependencies` in `package.json`
+- [x] Mermaid code blocks render as SVG diagrams
+- [x] Invalid mermaid syntax shows error state (not blank, not crash)
+- [x] Non-mermaid code blocks unaffected (still use CodeMirror)
+- [x] Dark theme mermaid diagrams (readable on slate-900 background)
+- [x] Node view registered in CrepeEditor before `.create()`
 
 **Tests:**
-- [ ] Run `npx vitest run src/components/document/milkdown/mermaidNodeView` to verify
-- [ ] Test: valid mermaid code produces SVG content in the DOM
-- [ ] Test: invalid mermaid code shows error indicator
-- [ ] Test: non-mermaid code blocks are not intercepted
+- [x] Run `npx vitest run src/components/document/milkdown/mermaidNodeView` to verify
+- [x] Test: valid mermaid code produces SVG content in the DOM
+- [x] Test: invalid mermaid code shows error indicator
+- [x] Test: non-mermaid code blocks are not intercepted
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit
