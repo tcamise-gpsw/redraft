@@ -8,3 +8,6 @@
 
 - 2026-06-21 — Task 3: Kept auth state in a dedicated `AuthProvider`/`useAuth` pair, but stored the provider in `src/hooks/useAuth.ts` without JSX by returning `createElement`. That preserves the approved file path while keeping the auth boundary centralized for later routing work.
 - 2026-06-21 — Task 3: Added `AUTH_ERROR_EVENT` plus `dispatchAuthError()` as the minimal cross-cutting hook for later 401 recovery. It avoids coupling the GitHub client directly to React state while still letting the app clear stored auth on unauthorized responses.
+
+- 2026-06-21 — Task 4: Kept the shell route placeholders intentionally thin (`Home`, `ProposalView`, `ProposalEdit`) and pushed shared chrome into `AppLayout` + `Header`. That preserves the feature-area route structure from the plan without over-abstracting before the data layers land.
+- 2026-06-21 — Task 4: Toast state lives in a dedicated provider instead of inside `App.tsx`, and the QueryClient is created from inside a component that can call `showToast`. This keeps TanStack Query error reporting aligned with the approved architecture while avoiding global singleton state.

@@ -179,7 +179,7 @@
 - [x] AuthForm: shows error on invalid PAT, calls login on valid submit
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -221,19 +221,19 @@ Routing setup in `App.tsx`:
 - All routes are lazy-loaded is optional — defer to implementer's judgment
 
 **Checklist:**
-- [ ] Three-panel layout renders correctly at desktop width
-- [ ] Sidebar collapses at tablet breakpoint
-- [ ] Mobile layout shows single column with navigation controls
-- [ ] Header shows user info and rate limit
-- [ ] Hash-based routing works (navigating to `/#/proposals/test` renders ProposalView)
-- [ ] QueryClientProvider wraps the app
-- [ ] Toast notifications display and auto-dismiss
-- [ ] Settings route renders the Settings page from Task 3
+- [x] Three-panel layout renders correctly at desktop width
+- [x] Sidebar collapses at tablet breakpoint
+- [x] Mobile layout shows single column with navigation controls
+- [x] Header shows user info and rate limit
+- [x] Hash-based routing works (navigating to `/#/proposals/test` renders ProposalView)
+- [x] QueryClientProvider wraps the app
+- [x] Toast notifications display and auto-dismiss
+- [x] Settings route renders the Settings page from Task 3
 
 **Tests:**
-- [ ] `npx vitest run src/components/layout`
-- [ ] AppLayout: renders three panels at desktop width
-- [ ] Routing: correct component renders for each route
+- [x] `npx vitest run src/components/layout`
+- [x] AppLayout: renders three panels at desktop width
+- [x] Routing: correct component renders for each route
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
