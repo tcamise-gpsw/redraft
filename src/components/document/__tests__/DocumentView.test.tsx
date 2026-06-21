@@ -5,6 +5,7 @@ import '@testing-library/jest-dom/vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CommentThread } from '../../../types/comments';
 
 const { saveProposal, useProposal, useProposalEdit } = vi.hoisted(() => ({
   saveProposal: vi.fn(),
@@ -55,6 +56,17 @@ vi.mock('../MilkdownDocument', () => ({
 
 import { DocumentView } from '../DocumentView';
 
+const COMMENT_THREAD: CommentThread = {
+  id: 'comment-1',
+  quote: 'Proposal',
+  quoteContext: { prefix: '', suffix: '' },
+  author: { login: 'jdoe', avatarUrl: '' },
+  body: 'A comment',
+  createdAt: '2026-06-21T00:00:00Z',
+  resolved: false,
+  replies: [],
+};
+
 describe('DocumentView', () => {
   beforeEach(() => {
     saveProposal.mockReset().mockResolvedValue(undefined);
@@ -62,9 +74,6 @@ describe('DocumentView', () => {
     useProposal.mockReset().mockReturnValue({
       content: '# Proposal',
       sha: 'current-sha',
-      comments: {
-        comments: [{ id: 'comment-1', quote: 'Proposal' }],
-      },
       commit: { sha: 'abc123' },
       isLoading: false,
       error: null,
@@ -76,6 +85,7 @@ describe('DocumentView', () => {
       <MemoryRouter>
         <DocumentView
           path="proposals/doc.md"
+          comments={[COMMENT_THREAD]}
           onSelectComment={vi.fn()}
           onTextSelect={vi.fn()}
         />
@@ -92,6 +102,7 @@ describe('DocumentView', () => {
       <MemoryRouter>
         <DocumentView
           path="proposals/doc.md"
+          comments={[]}
           onSelectComment={vi.fn()}
           onTextSelect={vi.fn()}
         />
@@ -109,7 +120,6 @@ describe('DocumentView', () => {
     useProposal.mockReturnValueOnce({
       content: '',
       sha: '',
-      comments: null,
       commit: null,
       isLoading: true,
       error: null,
@@ -119,6 +129,7 @@ describe('DocumentView', () => {
       <MemoryRouter>
         <DocumentView
           path="proposals/doc.md"
+          comments={[]}
           onSelectComment={vi.fn()}
           onTextSelect={vi.fn()}
         />
@@ -132,7 +143,6 @@ describe('DocumentView', () => {
     useProposal.mockReturnValueOnce({
       content: '',
       sha: '',
-      comments: null,
       commit: null,
       isLoading: false,
       error: new Error('Boom'),
@@ -142,6 +152,7 @@ describe('DocumentView', () => {
       <MemoryRouter>
         <DocumentView
           path="proposals/doc.md"
+          comments={[]}
           onSelectComment={vi.fn()}
           onTextSelect={vi.fn()}
         />

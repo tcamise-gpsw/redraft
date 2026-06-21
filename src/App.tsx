@@ -80,7 +80,7 @@ function AppShell() {
         defaultOptions: {
           queries: {
             retry: false,
-            staleTime: 10_000,
+            staleTime: 5 * 60 * 1000,
           },
         },
       }),

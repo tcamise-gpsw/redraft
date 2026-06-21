@@ -5,13 +5,18 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-const { documentViewPath, useProposal } = vi.hoisted(() => ({
+const { documentViewPath, useProposal, useComments } = vi.hoisted(() => ({
   documentViewPath: vi.fn(),
   useProposal: vi.fn(),
+  useComments: vi.fn(),
 }));
 
 vi.mock('../../../hooks/useProposal', () => ({
   useProposal,
+}));
+
+vi.mock('../../../hooks/useComments', () => ({
+  useComments,
 }));
 
 vi.mock('../../tree/ProposalTree', () => ({
@@ -25,6 +30,7 @@ vi.mock('../../document/DocumentView', () => ({
     path,
   }: {
     path: string;
+    comments: Array<{ id: string; quote: string }>;
     onSelectComment: (id: string) => void;
     onTextSelect: (selection: {
       quote: string;
@@ -79,8 +85,21 @@ describe('ProposalView comment interactions', () => {
   beforeEach(() => {
     documentViewPath.mockReset();
     useProposal.mockReturnValue({
-      comments: { version: 1, comments: [] },
       content: 'The camera should initialize lazily when preview starts.',
+      sha: '',
+      commit: null,
+      isLoading: false,
+      error: null,
+    });
+    useComments.mockReturnValue({
+      threads: [],
+      isDirty: false,
+      isSaving: false,
+      isLoading: false,
+      addComment: vi.fn(),
+      addReply: vi.fn(),
+      resolveThread: vi.fn(),
+      saveComments: vi.fn().mockResolvedValue(undefined),
     });
     Object.defineProperty(Element.prototype, 'scrollIntoView', {
       configurable: true,
@@ -131,6 +150,7 @@ describe('ProposalView comment interactions', () => {
 
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
+
   it('strips a trailing edit suffix before loading the proposal', () => {
     render(
       <MemoryRouter initialEntries={['/proposals/doc.md/edit']}>

@@ -1,9 +1,8 @@
-import { useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 
 import { ConflictError, GitHubClient } from '../lib/github';
-import type { FileContent } from '../lib/github';
 import { useAuth } from './useAuth';
 import type {
   CommentFile,
@@ -21,174 +20,129 @@ function fileName(path: string): string {
 
 export function useComments(path: string) {
   const { pat, repo } = useAuth();
-  const queryClient = useQueryClient();
+
+  // Local draft state — mutations never touch the network directly.
+  // saveComments() flushes the full state in a single write.
+  const [localThreads, setLocalThreads] = useState<CommentThread[] | null>(
+    null,
+  );
+  const [localSha, setLocalSha] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const client = useMemo(() => {
-    if (!pat || !repo) {
-      return null;
-    }
-
+    if (!pat || !repo) return null;
     return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo });
   }, [pat, repo]);
 
-  async function addComment(
+  const commentsPath = commentPath(path);
+
+  // One load per path. staleTime: Infinity prevents automatic re-fetches;
+  // the local store is the source of truth until a hard reload.
+  const commentsQuery = useQuery({
+    queryKey: ['proposal', path, 'comments'],
+    queryFn: async () => {
+      if (!client) throw new Error('Authentication is required');
+      return (
+        (await client.getFileContent(commentsPath, { optional: true })) ?? null
+      );
+    },
+    enabled: Boolean(client),
+    staleTime: Infinity,
+  });
+
+  // Reset local state whenever the user navigates to a different proposal.
+  useEffect(() => {
+    setLocalThreads(null);
+    setLocalSha(null);
+    setIsDirty(false);
+  }, [path]);
+
+  // Seed from the initial fetch result (runs once per load).
+  useEffect(() => {
+    if (commentsQuery.data !== undefined && localThreads === null) {
+      const parsed = commentsQuery.data?.content
+        ? (JSON.parse(commentsQuery.data.content) as CommentFile)
+        : null;
+      setLocalThreads(parsed?.comments ?? []);
+      setLocalSha(commentsQuery.data?.sha ?? null);
+    }
+  }, [commentsQuery.data, localThreads]);
+
+  function addComment(
     thread: Omit<CommentThread, 'id' | 'createdAt' | 'replies'>,
-  ): Promise<void> {
-    if (!client) {
-      throw new Error('Authentication is required');
-    }
-
-    try {
-      const pathToComments = commentPath(path);
-      const existing = await client.getFileContent(pathToComments, {
-        optional: true,
-      });
-      const nextThread: CommentThread = {
-        ...thread,
-        id: nanoid(),
-        createdAt: new Date().toISOString(),
-        replies: [],
-      };
-
-      if (!existing) {
-        const initialFile: CommentFile = { version: 1, comments: [nextThread] };
-        const writeResult = await client.createFile(
-          pathToComments,
-          JSON.stringify(initialFile),
-          `Add comment on ${fileName(path)}`,
-        );
-        queryClient.setQueryData<FileContent>(['proposal', path, 'comments'], {
-          content: JSON.stringify(initialFile),
-          sha: writeResult.sha,
-        });
-      } else {
-        const parsed = JSON.parse(existing.content) as CommentFile;
-        const nextFile: CommentFile = {
-          ...parsed,
-          comments: [...parsed.comments, nextThread],
-        };
-        const writeResult = await client.updateFile(
-          pathToComments,
-          JSON.stringify(nextFile),
-          existing.sha,
-          `Add comment on ${fileName(path)}`,
-        );
-        queryClient.setQueryData<FileContent>(['proposal', path, 'comments'], {
-          content: JSON.stringify(nextFile),
-          sha: writeResult.sha,
-        });
-      }
-
-      await queryClient.invalidateQueries({
-        queryKey: ['proposal', path, 'comments'],
-      });
-    } catch (error) {
-      if (
-        error instanceof ConflictError ||
-        (error instanceof Error && /sha|conflict/i.test(error.message))
-      ) {
-        throw new Error(
-          'File was modified since you loaded it. Please refresh and re-apply your changes.',
-        );
-      }
-      throw error;
-    }
+  ): void {
+    const next: CommentThread = {
+      ...thread,
+      id: nanoid(),
+      createdAt: new Date().toISOString(),
+      replies: [],
+    };
+    setLocalThreads((prev) => [...(prev ?? []), next]);
+    setIsDirty(true);
   }
 
-  async function addReply(
+  function addReply(
     threadId: string,
     reply: Omit<CommentReply, 'id' | 'createdAt'>,
-  ): Promise<void> {
-    if (!client) {
-      throw new Error('Authentication is required');
-    }
-
-    try {
-      const pathToComments = commentPath(path);
-      const existing = await client.getFileContent(pathToComments);
-      if (!existing) {
-        throw new Error(`Missing comments file for ${pathToComments}`);
-      }
-
-      const parsed = JSON.parse(existing.content) as CommentFile;
-      const nextFile: CommentFile = {
-        ...parsed,
-        comments: parsed.comments.map((thread) =>
-          thread.id === threadId
-            ? {
-                ...thread,
-                replies: [
-                  ...thread.replies,
-                  {
-                    ...reply,
-                    id: nanoid(),
-                    createdAt: new Date().toISOString(),
-                  },
-                ],
-              }
-            : thread,
-        ),
-      };
-
-      await client.updateFile(
-        pathToComments,
-        JSON.stringify(nextFile),
-        existing.sha,
-        `Reply to comment on ${fileName(path)}`,
-      );
-      await queryClient.invalidateQueries({
-        queryKey: ['proposal', path, 'comments'],
-      });
-    } catch (error) {
-      if (
-        error instanceof ConflictError ||
-        (error instanceof Error && /sha|conflict/i.test(error.message))
-      ) {
-        throw new Error(
-          'File was modified since you loaded it. Please refresh and re-apply your changes.',
-        );
-      }
-      throw error;
-    }
+  ): void {
+    setLocalThreads((prev) =>
+      (prev ?? []).map((t) =>
+        t.id === threadId
+          ? {
+              ...t,
+              replies: [
+                ...t.replies,
+                {
+                  ...reply,
+                  id: nanoid(),
+                  createdAt: new Date().toISOString(),
+                },
+              ],
+            }
+          : t,
+      ),
+    );
+    setIsDirty(true);
   }
 
-  async function resolveThread(threadId: string): Promise<void> {
-    if (!client) {
-      throw new Error('Authentication is required');
-    }
+  function resolveThread(threadId: string): void {
+    setLocalThreads((prev) =>
+      (prev ?? []).map((t) =>
+        t.id === threadId ? { ...t, resolved: !t.resolved } : t,
+      ),
+    );
+    setIsDirty(true);
+  }
 
+  async function saveComments(): Promise<void> {
+    if (!client) throw new Error('Authentication is required');
+
+    setIsSaving(true);
     try {
-      const pathToComments = commentPath(path);
-      const existing = await client.getFileContent(pathToComments);
-      if (!existing) {
-        throw new Error(`Missing comments file for ${pathToComments}`);
-      }
-      const parsed = JSON.parse(existing.content) as CommentFile;
       const nextFile: CommentFile = {
-        ...parsed,
-        comments: parsed.comments.map((thread) =>
-          thread.id === threadId
-            ? {
-                ...thread,
-                resolved: !thread.resolved,
-              }
-            : thread,
-        ),
+        version: 1,
+        comments: localThreads ?? [],
       };
+      const content = JSON.stringify(nextFile);
 
-      const writeResult = await client.updateFile(
-        pathToComments,
-        JSON.stringify(nextFile),
-        existing.sha,
-        `Resolve comment on ${fileName(path)}`,
-      );
-      queryClient.setQueryData<FileContent>(['proposal', path, 'comments'], {
-        content: JSON.stringify(nextFile),
-        sha: writeResult.sha,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['proposal', path, 'comments'],
-      });
+      if (localSha) {
+        const result = await client.updateFile(
+          commentsPath,
+          content,
+          localSha,
+          `Update comments on ${fileName(path)}`,
+        );
+        setLocalSha(result.sha);
+      } else {
+        const result = await client.createFile(
+          commentsPath,
+          content,
+          `Add comments on ${fileName(path)}`,
+        );
+        setLocalSha(result.sha);
+      }
+      setIsDirty(false);
     } catch (error) {
       if (
         error instanceof ConflictError ||
@@ -199,12 +153,19 @@ export function useComments(path: string) {
         );
       }
       throw error;
+    } finally {
+      setIsSaving(false);
     }
   }
 
   return {
+    threads: localThreads ?? [],
+    isLoading: Boolean(client) && (commentsQuery.isLoading || localThreads === null),
+    isDirty,
+    isSaving,
     addComment,
     addReply,
     resolveThread,
+    saveComments,
   };
 }

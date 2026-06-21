@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import type { CommentThread } from '../../types/comments';
 import { useProposal } from '../../hooks/useProposal';
 import { useProposalEdit } from '../../hooks/useProposalEdit';
 import { ActivityIndicator } from './ActivityIndicator';
@@ -9,10 +10,12 @@ import { Spinner } from '../ui/Spinner';
 
 export function DocumentView({
   path,
+  comments,
   onSelectComment,
   onTextSelect,
 }: {
   path: string;
+  comments: CommentThread[];
   onSelectComment: (id: string) => void;
   onTextSelect: (selection: {
     quote: string;
@@ -20,8 +23,7 @@ export function DocumentView({
   }) => void;
 }) {
   const { save } = useProposalEdit(path);
-  const { content, comments, commit, isLoading, error, sha } =
-    useProposal(path);
+  const { content, commit, isLoading, error, sha } = useProposal(path);
   const [isSaving, setIsSaving] = useState(false);
 
   if (isLoading) {
@@ -52,7 +54,7 @@ export function DocumentView({
     <div className="space-y-4">
       <ActivityIndicator commit={commit} />
       <MilkdownDocument
-        comments={comments?.comments ?? []}
+        comments={comments}
         content={content}
         isSaving={isSaving}
         onSave={async (nextContent) => {

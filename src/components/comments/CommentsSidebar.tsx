@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 
 import { useAuth } from '../../hooks/useAuth';
-import { useComments } from '../../hooks/useComments';
 import { useToast } from '../../hooks/useToast';
 import { resolveAnchor } from '../../lib/comments';
-import type { CommentThread } from '../../types/comments';
+import type { CommentReply, CommentThread } from '../../types/comments';
 import { CommentForm } from './CommentForm';
 import { CommentThread as ThreadCard } from './CommentThread';
 import { OrphanedComments } from './OrphanedComments';
@@ -18,23 +17,37 @@ interface PendingSelection {
 }
 
 export function CommentsSidebar({
-  path,
   comments,
   documentText,
   activeCommentId,
   onCommentClick,
   pendingSelection,
   onClearSelection,
+  addComment,
+  addReply,
+  resolveThread,
+  saveComments,
+  isDirty,
+  isSaving,
 }: {
-  path: string;
   comments: CommentThread[];
   documentText: string;
   activeCommentId: string | null;
   onCommentClick: (id: string) => void;
   pendingSelection: PendingSelection | null;
   onClearSelection: () => void;
+  addComment: (
+    thread: Omit<CommentThread, 'id' | 'createdAt' | 'replies'>,
+  ) => void;
+  addReply: (
+    threadId: string,
+    reply: Omit<CommentReply, 'id' | 'createdAt'>,
+  ) => void;
+  resolveThread: (threadId: string) => void;
+  saveComments: () => Promise<void>;
+  isDirty: boolean;
+  isSaving: boolean;
 }) {
-  const { addComment, addReply, resolveThread } = useComments(path);
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -69,7 +82,7 @@ export function CommentsSidebar({
       showToast({
         tone: 'error',
         title:
-          error instanceof Error ? error.message : 'Unable to update comments',
+          error instanceof Error ? error.message : 'Unable to save comments',
       });
       return false;
     }
@@ -77,26 +90,36 @@ export function CommentsSidebar({
 
   return (
     <section className="space-y-4">
+      {isDirty ? (
+        <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+          <span className="text-xs text-amber-300">Unsaved comment changes</span>
+          <button
+            type="button"
+            disabled={isSaving}
+            className="rounded px-2 py-1 text-xs font-medium text-amber-200 ring-1 ring-amber-500/40 transition hover:bg-amber-500/20 disabled:opacity-50"
+            onClick={() => void withToast(saveComments)}
+          >
+            {isSaving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      ) : null}
+
       {pendingSelection ? (
         <CommentForm
           quote={pendingSelection.quote}
           onCancel={onClearSelection}
-          onSubmit={async (body) => {
-            const succeeded = await withToast(async () => {
-              await addComment({
-                quote: pendingSelection.quote,
-                quoteContext: pendingSelection.context,
-                author: {
-                  login: user?.login ?? '',
-                  avatarUrl: user?.avatarUrl ?? '',
-                },
-                body,
-                resolved: false,
-              });
+          onSubmit={(body) => {
+            addComment({
+              quote: pendingSelection.quote,
+              quoteContext: pendingSelection.context,
+              author: {
+                login: user?.login ?? '',
+                avatarUrl: user?.avatarUrl ?? '',
+              },
+              body,
+              resolved: false,
             });
-            if (succeeded) {
-              onClearSelection();
-            }
+            onClearSelection();
           }}
         />
       ) : null}
@@ -107,21 +130,17 @@ export function CommentsSidebar({
           thread={thread}
           active={activeCommentId === thread.id}
           onClick={() => onCommentClick(thread.id)}
-          onReply={async (body) => {
-            await withToast(async () => {
-              await addReply(thread.id, {
-                author: {
-                  login: user?.login ?? '',
-                  avatarUrl: user?.avatarUrl ?? '',
-                },
-                body,
-              });
+          onReply={(body) => {
+            addReply(thread.id, {
+              author: {
+                login: user?.login ?? '',
+                avatarUrl: user?.avatarUrl ?? '',
+              },
+              body,
             });
           }}
-          onResolve={async () => {
-            await withToast(async () => {
-              await resolveThread(thread.id);
-            });
+          onResolve={() => {
+            resolveThread(thread.id);
           }}
         />
       ))}
@@ -130,21 +149,17 @@ export function CommentsSidebar({
         comments={orphaned}
         activeCommentId={activeCommentId}
         onCommentClick={onCommentClick}
-        onReply={async (threadId, body) => {
-          await withToast(async () => {
-            await addReply(threadId, {
-              author: {
-                login: user?.login ?? '',
-                avatarUrl: user?.avatarUrl ?? '',
-              },
-              body,
-            });
+        onReply={(threadId, body) => {
+          addReply(threadId, {
+            author: {
+              login: user?.login ?? '',
+              avatarUrl: user?.avatarUrl ?? '',
+            },
+            body,
           });
         }}
-        onResolve={async (threadId) => {
-          await withToast(async () => {
-            await resolveThread(threadId);
-          });
+        onResolve={(threadId) => {
+          resolveThread(threadId);
         }}
       />
       {!pendingSelection && ordered.length === 0 && orphaned.length === 0 ? (

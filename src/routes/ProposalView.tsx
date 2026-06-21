@@ -5,6 +5,7 @@ import { CommentsSidebar } from '../components/comments/CommentsSidebar';
 import { AppLayout } from '../components/layout/AppLayout';
 import { DocumentView } from '../components/document/DocumentView';
 import { ProposalTree } from '../components/tree/ProposalTree';
+import { useComments } from '../hooks/useComments';
 import { useProposal } from '../hooks/useProposal';
 
 export function ProposalView() {
@@ -14,7 +15,19 @@ export function ProposalView() {
     const cleaned = wildcard?.replace(/\/edit$/, '');
     return cleaned ? `proposals/${cleaned}` : 'proposals/unknown.md';
   }, [params]);
-  const { comments, content } = useProposal(path);
+
+  const {
+    threads,
+    isDirty,
+    isSaving,
+    addComment,
+    addReply,
+    resolveThread,
+    saveComments,
+  } = useComments(path);
+
+  const { content } = useProposal(path);
+
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<{
     quote: string;
@@ -30,6 +43,7 @@ export function ProposalView() {
       main={
         <DocumentView
           path={path}
+          comments={threads}
           onSelectComment={(id) => {
             setActiveCommentId(id);
             document
@@ -43,8 +57,7 @@ export function ProposalView() {
       }
       aside={
         <CommentsSidebar
-          path={path}
-          comments={comments?.comments ?? []}
+          comments={threads}
           documentText={content}
           activeCommentId={activeCommentId}
           onCommentClick={(id) => {
@@ -55,6 +68,12 @@ export function ProposalView() {
           }}
           pendingSelection={pendingSelection}
           onClearSelection={() => setPendingSelection(null)}
+          addComment={addComment}
+          addReply={addReply}
+          resolveThread={resolveThread}
+          saveComments={saveComments}
+          isDirty={isDirty}
+          isSaving={isSaving}
         />
       }
     />
