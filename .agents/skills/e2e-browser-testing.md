@@ -106,7 +106,8 @@ await tab.fill('textarea', 'New content here');
 ```
 
 ### Text selection → comment popover
-Simulate text selection inside `#document-markdown-root` and dispatch `selectionchange`:
+Simulate text selection inside `#document-markdown-root` and dispatch `mouseup`
+(the component shows on `mouseup`/`keyup`; `selectionchange` only clears):
 ```js
 await tab.evaluate(() => {
   const root = document.querySelector('#document-markdown-root');
@@ -117,9 +118,9 @@ await tab.evaluate(() => {
   range.setEnd(node, 20);
   window.getSelection().removeAllRanges();
   window.getSelection().addRange(range);
-  document.dispatchEvent(new Event('selectionchange'));
+  document.dispatchEvent(new Event('mouseup'));
 });
-await new Promise(r => setTimeout(r, 800));
+await new Promise(r => setTimeout(r, 300));
 // Then click the Comment button that appeared
 await tab.evaluate(() => {
   const btn = Array.from(document.querySelectorAll('button'))

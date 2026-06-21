@@ -86,7 +86,7 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
-    document.dispatchEvent(new Event('selectionchange'));
+    document.dispatchEvent(new Event('mouseup'));
   });
 
   await page.getByRole('button', { name: 'Comment' }).click();
