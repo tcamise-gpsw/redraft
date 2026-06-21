@@ -136,7 +136,7 @@ Each route handler receives the Hono context and the resolved `basePath` (propos
 - [x] Test tree endpoint lists only .md and .comments.json files
 
 **Commit:**
-- [ ] `feat(server): implement GitHub Contents API adapter routes`
+- [x] `feat(server): implement GitHub API adapter routes`
 
 ---
 
@@ -177,20 +177,20 @@ function startWatcher(basePath: string, onEvent: (event: FileEvent) => void): ()
 - On initial connection, no replay of current state is sent (the frontend uses REST to load current data)
 
 **Checklist:**
-- [ ] Writing a file to disk emits `file:changed` within 200ms
-- [ ] Creating a new .md file emits `file:created`
-- [ ] Deleting a file emits `file:deleted`
-- [ ] Non-.md/.comments.json files are ignored
-- [ ] Rapid writes (10 writes in 50ms) produce at most 1-2 events (debounce works)
-- [ ] WebSocket broadcast delivers to all connected clients
-- [ ] Disconnected clients are cleaned up without errors
+- [x] Writing a file to disk emits `file:changed` within 200ms
+- [x] Creating a new .md file emits `file:created`
+- [x] Deleting a file emits `file:deleted`
+- [x] Non-.md/.comments.json files are ignored
+- [x] Rapid writes (10 writes in 50ms) produce at most 1-2 events (debounce works)
+- [x] WebSocket broadcast delivers to all connected clients
+- [x] Disconnected clients are cleaned up without errors
 
 **Tests:**
-- [ ] Run `npx vitest run server/ws/ server/fs/watcher.test.ts`
-- [ ] Test watcher emits correct event types for add/change/unlink
-- [ ] Test debouncing reduces rapid events
-- [ ] Test hub broadcast delivers to multiple mock clients
-- [ ] Test hub handles client disconnect
+- [x] Run `npx vitest run server/ws/ server/fs/watcher.test.ts`
+- [x] Test watcher emits correct event types for add/change/unlink
+- [x] Test debouncing reduces rapid events
+- [x] Test hub broadcast delivers to multiple mock clients
+- [x] Test hub handles client disconnect
 
 **Commit:**
 - [ ] `feat(server): implement file watcher and WebSocket hub`

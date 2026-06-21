@@ -15,3 +15,9 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 
 - Hono's plain `*` route matcher does not populate `c.req.param('*')`. The route will match, but the wildcard value is missing. Named catch-all params (`:path{.+}`) are required if the handler needs the remainder of the path.
 - `Response.json()` is typed as `unknown` under strict TypeScript. Route tests need explicit response interfaces and casts, otherwise the server typecheck fails even when Vitest passes at runtime.
+
+## Task 3 — File Watcher & WebSocket Hub
+
+- `vi.advanceTimersByTimeAsync()` only proves the debounce timer fired; it does not guarantee any async file I/O awaited inside the timer callback has completed. The watcher tests had to await the real `onEvent` promise, not just the timer advance.
+- `vi.hoisted()` factories cannot safely close over imported runtime values. A fake watcher built on `EventEmitter` failed because the import had not initialized yet; a self-contained fake implementation inside the hoisted block avoids that trap.
+- Hono/WS integration tests need a server-side signal for disconnect bookkeeping. Waiting on the browser/client `close` event races the server cleanup path; emitting `connection-count` changes from the hub made the test deterministic.
