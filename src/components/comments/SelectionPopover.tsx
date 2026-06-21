@@ -26,17 +26,27 @@ export function SelectionPopover({
   useEffect(() => {
     const evaluate = () => {
       const selected = window.getSelection();
-      const quote = selected?.toString().trim() ?? '';
       const range = selected?.rangeCount ? selected.getRangeAt(0) : null;
       const root = document.querySelector(rootSelector);
 
-      if (!quote || !range || !root?.contains(range.commonAncestorContainer)) {
+      if (!selected || !range || !root?.contains(range.commonAncestorContainer)) {
         setSelection(null);
         setPosition(null);
         return;
       }
 
-      const rootText = root.textContent ?? '';
+      // getSelection().toString() inserts \n at block element boundaries
+      // (paragraph → paragraph, heading → paragraph, etc.) but
+      // root.textContent collapses those boundaries with no separator.
+      // Normalise both sides so cross-paragraph selections are found.
+      const quote = selected.toString().replace(/\s+/g, ' ').trim();
+      if (!quote) {
+        setSelection(null);
+        setPosition(null);
+        return;
+      }
+
+      const rootText = (root.textContent ?? '').replace(/\s+/g, ' ');
       const start = rootText.indexOf(quote);
       if (start < 0) {
         setSelection(null);
@@ -55,9 +65,7 @@ export function SelectionPopover({
           ),
         },
       });
-      // The popover is `position: fixed` — viewport-relative coordinates.
-      // getBoundingClientRect() already returns viewport coords; do NOT add
-      // window.scrollX/Y or the button drifts off-screen when scrolled.
+      // position: fixed uses viewport coords — do NOT add window.scrollX/Y.
       setPosition({
         left: rect.left,
         top: Math.max(8, rect.top - 40),

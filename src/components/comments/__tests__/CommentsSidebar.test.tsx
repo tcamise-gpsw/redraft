@@ -280,6 +280,29 @@ describe('SelectionPopover', () => {
     });
   });
 
+  it('shows a popover for selections that span paragraph boundaries (\\n in toString)', () => {
+    const onSelect = vi.fn();
+    render(
+      <div>
+        <div id="document-markdown-root">First paragraph Second paragraph</div>
+        <SelectionPopover rootSelector="#document-markdown-root" onSelect={onSelect} />
+      </div>,
+    );
+
+    // getSelection().toString() returns \n between block elements in a real browser
+    vi.spyOn(window, 'getSelection').mockReturnValue(
+      makeSelection('First paragraph\nSecond paragraph'),
+    );
+    act(() => { document.dispatchEvent(new Event('mouseup')); });
+
+    expect(screen.getByRole('button', { name: /comment/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /comment/i }));
+    // Quote is stored normalised (\\n → space) so anchoring can re-find it
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ quote: 'First paragraph Second paragraph' }),
+    );
+  });
+
   it('shows a popover on keyup for keyboard-driven selections', () => {
     const quote = 'initialize lazily';
     render(
