@@ -11,7 +11,8 @@ export function ProposalView() {
   const params = useParams();
   const path = useMemo(() => {
     const wildcard = params['*'];
-    return wildcard ? `proposals/${wildcard}` : 'proposals/unknown.md';
+    const cleaned = wildcard?.replace(/\/edit$/, '');
+    return cleaned ? `proposals/${cleaned}` : 'proposals/unknown.md';
   }, [params]);
   const { comments, content } = useProposal(path);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);

@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useProposal } from '../../hooks/useProposal';
+import { useProposalEdit } from '../../hooks/useProposalEdit';
 import { ActivityIndicator } from './ActivityIndicator';
-import { MarkdownRenderer } from './MarkdownRenderer';
+import { MilkdownDocument } from './MilkdownDocument';
 import { Spinner } from '../ui/Spinner';
-import { SelectionPopover } from '../comments/SelectionPopover';
 
 export function DocumentView({
   path,
@@ -18,7 +19,9 @@ export function DocumentView({
     context: { prefix: string; suffix: string };
   }) => void;
 }) {
-  const { content, comments, commit, isLoading, error } = useProposal(path);
+  const { save } = useProposalEdit(path);
+  const { content, comments, commit, isLoading, error, sha } = useProposal(path);
+  const [isSaving, setIsSaving] = useState(false);
 
   if (isLoading) {
     return (
@@ -46,28 +49,21 @@ export function DocumentView({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <Link
-          className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-100"
-          to={`/proposals/${path.replace(/^proposals\//, '')}/edit`}
-        >
-          Edit
-        </Link>
-      </div>
       <ActivityIndicator commit={commit} />
-      <div
-        className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6"
-        id="document-markdown-root"
-      >
-        <MarkdownRenderer
-          content={content}
-          comments={comments?.comments ?? []}
-          onSelectComment={onSelectComment}
-        />
-      </div>
-      <SelectionPopover
-        rootSelector="#document-markdown-root"
-        onSelect={onTextSelect}
+      <MilkdownDocument
+        comments={comments?.comments ?? []}
+        content={content}
+        isSaving={isSaving}
+        onSave={async (nextContent) => {
+          setIsSaving(true);
+          try {
+            await save(nextContent, sha);
+          } finally {
+            setIsSaving(false);
+          }
+        }}
+        onSelectComment={onSelectComment}
+        onTextSelect={onTextSelect}
       />
     </div>
   );

@@ -32,3 +32,9 @@
 - Reused Milkdown's existing code block node view for non-mermaid languages and overrode only the `mermaid` language case. That keeps standard code blocks on the established CodeMirror path instead of introducing a second generic renderer.
 - Rendered diagrams asynchronously inside a dedicated node view and guarded updates with a render token. That prevents stale async mermaid results from overwriting newer node content.
 - Registered the mermaid node view from `useCrepeInstance` alongside the comment plugin so the editor is fully configured before React triggers Milkdown creation.
+
+## Task 6 — Integrate Milkdown Into DocumentView
+
+- Moved save orchestration into `DocumentView` and kept `useProposalEdit` as the single write boundary. `MilkdownDocument` only knows how to emit markdown; GitHub writes and query invalidation still live in the hook designed for them.
+- Treated `/edit` as a compatibility suffix in `ProposalView` instead of preserving a separate route. That keeps old deep links working while collapsing editing back into the main proposal surface.
+- Rewrote the document and proposal-view tests around the new component seams before removing the legacy files. This kept route compatibility and comment-sidebar interactions covered while the old renderer/editor files were deleted.

@@ -305,7 +305,7 @@ export function mermaidNodeViewPlugin(): MilkdownPlugin;
 - [x] Test: non-mermaid code blocks are not intercepted
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -343,16 +343,16 @@ export function mermaidNodeViewPlugin(): MilkdownPlugin;
 - Remove `ProposalEdit` import
 
 **Checklist:**
-- [ ] `MarkdownRenderer`, `MarkdownEditor`, `SelectionPopover`, `ProposalEdit` all deleted
-- [ ] `DocumentView` renders `MilkdownDocument` with all props wired
-- [ ] Save works: WYSIWYG/Raw → Save → commits to GitHub via `useProposalEdit`
-- [ ] No broken imports anywhere in the app
-- [ ] `/proposals/:path/edit` URL now just shows the view (no crash, graceful)
-- [ ] Comment creation flow: select text → popover appears → click → sidebar opens form
+- [x] `MarkdownRenderer`, `MarkdownEditor`, `SelectionPopover`, `ProposalEdit` all deleted
+- [x] `DocumentView` renders `MilkdownDocument` with all props wired
+- [x] Save works: WYSIWYG/Raw → Save → commits to GitHub via `useProposalEdit`
+- [x] No broken imports anywhere in the app
+- [x] `/proposals/:path/edit` URL now just shows the view (no crash, graceful)
+- [x] Comment creation flow: select text → popover appears → click → sidebar opens form
 
 **Tests:**
-- [ ] Run `npx vitest run` to verify nothing is broken
-- [ ] Run `npx tsc --noEmit` to verify no type errors from deleted files
+- [x] Run `npx vitest run` to verify nothing is broken
+- [x] Run `npx tsc --noEmit` to verify no type errors from deleted files
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit

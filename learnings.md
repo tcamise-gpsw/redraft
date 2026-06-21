@@ -24,3 +24,7 @@
 ## Task 5 — Mermaid Node View
 
 - Milkdown `$view` plugins expose their final `NodeViewConstructor` on `.view` after initialization. Reusing `codeBlockView.view` was enough for fallback behavior; there was no need to recreate CodeMirror configuration manually.
+
+## Task 6 — Integrate Milkdown Into DocumentView
+
+- Deleting `SelectionPopover` required trimming its dedicated test block out of `CommentsSidebar.test.tsx`; otherwise the suite would keep importing a file that no longer exists even though the sidebar behavior itself was still valid.

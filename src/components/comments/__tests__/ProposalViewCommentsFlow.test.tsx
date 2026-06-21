@@ -5,7 +5,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-const useProposal = vi.hoisted(() => vi.fn());
+const { documentViewPath, useProposal } = vi.hoisted(() => ({
+  documentViewPath: vi.fn(),
+  useProposal: vi.fn(),
+}));
 
 vi.mock('../../../hooks/useProposal', () => ({
   useProposal,
@@ -19,7 +22,9 @@ vi.mock('../../document/DocumentView', () => ({
   DocumentView: ({
     onSelectComment,
     onTextSelect,
+    path,
   }: {
+    path: string;
     onSelectComment: (id: string) => void;
     onTextSelect: (selection: {
       quote: string;
@@ -27,6 +32,7 @@ vi.mock('../../document/DocumentView', () => ({
     }) => void;
   }) => (
     <div>
+      {documentViewPath(path)}
       <button type="button" onClick={() => onSelectComment('thread-1')}>
         Trigger highlight
       </button>
@@ -71,6 +77,7 @@ import { ProposalView } from '../../../routes/ProposalView';
 
 describe('ProposalView comment interactions', () => {
   beforeEach(() => {
+    documentViewPath.mockReset();
     useProposal.mockReturnValue({
       comments: { version: 1, comments: [] },
       content: 'The camera should initialize lazily when preview starts.',
@@ -123,5 +130,16 @@ describe('ProposalView comment interactions', () => {
     );
 
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+  });
+  it('strips a trailing edit suffix before loading the proposal', () => {
+    render(
+      <MemoryRouter initialEntries={['/proposals/doc.md/edit']}>
+        <Routes>
+          <Route path="/proposals/*" element={<ProposalView />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(documentViewPath).toHaveBeenCalledWith('proposals/doc.md');
   });
 });
