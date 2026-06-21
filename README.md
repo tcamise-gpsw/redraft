@@ -1,54 +1,117 @@
-# Proposal Review Workspace
+# Draftspace
 
-Proposal Review Workspace is a GitHub Pages-hosted React application for browsing, editing, and discussing technical proposals stored as markdown in a GitHub repository.
+Draftspace is a proposal review workspace for markdown documents. It lets teams browse proposals, discuss them with inline comment threads, and edit them in either a rich-text editor or raw markdown — backed by GitHub in remote mode or the local filesystem in local mode.
 
-## Quick start
+## What it does
+
+- Organizes proposals from a `proposals/` directory
+- Renders markdown documents with comments, activity, and Mermaid diagrams
+- Supports inline comment threads, replies, and resolution
+- Lets different users work in the mode that fits them best
+
+| Mode | Best for | Data source | Editing style |
+|---|---|---|---|
+| **Remote WYSIWYG** | Non-technical reviewers | GitHub repository | Rich-text editing in the browser |
+| **Remote Markdown** | Technical contributors | GitHub repository | Raw markdown + preview |
+| **Local + AI** | Power users and AI agents | Local files on disk | Browser UI + direct file edits |
+
+---
+
+## Remote mode — for reviewers and contributors
+
+Remote mode is the hosted GitHub-backed experience. You connect Draftspace to a repository that contains proposal files under `proposals/`.
+
+### For non-technical reviewers
+
+Use **View** and **WYSIWYG** modes when you want to read, comment, and make light edits without working directly in markdown syntax.
+
+Typical workflow:
+1. Open the hosted Draftspace site.
+2. Enter a fine-grained GitHub PAT and `owner/repo`.
+3. Choose a proposal from the tree.
+4. Read in **View** mode or switch to **WYSIWYG**.
+5. Select text, add comments, reply to threads, and resolve feedback.
+
+### For technical contributors
+
+Use **Raw** mode when you want direct markdown control while still keeping the browser review workflow.
+
+Typical workflow:
+1. Connect to the target repository.
+2. Open a proposal from the tree.
+3. Switch between **View**, **WYSIWYG**, and **Raw** as needed.
+4. Edit markdown directly in **Raw** mode.
+5. Save changes back to GitHub with SHA-based conflict protection.
+
+### Remote mode requirements
+
+Draftspace expects a fine-grained GitHub PAT with:
+- **Contents: Read/Write**
+- **Metadata: Read**
+
+Repository conventions:
+- Proposal documents live under `proposals/`
+- Comment threads live in sidecar `*.comments.json` files
+- Proposal content and comment files are written with SHA checks for conflict detection
+
+---
+
+## Local mode — for power users and AI agents
+
+Local mode serves the same UI from your machine, but reads and writes local files instead of going through the GitHub API.
+
+### Quick start
+
+From this repository:
 
 ```bash
 npm install
-npm run dev
 npm run build
+npm run serve -- ./proposals
 ```
 
-## Commands
+This starts a local Draftspace server and serves the app at `http://127.0.0.1:4200` by default.
 
-- `npm run dev` — start the Vite dev server
-- `npm run build` — produce a production bundle
-- `npm run preview` — preview the production bundle locally
-- `npx vitest run` — run unit and integration tests
-- `npx eslint src/` — lint the application source
-- `npx tsc --noEmit` — run the TypeScript compiler in check mode
-- `npx prettier --check src/` — verify source formatting
-- `npx playwright test` — run browser E2E tests
+What local mode gives you:
+- No PAT prompt
+- Direct read/write access to local `.md` and `.comments.json` files
+- Live UI updates when files change on disk
+- Optional git convenience endpoints for status and commits
 
-## What is in this repository
+### Working with AI agents
 
-- `src/` — application source code
-- `docs/architecture.md` — architecture, data flow, and API usage
-- `docs/development.md` — local setup, commands, deployment, and PAT guidance
-- `docs/specs/` — approved design artifacts
-- `PLAN.md` — approved implementation plan
-- `AGENTS.md` — implementation and testing guidance for coding agents
+Local mode is the intended environment for AI-assisted proposal workflows.
 
-## Architecture summary
+The design target is:
+- Agents edit proposal markdown directly on disk
+- Agents use the local Draftspace API for structured comment operations
+- The browser UI updates live as the agent writes files or replies to comment threads
 
-The app is a Vite-built React SPA served from GitHub Pages. Proposal markdown and sidecar comment JSON files live in the target GitHub repository and are read and written through the GitHub REST API using a fine-grained PAT stored in localStorage.
+Planned/common AI workflows include:
+- Review unresolved comment threads one by one
+- Draft or post replies
+- Resolve completed threads
+- Revise a proposal based on accumulated feedback
+- Summarize open discussions across proposals
 
-```mermaid
-flowchart LR
-  Pages[GitHub Pages] --> App[React SPA]
-  App --> API[GitHub REST API]
-  API --> Repo[Proposal repository]
-  App --> Comments[Sidecar comment JSON]
-```
+---
 
-## Current feature set
+## How Draftspace works
 
-- Auth gate for PAT + `owner/repo`
-- Proposal tree from the repo's `proposals/` directory
-- Markdown proposal viewing with activity indicators
-- Inline comment threads with quote anchoring, replies, resolution, and orphan detection
-- Raw markdown editing with save/cancel flow and SHA-conflict protection
-- Rate-limit and auth-expiry handling surfaced in the shell
+Draftspace uses one React frontend across all modes.
 
-See `docs/architecture.md` for the detailed component breakdown and `docs/development.md` for deployment, configuration, and PAT setup.
+- In **remote mode**, the browser talks to the GitHub REST API.
+- In **local mode**, the browser talks to a local server that mimics the GitHub contents API while reading and writing the filesystem.
+- Comment threads are stored separately from proposal markdown, so review discussion remains structured and portable.
+
+For architecture details, see `docs/architecture.md`.
+
+---
+
+## Related documentation
+
+- `docs/architecture.md` — system architecture and data flow
+- `docs/development.md` — development setup, build, test, and deployment details
+- `docs/specs/` — design specs and approved technical decisions
+- `docs/plans/` — implementation plans and execution notes
+- `AGENTS.md` — repository guidance for coding agents

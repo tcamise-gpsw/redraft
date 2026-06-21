@@ -327,7 +327,7 @@ function useFileWatcher(): void
 - [x] Test WebSocket reconnect logic
 
 **Commit:**
-- [ ] `feat(github): add local mode detection, auth bypass, and file watcher hook`
+- [x] `feat(github): add local mode detection, auth bypass, and file watcher hook`
 
 ---
 
@@ -355,15 +355,15 @@ AGENTS.md updates:
 - Add "Keep local server logic inside `server/`" convention
 
 **Checklist:**
-- [ ] README explains all three modes clearly
-- [ ] Each mode has a quick-start section with ≤5 steps
-- [ ] No developer/build instructions in README (those stay in docs/development.md)
-- [ ] AGENTS.md accurately reflects new commands and structure
-- [ ] Links to `docs/architecture.md`, `docs/development.md`, and specs are correct
+- [x] README explains all three modes clearly
+- [x] Each mode has a quick-start section with ≤5 steps
+- [x] No developer/build instructions in README (those stay in docs/development.md)
+- [x] AGENTS.md accurately reflects new commands and structure
+- [x] Links to `docs/architecture.md`, `docs/development.md`, and specs are correct
 
 **Tests:**
-- [ ] No automated tests — documentation only
-- [ ] Verify all links in README resolve to existing files
+- [x] No automated tests — documentation only
+- [x] Verify all links in README resolve to existing files
 
 **Commit:**
 - [ ] `docs: rewrite README for three-persona usage and update AGENTS.md`

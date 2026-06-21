@@ -43,3 +43,9 @@ Append-only record of meaningful execution-time decisions.
 - Passed `baseUrl: getApiBaseUrl()` at each `GitHubClient` construction site instead of hiding mode detection inside the client itself. That keeps the client a transport wrapper, not a browser-environment inspector, and makes the base URL explicit in the code paths that choose a backend.
 - Implemented local auth bypass inside `AuthProvider` by seeding a fixed `LOCAL_AUTH` state and turning logout/updateRepo into no-ops in local mode. That preserves the existing `AuthGate` contract and avoids a separate branching component tree for local mode.
 - Mounted `useFileWatcher()` inside a new `AppBody` child under `QueryClientProvider`. That preserves the hook’s access to `useQueryClient()` without forcing the watcher logic into every route component.
+
+## Task 7 — README Rewrite
+
+- Repositioned the README as a user-facing product entry point, not a contributor setup guide. Development and architecture detail now stay in `docs/`, while the README explains usage modes, workflows, and prerequisites in plain language.
+- Kept the local-mode quick start in README even though it includes `npm install` and `npm run build`, because in the current dogfooding phase the local server is consumed from this repo rather than an npm release. Those steps are still user-facing for the power-user / AI-agent persona.
+- Updated `AGENTS.md` to acknowledge the new local server and repo-local skills as first-class parts of the codebase. Leaving the old “do not introduce a backend” rule in place would have become actively misleading.

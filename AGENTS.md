@@ -2,16 +2,17 @@
 
 ## Project intent
 
-Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-proposal-review-core-design.md` and executed through `PLAN.md`.
+Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-proposal-review-core-design.md`, extended by the local-mode and AI workflow design in `docs/specs/2026-06-21-local-mode-ai-skills-design.md`.
 
 ## Commands
 
 - Dev server: `npm run dev`
 - Build: `npm run build`
+- Local server: `npm run serve -- ./proposals`
 - Test: `npx vitest run`
-- Lint: `npx eslint src/`
-- Type check: `npx tsc --noEmit`
-- Format check: `npx prettier --check src/`
+- Lint: `npx eslint src/ server/`
+- Type check: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
+- Format check: `npx prettier --check src/ server/`
 - E2E: `npx playwright test`
 
 ## Structure
@@ -24,15 +25,18 @@ Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-prop
 - `src/components/ui/` — shared primitives (button, dialog, spinner, toast)
 - `src/lib/github/` — GitHub REST client, typed errors, rate-limit/auth events
 - `src/lib/comments/` — anchor resolution and fuzzy matching
-- `src/hooks/` — auth, proposal loading, proposal editing, comments, toast state
+- `src/hooks/` — auth, proposal loading, proposal editing, comments, toast state, local file watcher bridge
 - `src/types/` — shared domain interfaces
-- `docs/` — architecture, development notes, and specs
+- `server/` — local Hono server, filesystem adapter, git convenience routes, watcher, WebSocket hub, CLI
+- `.agents/skills/` — project-local OMP skills
+- `docs/` — architecture, development notes, specs, and plans
 
 ## Conventions
 
 - TypeScript strict mode stays enabled.
 - Prefer focused components with one clear responsibility.
 - Keep GitHub API behavior inside `src/lib/github/`.
+- Keep local server logic inside `server/`.
 - Keep anchor-matching logic inside `src/lib/comments/`.
 - Keep ProseMirror plugins inside `src/components/document/milkdown/`.
 - Use TanStack Query for server state, React state for local interaction state.
@@ -50,5 +54,5 @@ Build the Proposal Review Workspace MVP described in `docs/specs/2025-06-21-prop
 - Do not leak the GitHub PAT into source, logs, or committed files.
 - Do not invent alternate storage paths for proposal content.
 - Do not bypass SHA checks when writing proposal or comment files.
-- Do not introduce a backend or server-side auth flow.
 - Do not bypass the auth/rate-limit event path when changing `GitHubClient` behavior.
+- Do not make git commits a required part of local Draftspace editing; git remains a convenience layer, not a gate.
