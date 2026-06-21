@@ -355,7 +355,7 @@ export function mermaidNodeViewPlugin(): MilkdownPlugin;
 - [x] Run `npx tsc --noEmit` to verify no type errors from deleted files
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -379,16 +379,16 @@ Dependency removal:
 - Run `npm install` to update lockfile
 
 **Checklist:**
-- [ ] Crepe renders with transparent background on slate-900 containers
-- [ ] Text is readable (slate-100 on dark background)
-- [ ] Comment highlights are visible amber with hover state
-- [ ] Old dependencies removed from package.json
-- [ ] `package-lock.json` updated via `npm install`
-- [ ] No visual conflicts between Crepe CSS and Tailwind
+- [x] Crepe renders with transparent background on slate-900 containers
+- [x] Text is readable (slate-100 on dark background)
+- [x] Comment highlights are visible amber with hover state
+- [x] Old dependencies removed from package.json
+- [x] `package-lock.json` updated via `npm install`
+- [x] No visual conflicts between Crepe CSS and Tailwind
 
 **Tests:**
-- [ ] Run `npm run build` to verify no missing CSS imports
-- [ ] Run `npx tsc --noEmit` to verify no imports of removed packages
+- [x] Run `npm run build` to verify no missing CSS imports
+- [x] Run `npx tsc --noEmit` to verify no imports of removed packages
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit

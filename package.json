@@ -24,11 +24,7 @@
     "nanoid": "^5.1.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.9.4",
-    "rehype-highlight": "^7.0.2",
-    "rehype-raw": "^7.0.0",
-    "remark-gfm": "^4.0.1"
+    "react-router-dom": "^7.9.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.1",

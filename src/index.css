@@ -26,3 +26,27 @@ body {
 * {
   box-sizing: border-box;
 }
+
+.milkdown-document-wrapper .milkdown {
+  --crepe-color-background: transparent;
+  --crepe-color-surface: rgb(15 23 42);
+  --crepe-color-on-background: rgb(241 245 249);
+  --crepe-color-border: rgb(30 41 59);
+}
+
+.milkdown-document-wrapper .crepe-toolbar {
+  background-color: rgb(15 23 42 / 0.9);
+  border-color: rgb(30 41 59);
+}
+
+.milkdown-comment-highlight {
+  background-color: rgb(251 191 36 / 0.2);
+  border-bottom: 2px solid rgb(251 191 36);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+.milkdown-comment-highlight:hover {
+  background-color: rgb(251 191 36 / 0.35);
+}

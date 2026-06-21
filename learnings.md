@@ -28,3 +28,7 @@
 ## Task 6 — Integrate Milkdown Into DocumentView
 
 - Deleting `SelectionPopover` required trimming its dedicated test block out of `CommentsSidebar.test.tsx`; otherwise the suite would keep importing a file that no longer exists even though the sidebar behavior itself was still valid.
+
+## Task 7 — Styling and Dependency Cleanup
+
+- `npm run build` emits large-chunk warnings once mermaid and the rest of Milkdown are bundled, but the build still succeeds. The warning is real, but it is a follow-up optimization concern rather than a blocker for the migration itself.

@@ -38,3 +38,8 @@
 - Moved save orchestration into `DocumentView` and kept `useProposalEdit` as the single write boundary. `MilkdownDocument` only knows how to emit markdown; GitHub writes and query invalidation still live in the hook designed for them.
 - Treated `/edit` as a compatibility suffix in `ProposalView` instead of preserving a separate route. That keeps old deep links working while collapsing editing back into the main proposal surface.
 - Rewrote the document and proposal-view tests around the new component seams before removing the legacy files. This kept route compatibility and comment-sidebar interactions covered while the old renderer/editor files were deleted.
+
+## Task 7 — Styling and Dependency Cleanup
+
+- Kept the theme work in `src/index.css` and limited it to CSS variables plus a few explicit selectors. That integrates with Crepe's shipped styles without introducing another styling layer or component-local overrides everywhere.
+- Removed the legacy markdown-rendering packages only after the old renderer, editor, and selection components were deleted. That kept dependency cleanup tightly coupled to actual source removal and made `tsc` a reliable check for missed imports.
