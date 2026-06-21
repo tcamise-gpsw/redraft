@@ -16,7 +16,23 @@ The current API (v1) was designed rapidly and has accumulated several inconsiste
 - No standard pagination envelope
 - Missing rate limit headers on several endpoints
 
-### Mermaid Diagram
+## Versioning Strategy
+
+A change is breaking if any existing client would need to update to stay functional.
+Non-breaking changes ship within the current version; breaking changes require a new version.
+
+```mermaid
+flowchart TD
+    C([Proposed API change]) --> Q{Breaking change?}
+    Q -- No --> M[Ship within /v1/\nBump minor version]
+    Q -- Yes --> V[Introduce /v2/ endpoint]
+    V --> D[Add deprecation header to /v1/\nX-Deprecation-Date]
+    D --> S{v1 traffic < 5% for 30 days?}
+    S -- No --> S
+    S -- Yes --> R[Remove /v1/ endpoint]
+```
+
+## Request / Response Sequence
 
 ```mermaid
 sequenceDiagram

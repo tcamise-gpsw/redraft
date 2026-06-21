@@ -38,6 +38,27 @@ On every `/auth/refresh` call:
 3. Invalidate old refresh token (single-use rotation)
 4. If old token already invalidated → suspect replay → revoke entire family
 
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant DB as Token DB
+
+    C->>S: POST /auth/refresh (refresh cookie)
+    S->>DB: Lookup refresh token
+    DB-->>S: Token record + family ID
+
+    alt Token valid
+        S->>DB: Invalidate old token
+        S->>DB: Insert new token (same family)
+        S-->>C: 200 — new access token + Set-Cookie
+    else Token already used (replay detected)
+        S->>DB: Revoke entire token family
+        S-->>C: 401 Unauthorized
+        Note over C: User must re-authenticate
+    end
+```
+
 ## Endpoints
 
 | Method | Path | Description |
@@ -47,6 +68,23 @@ On every `/auth/refresh` call:
 | POST | `/auth/logout` | Revoke refresh token; clear cookie |
 | GET | `/auth/sessions` | List active device sessions |
 | DELETE | `/auth/sessions/:id` | Revoke a specific session |
+
+## Request Authorization Flow
+
+Every protected endpoint runs this decision tree before reaching business logic:
+
+```mermaid
+flowchart TD
+    R([Incoming Request]) --> A{Authorization header present?}
+    A -- No --> U1[401 Unauthorized]
+    A -- Yes --> B{Verify RS256 signature}
+    B -- Invalid --> U2[401 Invalid token]
+    B -- Valid --> C{Token expired?}
+    C -- Yes --> U3[401 — include WWW-Authenticate]
+    C -- No --> D{Required role present in claims?}
+    D -- No --> F[403 Forbidden]
+    D -- Yes --> G([Allow — pass to handler])
+```
 
 ## Security Considerations
 
