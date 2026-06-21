@@ -1,11 +1,14 @@
 {
   "name": "redraft",
-  "private": true,
   "version": "0.1.0",
+  "description": "Local-first proposal review tool — serve and review Markdown proposals from any directory",
+  "keywords": ["markdown", "review", "proposals", "local", "documentation"],
   "type": "module",
+  "files": ["bin/", "dist/", "dist-server/"],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run build:server",
+    "build:server": "esbuild server/cli.ts --bundle --platform=node --format=esm --outfile=dist-server/cli.mjs --packages=external",
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint src/ server/",
@@ -13,7 +16,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check src/ server/",
     "e2e": "playwright test",
-    "serve": "tsx server/cli.ts"
+    "serve": "tsx server/cli.ts",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@milkdown/crepe": "^7.21.2",
@@ -44,6 +48,7 @@
     "@typescript-eslint/parser": "^8.46.1",
     "@vitejs/plugin-react": "^5.1.0",
     "autoprefixer": "^10.4.21",
+    "esbuild": "^0.28.1",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^5.2.0",
