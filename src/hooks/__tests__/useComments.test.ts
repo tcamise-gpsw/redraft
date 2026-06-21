@@ -85,7 +85,7 @@ describe('useComments – local state', () => {
   it('starts empty and not dirty when no comments file exists', async () => {
     getFileContent.mockResolvedValueOnce(null);
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 
@@ -101,7 +101,7 @@ describe('useComments – local state', () => {
       content: JSON.stringify({ version: 1, comments: [EXISTING_THREAD] }),
     });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 
@@ -115,7 +115,7 @@ describe('useComments – local state', () => {
   it('addComment appends a thread locally without any API call', async () => {
     getFileContent.mockResolvedValueOnce(null);
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 
@@ -144,7 +144,7 @@ describe('useComments – local state', () => {
       content: JSON.stringify({ version: 1, comments: [EXISTING_THREAD] }),
     });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 
@@ -170,7 +170,7 @@ describe('useComments – local state', () => {
       content: JSON.stringify({ version: 1, comments: [EXISTING_THREAD] }),
     });
 
-    const { result } = renderHook(() => useComments('proposals/doc.md'), {
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
       wrapper,
     });
 

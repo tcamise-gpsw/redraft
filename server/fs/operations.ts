@@ -108,7 +108,11 @@ async function walkMarkdownFilesInternal(
 
     if (entry.isDirectory()) {
       files.push(
-        ...(await walkMarkdownFilesInternal(basePath, matcher, nextRelativePath)),
+        ...(await walkMarkdownFilesInternal(
+          basePath,
+          matcher,
+          nextRelativePath,
+        )),
       );
       continue;
     }
@@ -250,14 +254,18 @@ export async function deleteFile(
   await unlink(filePath);
 }
 
-export async function walkMarkdownFiles(basePath: string): Promise<TreeEntry[]> {
+export async function walkMarkdownFiles(
+  basePath: string,
+): Promise<TreeEntry[]> {
   const matcher = ignore();
   matcher.add(BUILT_IN_EXCLUDES);
   const files = await walkMarkdownFilesInternal(basePath, matcher);
   return files.sort((left, right) => left.path.localeCompare(right.path));
 }
 
-export async function listReviewEntries(basePath: string): Promise<ReviewEntry[]> {
+export async function listReviewEntries(
+  basePath: string,
+): Promise<ReviewEntry[]> {
   const commentFiles = await walkCommentFiles(basePath);
   const entries = await Promise.all(
     commentFiles.map(async (commentPath) => {

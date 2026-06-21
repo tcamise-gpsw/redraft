@@ -22,7 +22,9 @@ function isWatchedMarkdownFile(path: string): boolean {
 }
 
 function isCommentFile(path: string): boolean {
-  return path.startsWith(`${COMMENTS_ROOT}/`) && path.endsWith('.comments.json');
+  return (
+    path.startsWith(`${COMMENTS_ROOT}/`) && path.endsWith('.comments.json')
+  );
 }
 
 function scopeGitignorePattern(currentPath: string, pattern: string): string {
@@ -46,7 +48,10 @@ function addGitignoreRules(
   matcher: Ignore,
 ): void {
   try {
-    const content = readFileSync(resolve(basePath, currentPath, '.gitignore'), 'utf8');
+    const content = readFileSync(
+      resolve(basePath, currentPath, '.gitignore'),
+      'utf8',
+    );
     matcher.add(
       content
         .split(/\r?\n/u)

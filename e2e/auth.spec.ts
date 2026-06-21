@@ -7,7 +7,9 @@ const rateHeaders = {
   'content-type': 'application/json',
 };
 
-test('auth flow accepts a PAT and shows the proposal tree', async ({ page }) => {
+test('auth flow accepts a PAT and shows the documents tree', async ({
+  page,
+}) => {
   await page.route('https://api.github.com/**', async (route) => {
     const url = route.request().url();
 
@@ -15,7 +17,10 @@ test('auth flow accepts a PAT and shows the proposal tree', async ({ page }) => 
       await route.fulfill({
         status: 200,
         headers: rateHeaders,
-        body: JSON.stringify({ login: 'jdoe', avatar_url: 'https://example.com/avatar.png' }),
+        body: JSON.stringify({
+          login: 'jdoe',
+          avatar_url: 'https://example.com/avatar.png',
+        }),
       });
       return;
     }
@@ -25,26 +30,35 @@ test('auth flow accepts a PAT and shows the proposal tree', async ({ page }) => 
         status: 200,
         headers: rateHeaders,
         body: JSON.stringify({
-          tree: [
-            { path: 'proposals/camera-session.md', type: 'blob' },
-            { path: 'proposals/media', type: 'tree' },
-          ],
+          tree: [{ path: 'camera-session.md', type: 'blob' }],
         }),
       });
       return;
     }
 
     if (url.includes('/contents/')) {
-      await route.fulfill({ status: 404, headers: rateHeaders, body: JSON.stringify({ message: 'Not Found' }) });
+      await route.fulfill({
+        status: 404,
+        headers: rateHeaders,
+        body: JSON.stringify({ message: 'Not Found' }),
+      });
       return;
     }
 
     if (url.includes('/commits')) {
-      await route.fulfill({ status: 200, headers: rateHeaders, body: JSON.stringify([]) });
+      await route.fulfill({
+        status: 200,
+        headers: rateHeaders,
+        body: JSON.stringify([]),
+      });
       return;
     }
 
-    await route.fulfill({ status: 200, headers: rateHeaders, body: JSON.stringify({}) });
+    await route.fulfill({
+      status: 200,
+      headers: rateHeaders,
+      body: JSON.stringify({}),
+    });
   });
 
   await page.goto('/');
@@ -52,11 +66,17 @@ test('auth flow accepts a PAT and shows the proposal tree', async ({ page }) => 
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Proposals' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Documents' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Under Review' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Documents' }).click();
   await expect(page.getByText('camera-session.md')).toBeVisible();
 });
 
-test('a 401 response clears auth and returns to the auth gate', async ({ page }) => {
+test('a 401 response clears auth and returns to the auth gate', async ({
+  page,
+}) => {
   let authenticated = false;
 
   await page.route('https://api.github.com/**', async (route) => {
@@ -67,7 +87,10 @@ test('a 401 response clears auth and returns to the auth gate', async ({ page })
       await route.fulfill({
         status: 200,
         headers: rateHeaders,
-        body: JSON.stringify({ login: 'jdoe', avatar_url: 'https://example.com/avatar.png' }),
+        body: JSON.stringify({
+          login: 'jdoe',
+          avatar_url: 'https://example.com/avatar.png',
+        }),
       });
       return;
     }
@@ -81,7 +104,11 @@ test('a 401 response clears auth and returns to the auth gate', async ({ page })
       return;
     }
 
-    await route.fulfill({ status: 404, headers: rateHeaders, body: JSON.stringify({ message: 'Not Found' }) });
+    await route.fulfill({
+      status: 404,
+      headers: rateHeaders,
+      body: JSON.stringify({ message: 'Not Found' }),
+    });
   });
 
   await page.goto('/');
@@ -90,5 +117,5 @@ test('a 401 response clears auth and returns to the auth gate', async ({ page })
   await page.getByRole('button', { name: 'Connect' }).click();
 
   await expect(page.getByText('Authentication failed')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Connect to GitHub' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Connect' })).toBeVisible();
 });

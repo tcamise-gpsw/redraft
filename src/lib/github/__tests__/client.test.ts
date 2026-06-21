@@ -129,7 +129,10 @@ describe('GitHubClient', () => {
           { path: 'docs/auth-overhaul.md', type: 'blob' },
           { path: 'docs', type: 'tree' },
           { path: 'README.md', type: 'blob' },
-          { path: '.redraft/comments/docs/auth-overhaul.comments.json', type: 'blob' },
+          {
+            path: '.redraft/comments/docs/auth-overhaul.comments.json',
+            type: 'blob',
+          },
           { path: 'notes.txt', type: 'blob' },
         ],
       },
@@ -159,7 +162,7 @@ describe('GitHubClient', () => {
       headers: responseHeaders,
     });
 
-    await expect(client.getFileContent('proposals/doc.md')).resolves.toEqual({
+    await expect(client.getFileContent('docs/doc.md')).resolves.toEqual({
       content: '# Draft\n',
       sha: 'doc-sha',
     });
@@ -179,7 +182,7 @@ describe('GitHubClient', () => {
     });
 
     await expect(
-      client.getFileContent('proposals/missing.md', { optional: true }),
+      client.getFileContent('docs/missing.md', { optional: true }),
     ).resolves.toBeNull();
   });
 
@@ -197,7 +200,7 @@ describe('GitHubClient', () => {
     });
 
     await expect(
-      client.getFileContent('proposals/missing.md'),
+      client.getFileContent('docs/missing.md'),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
@@ -219,12 +222,12 @@ describe('GitHubClient', () => {
     });
 
     await expect(
-      client.createFile('proposals/new.md', '# Draft\n', 'Add proposal'),
+      client.createFile('docs/new.md', '# Draft\n', 'Add document'),
     ).resolves.toEqual({ sha: 'new-sha' });
     expect(octokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
       expect.objectContaining({
-        path: 'proposals/new.md',
-        message: 'Add proposal',
+        path: 'docs/new.md',
+        message: 'Add document',
       }),
     );
   });
@@ -243,7 +246,7 @@ describe('GitHubClient', () => {
     });
 
     await expect(
-      client.updateFile('proposals/doc.md', '# Updated\n', 'doc-sha', 'Update'),
+      client.updateFile('docs/doc.md', '# Updated\n', 'doc-sha', 'Update'),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
@@ -259,7 +262,7 @@ describe('GitHubClient', () => {
       data: [
         {
           commit: {
-            message: 'Update proposal',
+            message: 'Update document',
             author: { date: '2026-06-21T05:00:00Z' },
           },
           author: {
@@ -271,13 +274,13 @@ describe('GitHubClient', () => {
       headers: responseHeaders,
     });
 
-    await expect(client.getLatestCommit('proposals/doc.md')).resolves.toEqual({
+    await expect(client.getLatestCommit('docs/doc.md')).resolves.toEqual({
       author: {
         login: 'jdoe',
         avatarUrl: 'https://example.com/avatar.png',
       },
       date: '2026-06-21T05:00:00Z',
-      message: 'Update proposal',
+      message: 'Update document',
     });
   });
 

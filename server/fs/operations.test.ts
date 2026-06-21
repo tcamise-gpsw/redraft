@@ -100,11 +100,27 @@ describe('filesystem operations', () => {
     await mkdir(join(basePath, 'docs', 'drafts'), { recursive: true });
     await mkdir(join(basePath, 'ignored'), { recursive: true });
     await writeFileText(join(basePath, '.gitignore'), 'ignored/\n', 'utf8');
-    await writeFileText(join(basePath, 'docs', '.gitignore'), 'drafts/\n', 'utf8');
+    await writeFileText(
+      join(basePath, 'docs', '.gitignore'),
+      'drafts/\n',
+      'utf8',
+    );
     await writeFileText(join(basePath, 'README.md'), '# Root\n', 'utf8');
-    await writeFileText(join(basePath, 'ignored', 'hidden.md'), '# Hidden\n', 'utf8');
-    await writeFileText(join(basePath, 'docs', 'visible.md'), '# Visible\n', 'utf8');
-    await writeFileText(join(basePath, 'docs', 'drafts', 'secret.md'), '# Secret\n', 'utf8');
+    await writeFileText(
+      join(basePath, 'ignored', 'hidden.md'),
+      '# Hidden\n',
+      'utf8',
+    );
+    await writeFileText(
+      join(basePath, 'docs', 'visible.md'),
+      '# Visible\n',
+      'utf8',
+    );
+    await writeFileText(
+      join(basePath, 'docs', 'drafts', 'secret.md'),
+      '# Secret\n',
+      'utf8',
+    );
 
     const files = await walkMarkdownFiles(basePath);
 
@@ -118,7 +134,11 @@ describe('filesystem operations', () => {
     await mkdir(join(basePath, '.git', 'docs'), { recursive: true });
     await mkdir(join(basePath, '.redraft', 'comments'), { recursive: true });
     await mkdir(join(basePath, 'node_modules', 'pkg'), { recursive: true });
-    await writeFileText(join(basePath, '.git', 'docs', 'ignored.md'), '# Git\n', 'utf8');
+    await writeFileText(
+      join(basePath, '.git', 'docs', 'ignored.md'),
+      '# Git\n',
+      'utf8',
+    );
     await writeFileText(
       join(basePath, '.redraft', 'comments', 'doc.comments.json'),
       '{"version":1,"comments":[]}',
@@ -137,14 +157,34 @@ describe('filesystem operations', () => {
   });
 
   it('lists review entries with unresolved thread counts', async () => {
-    await mkdir(join(basePath, '.redraft', 'comments', 'docs'), { recursive: true });
+    await mkdir(join(basePath, '.redraft', 'comments', 'docs'), {
+      recursive: true,
+    });
     await writeFileText(
       join(basePath, '.redraft', 'comments', 'README.comments.json'),
       JSON.stringify({
         version: 1,
         comments: [
-          { id: 'a', quote: 'one', quoteContext: { prefix: '', suffix: '' }, author: { login: 'u', avatarUrl: '' }, body: 'body', createdAt: '2026-01-01T00:00:00.000Z', resolved: false, replies: [] },
-          { id: 'b', quote: 'two', quoteContext: { prefix: '', suffix: '' }, author: { login: 'u', avatarUrl: '' }, body: 'body', createdAt: '2026-01-01T00:00:00.000Z', resolved: true, replies: [] },
+          {
+            id: 'a',
+            quote: 'one',
+            quoteContext: { prefix: '', suffix: '' },
+            author: { login: 'u', avatarUrl: '' },
+            body: 'body',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            resolved: false,
+            replies: [],
+          },
+          {
+            id: 'b',
+            quote: 'two',
+            quoteContext: { prefix: '', suffix: '' },
+            author: { login: 'u', avatarUrl: '' },
+            body: 'body',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            resolved: true,
+            replies: [],
+          },
         ],
       }),
       'utf8',
@@ -154,8 +194,26 @@ describe('filesystem operations', () => {
       JSON.stringify({
         version: 1,
         comments: [
-          { id: 'c', quote: 'three', quoteContext: { prefix: '', suffix: '' }, author: { login: 'u', avatarUrl: '' }, body: 'body', createdAt: '2026-01-01T00:00:00.000Z', resolved: false, replies: [] },
-          { id: 'd', quote: 'four', quoteContext: { prefix: '', suffix: '' }, author: { login: 'u', avatarUrl: '' }, body: 'body', createdAt: '2026-01-01T00:00:00.000Z', resolved: false, replies: [] },
+          {
+            id: 'c',
+            quote: 'three',
+            quoteContext: { prefix: '', suffix: '' },
+            author: { login: 'u', avatarUrl: '' },
+            body: 'body',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            resolved: false,
+            replies: [],
+          },
+          {
+            id: 'd',
+            quote: 'four',
+            quoteContext: { prefix: '', suffix: '' },
+            author: { login: 'u', avatarUrl: '' },
+            body: 'body',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            resolved: false,
+            replies: [],
+          },
         ],
       }),
       'utf8',
@@ -172,7 +230,6 @@ describe('filesystem operations', () => {
   it('returns no review entries when the comments directory is missing', async () => {
     await expect(listReviewEntries(basePath)).resolves.toEqual([]);
   });
-
 
   it('creates a new file and returns its computed sha', async () => {
     const result = await createFile(

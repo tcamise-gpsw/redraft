@@ -8,7 +8,7 @@ Build the ReDraft MVP described in `docs/specs/2025-06-21-proposal-review-core-d
 
 - Dev server: `npm run dev`
 - Build: `npm run build`
-- Local server: `npm run serve -- ./proposals`
+- Local server: `npm run serve`
 - Test: `npx vitest run`
 - Lint: `npx eslint src/ server/`
 - Type check: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
@@ -19,13 +19,13 @@ Build the ReDraft MVP described in `docs/specs/2025-06-21-proposal-review-core-d
 
 - `src/components/auth/` — PAT entry, auth gate
 - `src/components/layout/` — shell, header, layout tests
-- `src/components/tree/` — proposal navigation tree and create dialog
+- `src/components/tree/` — document navigation tree, under-review list, and create dialog
 - `src/components/document/` — MilkdownDocument (view/WYSIWYG/raw), activity indicator, milkdown plugins
 - `src/components/comments/` — sidebar threads and forms
 - `src/components/ui/` — shared primitives (button, dialog, spinner, toast)
 - `src/lib/github/` — GitHub REST client, typed errors, rate-limit/auth events
 - `src/lib/comments/` — anchor resolution and fuzzy matching
-- `src/hooks/` — auth, proposal loading, proposal editing, comments, toast state, local file watcher bridge
+- `src/hooks/` — auth, document loading, document editing, comments, toast state, local file watcher bridge
 - `src/types/` — shared domain interfaces
 - `server/` — local Hono server, filesystem adapter, git convenience routes, watcher, WebSocket hub, CLI
 - `.agents/skills/` — project-local OMP skills
@@ -52,7 +52,7 @@ Build the ReDraft MVP described in `docs/specs/2025-06-21-proposal-review-core-d
 ## Common pitfalls
 
 - Do not leak the GitHub PAT into source, logs, or committed files.
-- Do not invent alternate storage paths for proposal content.
-- Do not bypass SHA checks when writing proposal or comment files.
+- Do not invent alternate storage paths for document content.
+- Do not bypass SHA checks when writing document or comment files.
 - Do not bypass the auth/rate-limit event path when changing `GitHubClient` behavior.
 - Do not make git commits a required part of local ReDraft editing; git remains a convenience layer, not a gate.

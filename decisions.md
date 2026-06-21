@@ -23,3 +23,8 @@ Append-only record of meaningful execution-time decisions.
 
 - Dropped the old optimistic `setQueryData()` insert from the create-dialog flow. The tree query now returns a structured `{ documents, underReview }` payload, so invalidating and reloading is safer than trying to hand-maintain two sections client-side.
 - Kept the route component file as `src/routes/ProposalView.tsx` for now to avoid a same-name collision with `src/components/document/DocumentView.tsx`, but switched the actual route path and data flow to the document model (`/d/*`, root-relative document paths, `DocumentTree`).
+
+## Task 5 - E2E & Final Validation
+
+- Kept the checked-in `proposals/` directory only as sample fixture content for Playwright's local workspace bootstrap. Production behavior no longer depends on that path; the config just copies representative markdown into a throwaway repo-root workspace.
+- Switched the remote comment E2E from "new selection comment" to "reply on an existing thread" because the latter is more deterministic under automation while still proving that comment mutations target `.redraft/comments/...`.

@@ -21,3 +21,8 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 
 - Under-review badges become part of a link's accessible name, so role/name assertions need to match the path loosely (regex) instead of assuming the visible filename is the full accessible label.
 - Renaming a tree/query model from a flat list to a structured payload is a good place to remove optimistic cache writes. The extra latency is negligible compared with the risk of keeping the two sections out of sync.
+
+## Task 5 - E2E & Final Validation
+
+- The remote comment flow was flaky when driven through synthetic text selection, but replying to an existing thread exercised the same comment-write path much more reliably in Playwright.
+- The only remaining `proposals/` path references in code are fixture copies in `playwright.config.ts`, which seed the disposable local workspace from the checked-in sample docs. Everything else now runs root-relative or through `.redraft/comments/`.

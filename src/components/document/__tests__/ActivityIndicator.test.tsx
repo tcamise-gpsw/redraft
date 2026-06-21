@@ -10,7 +10,7 @@ const FIXED_NOW = new Date('2026-06-21T12:00:00Z').getTime();
 
 const commit = {
   author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
-  message: 'Add proposal',
+  message: 'Add document',
   date: '',
 };
 
@@ -64,7 +64,7 @@ describe('ActivityIndicator', () => {
 
   it('shows the commit message and author login', () => {
     renderAt(new Date(FIXED_NOW - 3_600_000).toISOString());
-    expect(screen.getByText(/Add proposal/)).toBeInTheDocument();
+    expect(screen.getByText(/Add document/)).toBeInTheDocument();
     expect(screen.getByText(/@jdoe/)).toBeInTheDocument();
   });
 });

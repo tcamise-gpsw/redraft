@@ -107,11 +107,18 @@ export function useDocuments() {
     queryKey: ['documents', 'tree'],
     queryFn: async () => {
       if (!client || !repo) {
-        return { documents: [] as DocumentNode[], underReview: [] as ReviewEntry[] };
+        return {
+          documents: [] as DocumentNode[],
+          underReview: [] as ReviewEntry[],
+        };
       }
 
       if (localMode) {
-        const response = await fetchLocalTree(getApiBaseUrl(), repo.owner, repo.repo);
+        const response = await fetchLocalTree(
+          getApiBaseUrl(),
+          repo.owner,
+          repo.repo,
+        );
         return {
           documents: buildTree(response.documents),
           underReview: response.underReview,
@@ -123,9 +130,12 @@ export function useDocuments() {
       const underReview = (
         await Promise.all(
           markdownItems.map(async (item) => {
-            const commentFile = await client.getFileContent(commentPath(item.path), {
-              optional: true,
-            });
+            const commentFile = await client.getFileContent(
+              commentPath(item.path),
+              {
+                optional: true,
+              },
+            );
 
             if (!commentFile) {
               return null;

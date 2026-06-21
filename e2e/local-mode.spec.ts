@@ -1,55 +1,71 @@
 import { expect, test } from '@playwright/test';
 import { readFile, rm, writeFile } from 'node:fs/promises';
 
-const LOCAL_PROPOSALS_ROOT = '/tmp/redraft-local-playwright';
+const LOCAL_WORKSPACE_ROOT = '/tmp/redraft-local-playwright';
+const AUTH_DOC_PATH = `${LOCAL_WORKSPACE_ROOT}/docs/auth-overhaul.md`;
+const AUTH_COMMENT_PATH = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/docs/auth-overhaul.comments.json`;
 
-test('local mode auto-authenticates and renders proposal content', async ({ page }) => {
+test('local mode auto-authenticates and renders the split document tree', async ({
+  page,
+}) => {
   await page.goto('/');
 
   await expect(page.getByRole('button', { name: 'Connect' })).toHaveCount(0);
-  await expect(page.getByText('api-design-v2.md')).toBeVisible();
-  await page.getByRole('link', { name: /auth-overhaul.md/ }).click();
+  await expect(page.getByText('Under Review')).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /api-design-v2.md/ }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Documents' }).click();
+  await expect(page.getByText('auth-overhaul.md')).toBeVisible();
+  await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
   await expect(
     page.getByRole('heading', { name: 'Authentication Overhaul Proposal' }),
   ).toBeVisible();
 });
 
-test('local mode writes markdown edits back to disk and reflects external file changes', async ({ page }) => {
-  const proposalPath = `${LOCAL_PROPOSALS_ROOT}/auth-overhaul.md`;
-  const original = await readFile(proposalPath, 'utf8');
+test('local mode writes markdown edits back to disk and reflects external file changes', async ({
+  page,
+}) => {
+  const original = await readFile(AUTH_DOC_PATH, 'utf8');
 
   try {
     await page.goto('/');
-    await page.getByRole('link', { name: /auth-overhaul.md/ }).click();
+    await page.getByRole('button', { name: 'Documents' }).click();
+    await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
     await page.getByRole('button', { name: 'Raw' }).click();
     await page
       .getByLabel('Markdown editor')
       .fill('# Authentication Overhaul Proposal\n\nSaved from local mode');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Proposal saved')).toBeVisible();
-    await expect(readFile(proposalPath, 'utf8')).resolves.toContain(
+    await expect(page.getByText('Document saved')).toBeVisible();
+    await expect(readFile(AUTH_DOC_PATH, 'utf8')).resolves.toContain(
       'Saved from local mode',
     );
 
     await writeFile(
-      proposalPath,
+      AUTH_DOC_PATH,
       '# Authentication Overhaul Proposal\n\nChanged outside the UI\n',
       'utf8',
     );
     await expect(page.getByText('Changed outside the UI')).toBeVisible();
   } finally {
-    await writeFile(proposalPath, original, 'utf8');
+    await writeFile(AUTH_DOC_PATH, original, 'utf8');
   }
 });
 
-test('local mode writes saved comment threads back to disk', async ({ page }) => {
-  const commentPath = `${LOCAL_PROPOSALS_ROOT}/auth-overhaul.comments.json`;
-  const originalComments = await readFile(commentPath, 'utf8').catch(() => null);
+test('local mode writes saved comment threads to .redraft/comments', async ({
+  page,
+}) => {
+  const originalComments = await readFile(AUTH_COMMENT_PATH, 'utf8').catch(
+    () => null,
+  );
 
   try {
-    await rm(commentPath, { force: true });
+    await rm(AUTH_COMMENT_PATH, { force: true });
     await page.goto('/');
-    await page.getByRole('link', { name: /auth-overhaul.md/ }).click();
+    await page.getByRole('button', { name: 'Documents' }).click();
+    await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
 
     await page.locator('.ProseMirror').evaluate((root) => {
       const paragraph = root.querySelector('p');
@@ -89,32 +105,41 @@ test('local mode writes saved comment threads back to disk', async ({ page }) =>
 
     await expect(page.getByText('Question from local mode')).toBeVisible();
     await expect
-      .poll(async () => readFile(commentPath, 'utf8').catch(() => ''))
+      .poll(async () => readFile(AUTH_COMMENT_PATH, 'utf8').catch(() => ''))
       .toContain('Question from local mode');
   } finally {
     if (originalComments === null) {
-      await rm(commentPath, { force: true });
+      await rm(AUTH_COMMENT_PATH, { force: true });
     } else {
-      await writeFile(commentPath, originalComments, 'utf8');
+      await writeFile(AUTH_COMMENT_PATH, originalComments, 'utf8');
     }
   }
 });
 
-test('local mode updates the proposal tree when files are created on disk', async ({ page }) => {
-  const proposalPath = `${LOCAL_PROPOSALS_ROOT}/playwright-local.md`;
+test('local mode updates the documents tree and under-review section when files change on disk', async ({
+  page,
+}) => {
+  const documentPath = `${LOCAL_WORKSPACE_ROOT}/playwright-local.md`;
+  const commentPath = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/playwright-local.comments.json`;
 
   await page.goto('/');
+  await page.getByRole('button', { name: 'Documents' }).click();
   await writeFile(
-    proposalPath,
+    documentPath,
     '# Playwright Local\n\nCreated by the E2E test.\n',
     'utf8',
   );
 
   try {
+    await expect(page.getByText('playwright-local.md')).toBeVisible();
+
+    await writeFile(commentPath, '{"version":1,"comments":[]}', 'utf8');
+
     await expect(
       page.getByRole('link', { name: /playwright-local.md/ }),
     ).toBeVisible();
   } finally {
-    await rm(proposalPath, { force: true });
+    await rm(documentPath, { force: true });
+    await rm(commentPath, { force: true });
   }
 });

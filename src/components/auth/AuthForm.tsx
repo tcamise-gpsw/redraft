@@ -52,7 +52,11 @@ export function AuthForm() {
     <main className="min-h-screen bg-slate-950 px-6 py-16 text-slate-50">
       <div className="mx-auto max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl shadow-black/30">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="ReDraft" className="h-10 rounded bg-white px-2 py-0.5" />
+          <img
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="ReDraft"
+            className="h-10 rounded bg-white px-2 py-0.5"
+          />
           <p className="text-sm text-slate-300">
             Enter a GitHub PAT and the target repository to unlock proposal
             review.

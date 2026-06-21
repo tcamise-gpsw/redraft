@@ -324,7 +324,7 @@ export function CreateDocumentDialog(props: {
 - [x] Test: New Document dialog validates and creates with correct path
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
+- [x] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format
 
 ---
 
@@ -360,33 +360,33 @@ Read `skill://e2e-browser-testing` before starting this task.
 - Verify comment read/write targets `.redraft/comments/` paths.
 
 **Static checks:**
-- [ ] Full unit test suite passes: `npx vitest run`
-- [ ] Type check passes: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
-- [ ] Lint passes: `npx eslint src/ server/`
-- [ ] Format check passes: `npx prettier --check src/ server/`
-- [ ] Build succeeds: `npm run build`
+- [x] Full unit test suite passes: `npx vitest run`
+- [x] Type check passes: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
+- [x] Lint passes: `npx eslint src/ server/`
+- [x] Format check passes: `npx prettier --check src/ server/`
+- [x] Build succeeds: `npm run build`
 
 **E2E checks:**
-- [ ] `npx playwright test --project=local` passes — all local mode scenarios green
-- [ ] `npx playwright test --project=remote` passes — all remote mode scenarios green
-- [ ] Local: tree shows "Under Review" with seeded comment sidecar
-- [ ] Local: creating a comment writes to `.redraft/comments/` on disk (not adjacent)
-- [ ] Local: editing and saving writes to the correct root-relative path
-- [ ] Local: file watcher updates both tree sections live
-- [ ] Remote: split tree renders from mocked tree data
-- [ ] Remote: comment operations target `.redraft/comments/` paths
+- [x] `npx playwright test --project=local` passes — all local mode scenarios green
+- [x] `npx playwright test --project=remote` passes — all remote mode scenarios green
+- [x] Local: tree shows "Under Review" with seeded comment sidecar
+- [x] Local: creating a comment writes to `.redraft/comments/` on disk (not adjacent)
+- [x] Local: editing and saving writes to the correct root-relative path
+- [x] Local: file watcher updates both tree sections live
+- [x] Remote: split tree renders from mocked tree data
+- [x] Remote: comment operations target `.redraft/comments/` paths
 
 **Documentation updates:**
-- [ ] Update `AGENTS.md` — change "proposals" references to "documents", update command examples (e.g. `npm run serve -- ./proposals` → `npm run serve`), update directory descriptions if any reference `proposals/` as the primary content path
-- [ ] Update `README.md` — update quick-start instructions (`npx redraft-local` with no required args), update architecture description, change any "proposal" language to "document"
-- [ ] Update `docs/development.md` — update local server commands and workflow descriptions
-- [ ] Update `.agents/skills/redraft-review/SKILL.md` — change comment sidecar paths from adjacent to `.redraft/comments/`, update API paths from `local/proposals` to `local/redraft`
-- [ ] Update `.agents/skills/e2e-browser-testing/SKILL.md` — update route paths, fixture paths, and scenario descriptions from `proposals/` to repo-root model
+- [x] Update `AGENTS.md` — change "proposals" references to "documents", update command examples (e.g. `npm run serve -- ./proposals` → `npm run serve`), update directory descriptions if any reference `proposals/` as the primary content path
+- [x] Update `README.md` — update quick-start instructions (`npx redraft-local` with no required args), update architecture description, change any "proposal" language to "document"
+- [x] Update `docs/development.md` — update local server commands and workflow descriptions
+- [x] Update `.agents/skills/redraft-review/SKILL.md` — change comment sidecar paths from adjacent to `.redraft/comments/`, update API paths from `local/proposals` to `local/redraft`
+- [x] Update `.agents/skills/e2e-browser-testing/SKILL.md` — update route paths, fixture paths, and scenario descriptions from `proposals/` to repo-root model
 
 **Final sweep:**
-- [ ] No remaining references to `proposals/` in source code (sample data in `proposals/` directory can stay or be removed)
-- [ ] All acceptance criteria from spec verified end-to-end
-- [ ] `npx prettier --write src/ server/ e2e/` to normalize formatting
+- [x] No remaining references to `proposals/` in source code (sample data in `proposals/` directory can stay or be removed)
+- [x] All acceptance criteria from spec verified end-to-end
+- [x] `npx prettier --write src/ server/ e2e/` to normalize formatting
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format

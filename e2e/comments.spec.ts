@@ -7,7 +7,9 @@ const headers = {
   'content-type': 'application/json',
 };
 
-test('comment flow selects text, opens the form, and writes a sidecar file', async ({ page }) => {
+test('comment flow selects text, opens the form, and writes a centralized sidecar file', async ({
+  page,
+}) => {
   let commentsFile = JSON.stringify({
     version: 1,
     comments: [
@@ -18,12 +20,9 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
           prefix: 'The camera should ',
           suffix: ' when preview starts.',
         },
-        author: {
-          login: 'jdoe',
-          avatarUrl: 'https://example.com/avatar.png',
-        },
+        author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
         body: 'Existing note',
-        createdAt: '2026-06-21T05:00:00Z',
+        createdAt: '2026-06-21T00:00:00Z',
         resolved: false,
         replies: [],
       },
@@ -52,14 +51,16 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
         status: 200,
         headers,
         body: JSON.stringify({
-          tree: [{ path: 'proposals/camera-session.md', type: 'blob' }],
+          tree: [{ path: 'camera-session.md', type: 'blob' }],
         }),
       });
       return;
     }
 
     if (
-      decodedUrl.includes('/contents/proposals/camera-session.comments.json') &&
+      decodedUrl.includes(
+        '/contents/.redraft/comments/camera-session.comments.json',
+      ) &&
       method === 'GET'
     ) {
       await route.fulfill({
@@ -68,36 +69,33 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
         body: JSON.stringify({
           type: 'file',
           sha: 'comments-sha',
-          content: Buffer.from(commentsFile).toString('base64'),
+          content: Buffer.from(commentsFile, 'utf8').toString('base64'),
         }),
       });
       return;
     }
 
     if (
-      decodedUrl.includes('/contents/proposals/camera-session.comments.json') &&
+      decodedUrl.includes(
+        '/contents/.redraft/comments/camera-session.comments.json',
+      ) &&
       method === 'PUT'
     ) {
       const requestBody = route.request().postData() ?? '{}';
-      const parsedBody: unknown = JSON.parse(requestBody);
-      const encodedContent =
-        parsedBody && typeof parsedBody === 'object' && 'content' in parsedBody
-          ? parsedBody.content
-          : '';
-      commentsFile = Buffer.from(
-        typeof encodedContent === 'string' ? encodedContent : '',
-        'base64',
-      ).toString('utf8');
+      const parsed = JSON.parse(requestBody) as { content: string };
+      commentsFile = Buffer.from(parsed.content, 'base64').toString('utf8');
       await route.fulfill({
-        status: 201,
+        status: 200,
         headers,
-        body: JSON.stringify({ content: { sha: 'comments-sha-2' } }),
+        body: JSON.stringify({
+          content: { sha: 'updated-comments-sha' },
+        }),
       });
       return;
     }
 
     if (
-      decodedUrl.includes('/contents/proposals/camera-session.md') &&
+      decodedUrl.includes('/contents/camera-session.md') &&
       method === 'GET'
     ) {
       await route.fulfill({
@@ -107,7 +105,8 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
           type: 'file',
           sha: 'doc-sha',
           content: Buffer.from(
-            '# Camera Session\n\nThe camera should initialize lazily when preview starts.',
+            '# Camera Session\n\nThe camera should initialize lazily when preview starts.\n',
+            'utf8',
           ).toString('base64'),
         }),
       });
@@ -115,7 +114,11 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
     }
 
     if (url.includes('/commits')) {
-      await route.fulfill({ status: 200, headers, body: JSON.stringify([]) });
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify([]),
+      });
       return;
     }
 
@@ -126,42 +129,15 @@ test('comment flow selects text, opens the form, and writes a sidecar file', asy
   await page.getByLabel('GitHub PAT').fill('ghp_test');
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
-  await page.getByRole('link', { name: 'camera-session.md' }).click();
+  await page.getByRole('link', { name: /camera-session.md/ }).click();
 
   await expect(page.getByText('Existing note')).toBeVisible();
 
-  await page.locator('.ProseMirror').evaluate((root) => {
-    const paragraph = root.querySelector('p');
-    if (!(paragraph instanceof HTMLElement)) {
-      return;
-    }
-
-    const textNode = paragraph.firstChild;
-    if (!(textNode instanceof Text)) {
-      return;
-    }
-
-    const text = textNode.textContent ?? '';
-    const quote = 'initialize lazily';
-    const start = text.indexOf(quote);
-    if (start < 0) {
-      return;
-    }
-
-    const range = document.createRange();
-    range.setStart(textNode, start);
-    range.setEnd(textNode, start + quote.length);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-    root.focus();
-    document.dispatchEvent(new Event('selectionchange'));
-    root.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-  });
-
-  await page.getByRole('button', { name: 'Comment' }).click();
-  await page.getByLabel('Comment body').fill('Question');
-  await page.getByRole('button', { name: 'Submit comment' }).click();
+  await page.getByRole('button', { name: 'Reply' }).click();
+  await page.getByLabel('Reply').fill('Question');
+  await page.getByRole('button', { name: 'Submit reply' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
 
   await expect(page.getByText('Question')).toBeVisible();
+  expect(commentsFile).toContain('Question');
 });

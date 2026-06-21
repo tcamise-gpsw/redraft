@@ -28,7 +28,13 @@ describe('GitHub tree-style routes', () => {
       'utf8',
     );
     await writeFile(
-      join(basePath, '.redraft', 'comments', 'nested', 'api-design-v2.comments.json'),
+      join(
+        basePath,
+        '.redraft',
+        'comments',
+        'nested',
+        'api-design-v2.comments.json',
+      ),
       JSON.stringify({
         version: 1,
         comments: [

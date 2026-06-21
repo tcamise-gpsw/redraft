@@ -52,7 +52,7 @@ function mapStatus(code: string): 'modified' | 'untracked' | 'deleted' {
 }
 
 function defaultCommitMessage(): string {
-  return `Update proposals via ReDraft (${new Date().toISOString()})`;
+  return `Update documents via ReDraft (${new Date().toISOString()})`;
 }
 
 export function registerGitRoute(app: Hono, helpers: GitRouteHelpers): void {

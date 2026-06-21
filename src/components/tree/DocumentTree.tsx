@@ -98,7 +98,11 @@ export function DocumentTree() {
               documents.length > 0 ? (
                 <ul className="space-y-2" role="tree">
                   {documents.map((node) => (
-                    <TreeNode key={node.path} node={node} reviewPaths={reviewPaths} />
+                    <TreeNode
+                      key={node.path}
+                      node={node}
+                      reviewPaths={reviewPaths}
+                    />
                   ))}
                 </ul>
               ) : (

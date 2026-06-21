@@ -101,7 +101,9 @@ describe('DocumentTree', () => {
   });
 
   it('highlights the active document route', async () => {
-    getTree.mockResolvedValueOnce([{ path: 'media/overview.md', type: 'blob' }]);
+    getTree.mockResolvedValueOnce([
+      { path: 'media/overview.md', type: 'blob' },
+    ]);
 
     renderTree();
     fireEvent.click(await screen.findByRole('button', { name: 'Documents' }));
@@ -111,7 +113,9 @@ describe('DocumentTree', () => {
   });
 
   it('navigates with a file link and exposes the target hash path', async () => {
-    getTree.mockResolvedValueOnce([{ path: 'media/overview.md', type: 'blob' }]);
+    getTree.mockResolvedValueOnce([
+      { path: 'media/overview.md', type: 'blob' },
+    ]);
 
     renderTree();
     fireEvent.click(await screen.findByRole('button', { name: 'Documents' }));

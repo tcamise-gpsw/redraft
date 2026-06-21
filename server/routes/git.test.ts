@@ -26,7 +26,7 @@ describe('Git convenience routes', () => {
 
   beforeEach(async () => {
     repoRoot = await mkdtemp(join(tmpdir(), 'redraft-git-'));
-    basePath = join(repoRoot, 'proposals');
+    basePath = join(repoRoot, 'docs');
     await mkdir(basePath, { recursive: true });
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Auth\n', 'utf8');
 
@@ -37,8 +37,8 @@ describe('Git convenience routes', () => {
     await execGit('git', ['config', 'user.email', 'redraft@example.com'], {
       cwd: repoRoot,
     });
-    await execGit('git', ['add', 'proposals'], { cwd: repoRoot });
-    await execGit('git', ['commit', '-m', 'Initial proposals'], {
+    await execGit('git', ['add', 'docs'], { cwd: repoRoot });
+    await execGit('git', ['commit', '-m', 'Initial documents'], {
       cwd: repoRoot,
     });
   });
@@ -47,7 +47,7 @@ describe('Git convenience routes', () => {
     await rm(repoRoot, { recursive: true, force: true });
   });
 
-  it('reports modified proposal files in git status', async () => {
+  it('reports modified document files in git status', async () => {
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Updated\n', 'utf8');
     const app = buildGitHubApiRouter(basePath);
 
@@ -57,40 +57,40 @@ describe('Git convenience routes', () => {
     expect(response.status).toBe(200);
     expect(body.dirty).toBe(true);
     expect(body.files).toContainEqual({
-      path: 'proposals/auth-overhaul.md',
+      path: 'docs/auth-overhaul.md',
       status: 'modified',
     });
   });
 
-  it('creates a commit for pending proposal changes', async () => {
+  it('creates a commit for pending document changes', async () => {
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Updated\n', 'utf8');
     const app = buildGitHubApiRouter(basePath);
 
     const response = await app.request('http://local.test/api/git/commit', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ message: 'Update proposals via ReDraft' }),
+      body: JSON.stringify({ message: 'Update documents via ReDraft' }),
     });
     const body = (await response.json()) as GitCommitResponse;
 
     expect(response.status).toBe(200);
-    expect(body.message).toBe('Update proposals via ReDraft');
+    expect(body.message).toBe('Update documents via ReDraft');
     expect(body.sha).toMatch(/^[a-f0-9]{40}$/);
 
     const { stdout } = await execGit('git', ['log', '-1', '--pretty=%s'], {
       cwd: repoRoot,
     });
-    expect(stdout.trim()).toBe('Update proposals via ReDraft');
+    expect(stdout.trim()).toBe('Update documents via ReDraft');
   });
 
-  it('returns 404 when the proposals directory is not inside a git repository', async () => {
+  it('returns 404 when the served directory is not inside a git repository', async () => {
     const looseRoot = await mkdtemp(join(tmpdir(), 'redraft-no-git-'));
-    const looseProposals = join(looseRoot, 'proposals');
-    await mkdir(looseProposals, { recursive: true });
-    await writeFile(join(looseProposals, 'doc.md'), '# Doc\n', 'utf8');
+    const looseDocs = join(looseRoot, 'docs');
+    await mkdir(looseDocs, { recursive: true });
+    await writeFile(join(looseDocs, 'doc.md'), '# Doc\n', 'utf8');
 
     try {
-      const app = buildGitHubApiRouter(looseProposals);
+      const app = buildGitHubApiRouter(looseDocs);
       const response = await app.request('http://local.test/api/git/status');
       const body = (await response.json()) as { message: string };
 
@@ -113,7 +113,7 @@ describe('Git convenience routes', () => {
     const body = (await response.json()) as GitCommitResponse;
 
     expect(response.status).toBe(200);
-    expect(body.message).toMatch(/Update proposals via ReDraft/);
+    expect(body.message).toMatch(/Update documents via ReDraft/);
 
     const { stdout } = await execGit('git', ['log', '-1', '--pretty=%s'], {
       cwd: repoRoot,

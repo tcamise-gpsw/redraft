@@ -24,14 +24,14 @@ Choose the mode first. Do not mix them casually — the auth model, server start
 
 ### Use remote mode when
 - validating existing app behavior without touching real GitHub data
-- checking regressions in auth, proposals, comments, or editing
+- checking regressions in auth, documents, comments, or editing
 - verifying frontend changes that should behave exactly as before in GitHub mode
 
 ### Use local mode when
 - validating the local server flow
 - verifying filesystem writeback
 - verifying file watcher → WebSocket → UI updates
-- testing AI-agent workflows that operate on local proposal files
+- testing AI-agent workflows that operate on local markdown documents
 
 ---
 
@@ -50,7 +50,7 @@ npx tsc --noEmit -p server/tsconfig.json
 npx eslint src/ server/
 npx prettier --check src/ server/
 npm run build
-npm run serve -- ./proposals
+npm run serve
 ```
 
 ---
@@ -74,7 +74,7 @@ Or for a targeted regression:
 
 ```bash
 npx playwright test e2e/auth.spec.ts --project=remote
-npx playwright test e2e/proposals.spec.ts --project=remote
+npx playwright test e2e/documents.spec.ts --project=remote
 npx playwright test e2e/comments.spec.ts --project=remote
 npx playwright test e2e/editing.spec.ts --project=remote
 ```
@@ -103,11 +103,11 @@ npx playwright test --project=local
 
 The local project is expected to:
 - build the frontend first
-- serve a writable filesystem-backed copy of `proposals/`
+- serve a writable filesystem-backed repo root
 - isolate writes from the checked-in repo content
 
 ### Local fixture rule
-Do not point destructive tests at the real checked-in `proposals/` tree unless the user explicitly wants that. Prefer a writable copy, e.g. `/tmp/redraft-local-playwright`, seeded from `proposals/`.
+Do not point destructive tests at the real checked-in repo unless the user explicitly wants that. Prefer a writable copy, e.g. `/tmp/redraft-local-playwright`, seeded with representative markdown files and `.redraft/comments/` metadata.
 
 This keeps tests honest — real file writes, real watcher events, real server behavior — without leaving dirty repo content behind.
 
@@ -127,7 +127,7 @@ If that happens:
 
 ### Clean server lifecycle
 For manual local smoke tests:
-- start the exact command: `npm run serve -- ./proposals`
+- start the exact command: `npm run serve`
 - if port `4200` is occupied, inspect the listener and clear stale ReDraft processes before retrying
 - stop the server when finished so you do not leave orphan listeners behind
 
@@ -178,26 +178,24 @@ Use these as the default checklist for local E2E coverage.
    - confirm no PAT connect form
    - confirm user is `local-user`
 
-2. **Proposal browsing**
+2. **Document browsing**
    - tree shows `.md` files
-   - selecting a proposal renders headings/text correctly
+   - selecting a document renders headings/text correctly
    - Mermaid content renders, not just raw code fences
 
 3. **Editing and file writeback**
    - switch to `Raw`
    - edit markdown
    - save
-   - read the proposal file from disk to prove writeback
+   - read the document file from disk to prove writeback
 
 4. **Comment operations**
-   - select text
-   - open comment form
-   - submit a new comment
+   - select text or reply to an existing thread
    - save
-   - poll the sidecar file on disk until the comment text appears
+   - verify the `.redraft/comments/` sidecar is updated
 
 5. **Live file watching**
-   - mutate the open proposal file outside the browser
+   - mutate the open document outside the browser
    - verify the UI updates within a short window
 
 6. **Live tree update**
@@ -251,11 +249,11 @@ When the browser shows a real bug:
 
 ## Repository context
 
-- Local server command: `npm run serve -- ./proposals`
+- Local server command: `npm run serve`
 - Dev server command: `npm run dev`
 - Local app default URL: `http://127.0.0.1:4200`
 - Remote dev app URL: `http://127.0.0.1:4173`
-- Proposals live under `proposals/`
-- Comment sidecars live beside proposals as `*.comments.json`
-- Hash routing is in use: routes are `/#/...`
+- Markdown documents can live anywhere under the served repo root
+- Comment sidecars live under `.redraft/comments/<mirrored-path>.comments.json`
+- Hash routing is in use: routes are `/#/d/...`
 - Playwright has distinct `remote` and `local` projects

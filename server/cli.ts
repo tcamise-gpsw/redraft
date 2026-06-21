@@ -99,7 +99,10 @@ const program = registerServeOptions(
   new Command()
     .name('redraft')
     .description('ReDraft local tooling')
-    .argument('[directory]', 'directory to serve (default: current working directory)')
+    .argument(
+      '[directory]',
+      'directory to serve (default: current working directory)',
+    )
     .action(async function (this: Command, directory: string | undefined) {
       try {
         await runServe(directory ?? '.', this.optsWithGlobals<ServeOptions>());

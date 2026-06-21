@@ -27,7 +27,11 @@ export function TreeNode({
         {expanded && node.children?.length ? (
           <ul className="space-y-1 border-l border-slate-800 pl-3">
             {node.children.map((child) => (
-              <TreeNode key={child.path} node={child} reviewPaths={reviewPaths} />
+              <TreeNode
+                key={child.path}
+                node={child}
+                reviewPaths={reviewPaths}
+              />
             ))}
           </ul>
         ) : null}

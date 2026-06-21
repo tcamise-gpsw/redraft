@@ -77,7 +77,10 @@ export function CreateDocumentDialog({
   return (
     <Dialog open={open} title="New document" onClose={onClose}>
       <form className="space-y-4" onSubmit={handleCreate}>
-        <label className="block space-y-2 text-sm font-medium" htmlFor="document-path">
+        <label
+          className="block space-y-2 text-sm font-medium"
+          htmlFor="document-path"
+        >
           <span>File path</span>
           <input
             id="document-path"
@@ -87,7 +90,10 @@ export function CreateDocumentDialog({
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50"
           />
         </label>
-        <label className="block space-y-2 text-sm font-medium" htmlFor="document-title">
+        <label
+          className="block space-y-2 text-sm font-medium"
+          htmlFor="document-title"
+        >
           <span>Title</span>
           <input
             id="document-title"

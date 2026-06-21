@@ -14,7 +14,7 @@
 - `npm run build` — create a production build
 - `npm run preview` — preview the production build locally
 - `npm run test` — run Vitest once
-- `npm run serve -- [directory]` — serve local proposals from source (dev only, requires `tsx`)
+- `npm run serve -- [directory]` — serve local documents from source (dev only, requires `tsx`); omit `[directory]` to serve the current working directory
 - `npm run build:server` — compile server TypeScript to `dist-server/cli.mjs` via esbuild
 - `npm run typecheck` — run TypeScript without emitting
 - `npm run format` — format the repository
