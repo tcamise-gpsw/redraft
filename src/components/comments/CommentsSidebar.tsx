@@ -92,7 +92,9 @@ export function CommentsSidebar({
     <section className="space-y-4">
       {isDirty ? (
         <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-          <span className="text-xs text-amber-300">Unsaved comment changes</span>
+          <span className="text-xs text-amber-300">
+            Unsaved comment changes
+          </span>
           <button
             type="button"
             disabled={isSaving}

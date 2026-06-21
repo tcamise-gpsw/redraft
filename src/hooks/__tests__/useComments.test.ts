@@ -69,7 +69,10 @@ const EXISTING_THREAD = {
 describe('useComments – local state', () => {
   beforeEach(() => {
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     vi.stubGlobal('localStorage', createLocalStorageMock());
     localStorage.clear();
@@ -186,7 +189,10 @@ describe('useComments – local state', () => {
 describe('useComments – saveComments', () => {
   beforeEach(() => {
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     vi.stubGlobal('localStorage', createLocalStorageMock());
     localStorage.clear();

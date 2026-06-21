@@ -62,3 +62,8 @@ Append-only record of meaningful execution-time decisions.
 - The local-mode Playwright server boot command copies `proposals/` into `/tmp/draftspace-local-playwright` before serving it. That gives the tests a writable workspace without mutating the repository’s real proposal files or requiring a second fixture tree to be checked into git.
 - Set Playwright `workers: 1` globally to stabilize the previously flaky remote comments flow. The failure reproduced only under parallel execution, and serializing the suite is the smallest reliability-first change.
 - Updated the local contents route so `PUT /contents/:path` creates a missing file when no `sha` is supplied. That matches the actual Octokit contract used by `GitHubClient.createFile()` and keeps the local server behavior transport-compatible with GitHub instead of requiring frontend special-casing.
+
+## Task 10 — Final Validation
+
+- Used the repository formatter (`npx prettier --write src/ server/`) once the final `--check` gate proved the tree was not style-clean. The plan’s success condition is the command result, so normalizing the tracked files to the configured formatter was safer than trying to reason about which files were “supposed” to already be formatted.
+- Treated the browser smoke test as invalid until the page was reloaded into a clean local-mode render. The first session showed the exact View/WYSIWYG rendering glitch the user called out, so only the fresh session’s raw-editor save plus on-disk verification counted as evidence.

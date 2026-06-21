@@ -14,7 +14,12 @@ export function useProposal(path: string) {
       return null;
     }
 
-    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo, baseUrl: getApiBaseUrl() });
+    return new GitHubClient({
+      pat,
+      owner: repo.owner,
+      repo: repo.repo,
+      baseUrl: getApiBaseUrl(),
+    });
   }, [pat, repo]);
 
   const contentQuery = useQuery({

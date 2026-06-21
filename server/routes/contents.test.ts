@@ -72,7 +72,9 @@ describe('GitHub contents-style routes', () => {
 
     expect(response.status).toBe(200);
     expect(body.type).toBe('file');
-    expect(Buffer.from(body.content, 'base64').toString('utf8')).toBe('# Auth\n');
+    expect(Buffer.from(body.content, 'base64').toString('utf8')).toBe(
+      '# Auth\n',
+    );
     expect(body.sha).toMatch(/^[a-f0-9]{40}$/);
   });
 
@@ -99,9 +101,9 @@ describe('GitHub contents-style routes', () => {
 
     expect(response.status).toBe(200);
     expect(body.content.sha).toMatch(/^[a-f0-9]{40}$/);
-    await expect(readFile(join(basePath, 'auth-overhaul.md'), 'utf8')).resolves.toBe(
-      '# Updated\n',
-    );
+    await expect(
+      readFile(join(basePath, 'auth-overhaul.md'), 'utf8'),
+    ).resolves.toBe('# Updated\n');
   });
 
   it('returns 409 when a PUT request uses a stale sha', async () => {
@@ -135,7 +137,9 @@ describe('GitHub contents-style routes', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           message: 'Add comments',
-          content: Buffer.from('{"version":1,"comments":[]}', 'utf8').toString('base64'),
+          content: Buffer.from('{"version":1,"comments":[]}', 'utf8').toString(
+            'base64',
+          ),
         }),
       },
     );

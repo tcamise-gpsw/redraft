@@ -22,7 +22,10 @@ export interface ContentsRouteHelpers extends RouteHelpers {
 
 function decodeContent(body: ContentRequestBody): Buffer {
   if (!body.content) {
-    throw new FileOperationError(400, 'Request body must include base64 content.');
+    throw new FileOperationError(
+      400,
+      'Request body must include base64 content.',
+    );
   }
 
   return Buffer.from(body.content, 'base64');
@@ -63,7 +66,11 @@ export function registerContentsRoute(
         body.sha ?? null,
       );
     } catch (error) {
-      if (error instanceof FileOperationError && error.status === 404 && !body.sha) {
+      if (
+        error instanceof FileOperationError &&
+        error.status === 404 &&
+        !body.sha
+      ) {
         result = await createFile(
           helpers.basePath,
           localPath,

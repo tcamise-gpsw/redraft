@@ -5,7 +5,7 @@ export interface RouteHelpers {
 }
 
 export function registerUserRoute(app: Hono, helpers: RouteHelpers): void {
-  app.get('/api/github/user', (c) => {
+  app.get('/api/github/user', () => {
     return helpers.json({ login: 'local-user', avatar_url: '' });
   });
 }

@@ -53,3 +53,7 @@ Append-only record of surprises, bugs, and useful discoveries during execution.
 - The remote comments spec failure was a real concurrency issue, not a deterministic logic regression: it passed consistently on its own and as part of the suite once workers were forced to 1. That is exactly the kind of browser-level flake worth fixing in configuration instead of papering over in the test body.
 - Local-mode browser tests are far easier against a writable copy of `proposals/` than against the real repo tree. Copying into `/tmp` kept the tests honest (real filesystem writes, real watcher events) without leaving behind committed or half-restored proposal edits.
 - The first local comment-save E2E exposed a contract mismatch between the local server and `GitHubClient`: Octokit’s `createOrUpdateFileContents` issues a `PUT` without `sha` for creates, so the local server had to support “PUT creates missing file” instead of assuming creation only happens via `POST`.
+
+## Task 10 — Final Validation
+
+- `npx playwright test` can fail during `webServer` startup if it runs concurrently with a top-level `npm run build`: both touch `dist/`, and Vite can throw `ENOTEMPTY` while preparing the out directory. The failure was environmental contention, not an app regression; rerunning Playwright after the standalone build finished passed cleanly.

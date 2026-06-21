@@ -153,7 +153,11 @@ describe('mermaidNodeViewPlugin', () => {
     const nodeType = { name: 'code_block' };
     const constructor = getConstructor();
     const nodeView = constructor(
-      { attrs: { language: 'mermaid' }, textContent: 'graph TD; A-->B', type: nodeType },
+      {
+        attrs: { language: 'mermaid' },
+        textContent: 'graph TD; A-->B',
+        type: nodeType,
+      },
       {},
       () => 0,
     );
@@ -179,7 +183,11 @@ describe('mermaidNodeViewPlugin', () => {
     const otherType = { name: 'other_block' };
     const constructor = getConstructor();
     const nodeView = constructor(
-      { attrs: { language: 'mermaid' }, textContent: 'graph TD; A-->B', type: nodeType },
+      {
+        attrs: { language: 'mermaid' },
+        textContent: 'graph TD; A-->B',
+        type: nodeType,
+      },
       {},
       () => 0,
     );
@@ -197,7 +205,11 @@ describe('mermaidNodeViewPlugin', () => {
     const nodeType = { name: 'code_block' };
     const constructor = getConstructor();
     const nodeView = constructor(
-      { attrs: { language: 'mermaid' }, textContent: 'graph TD; A-->B', type: nodeType },
+      {
+        attrs: { language: 'mermaid' },
+        textContent: 'graph TD; A-->B',
+        type: nodeType,
+      },
       {},
       () => 0,
     );

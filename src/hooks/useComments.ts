@@ -33,7 +33,12 @@ export function useComments(path: string) {
 
   const client = useMemo(() => {
     if (!pat || !repo) return null;
-    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo, baseUrl: getApiBaseUrl() });
+    return new GitHubClient({
+      pat,
+      owner: repo.owner,
+      repo: repo.repo,
+      baseUrl: getApiBaseUrl(),
+    });
   }, [pat, repo]);
 
   const commentsPath = commentPath(path);
@@ -161,7 +166,8 @@ export function useComments(path: string) {
 
   return {
     threads: localThreads ?? [],
-    isLoading: Boolean(client) && (commentsQuery.isLoading || localThreads === null),
+    isLoading:
+      Boolean(client) && (commentsQuery.isLoading || localThreads === null),
     isDirty,
     isSaving,
     addComment,

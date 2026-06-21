@@ -23,7 +23,11 @@ describe('buildDraftspaceApp', () => {
       '<!doctype html><html><head><title>Draftspace</title></head><body><div id="root"></div></body></html>',
       'utf8',
     );
-    await writeFile(join(uiRoot, 'assets', 'app.js'), 'console.log("ok")', 'utf8');
+    await writeFile(
+      join(uiRoot, 'assets', 'app.js'),
+      'console.log("ok")',
+      'utf8',
+    );
   });
 
   afterEach(async () => {
@@ -65,7 +69,9 @@ describe('buildDraftspaceApp', () => {
   it('falls back to index.html for unknown non-api routes', async () => {
     const app = buildDraftspaceApp({ basePath, uiRoot });
 
-    const response = await app.request('http://local.test/proposals/auth-overhaul');
+    const response = await app.request(
+      'http://local.test/proposals/auth-overhaul',
+    );
     const body = await response.text();
 
     expect(response.status).toBe(200);

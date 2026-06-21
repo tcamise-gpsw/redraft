@@ -56,10 +56,16 @@ describe('startWatcher', () => {
   it('emits a file:changed event with a sha for markdown updates', async () => {
     const filePath = join(basePath, 'proposal.md');
     await writeFile(filePath, '# Proposal\n', 'utf8');
-    const eventSignal = Promise.withResolvers<{ type: string; path: string; sha?: string }>();
-    const onEvent = vi.fn((event: { type: string; path: string; sha?: string }) => {
-      eventSignal.resolve(event);
-    });
+    const eventSignal = Promise.withResolvers<{
+      type: string;
+      path: string;
+      sha?: string;
+    }>();
+    const onEvent = vi.fn(
+      (event: { type: string; path: string; sha?: string }) => {
+        eventSignal.resolve(event);
+      },
+    );
 
     const stop = startWatcher(basePath, onEvent);
     getWatcher()?.emit('change', filePath);
@@ -77,17 +83,27 @@ describe('startWatcher', () => {
   it('emits file:created and file:deleted events for tracked files', async () => {
     const filePath = join(basePath, 'proposal.md');
     await writeFile(filePath, '# Proposal\n', 'utf8');
-    const firstEvent = Promise.withResolvers<{ type: string; path: string; sha?: string }>();
-    const secondEvent = Promise.withResolvers<{ type: string; path: string; sha?: string }>();
+    const firstEvent = Promise.withResolvers<{
+      type: string;
+      path: string;
+      sha?: string;
+    }>();
+    const secondEvent = Promise.withResolvers<{
+      type: string;
+      path: string;
+      sha?: string;
+    }>();
     let eventCount = 0;
-    const onEvent = vi.fn((event: { type: string; path: string; sha?: string }) => {
-      if (eventCount === 0) {
-        firstEvent.resolve(event);
-      } else {
-        secondEvent.resolve(event);
-      }
-      eventCount += 1;
-    });
+    const onEvent = vi.fn(
+      (event: { type: string; path: string; sha?: string }) => {
+        if (eventCount === 0) {
+          firstEvent.resolve(event);
+        } else {
+          secondEvent.resolve(event);
+        }
+        eventCount += 1;
+      },
+    );
 
     const stop = startWatcher(basePath, onEvent);
     getWatcher()?.emit('add', filePath);
@@ -124,10 +140,16 @@ describe('startWatcher', () => {
   it('debounces repeated writes for the same path into one event', async () => {
     const filePath = join(basePath, 'proposal.md');
     await writeFile(filePath, '# Proposal\n', 'utf8');
-    const eventSignal = Promise.withResolvers<{ type: string; path: string; sha?: string }>();
-    const onEvent = vi.fn((event: { type: string; path: string; sha?: string }) => {
-      eventSignal.resolve(event);
-    });
+    const eventSignal = Promise.withResolvers<{
+      type: string;
+      path: string;
+      sha?: string;
+    }>();
+    const onEvent = vi.fn(
+      (event: { type: string; path: string; sha?: string }) => {
+        eventSignal.resolve(event);
+      },
+    );
 
     const stop = startWatcher(basePath, onEvent);
     getWatcher()?.emit('change', filePath);

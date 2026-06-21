@@ -27,7 +27,10 @@ function isTrackedProposalFile(path: string): boolean {
   return path.endsWith('.md') || path.endsWith('.comments.json');
 }
 
-async function walkFiles(basePath: string, currentPath = ''): Promise<TreeEntry[]> {
+async function walkFiles(
+  basePath: string,
+  currentPath = '',
+): Promise<TreeEntry[]> {
   const directoryPath = resolvePath(basePath, currentPath || '.');
   const entries = await readdir(directoryPath, { withFileTypes: true });
   const files: TreeEntry[] = [];

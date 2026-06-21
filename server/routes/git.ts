@@ -58,9 +58,13 @@ function defaultCommitMessage(): string {
 export function registerGitRoute(app: Hono, helpers: GitRouteHelpers): void {
   app.get('/api/git/status', async () => {
     const { repoRoot, relativeScope } = await getRepoContext(helpers.basePath);
-    const { stdout } = await execGit('git', ['status', '--porcelain', '--', relativeScope], {
-      cwd: repoRoot,
-    });
+    const { stdout } = await execGit(
+      'git',
+      ['status', '--porcelain', '--', relativeScope],
+      {
+        cwd: repoRoot,
+      },
+    );
 
     const files = stdout
       .split('\n')
@@ -94,7 +98,9 @@ export function registerGitRoute(app: Hono, helpers: GitRouteHelpers): void {
       { cwd: repoRoot },
     );
 
-    const { stdout } = await execGit('git', ['rev-parse', 'HEAD'], { cwd: repoRoot });
+    const { stdout } = await execGit('git', ['rev-parse', 'HEAD'], {
+      cwd: repoRoot,
+    });
     return helpers.json({ sha: stdout.trim(), message });
   });
 }

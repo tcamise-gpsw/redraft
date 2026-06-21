@@ -6,7 +6,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { WebSocketHub } from './hub.js';
 
-function once<T>(target: { once: (event: string, listener: (...args: unknown[]) => void) => unknown }, event: string): Promise<T> {
+function once<T>(
+  target: {
+    once: (event: string, listener: (...args: unknown[]) => void) => unknown;
+  },
+  event: string,
+): Promise<T> {
   const { promise, resolve, reject } = Promise.withResolvers<T>();
   target.once(event, (...args: unknown[]) => {
     resolve((args[0] as T) ?? (undefined as T));
@@ -91,10 +96,14 @@ describe('WebSocketHub', () => {
     });
 
     await expect(messageA).resolves.toEqual(
-      Buffer.from('{"type":"file:changed","path":"proposal.md","sha":"abc123"}'),
+      Buffer.from(
+        '{"type":"file:changed","path":"proposal.md","sha":"abc123"}',
+      ),
     );
     await expect(messageB).resolves.toEqual(
-      Buffer.from('{"type":"file:changed","path":"proposal.md","sha":"abc123"}'),
+      Buffer.from(
+        '{"type":"file:changed","path":"proposal.md","sha":"abc123"}',
+      ),
     );
   });
 

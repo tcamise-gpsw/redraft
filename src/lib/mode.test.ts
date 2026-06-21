@@ -5,9 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { getApiBaseUrl, isLocalMode } from './mode';
 
 function setModeMeta(content: string | null) {
-  document.head
-    .querySelector('meta[name="draftspace-mode"]')
-    ?.remove();
+  document.head.querySelector('meta[name="draftspace-mode"]')?.remove();
 
   if (content) {
     const meta = document.createElement('meta');

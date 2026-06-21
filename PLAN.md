@@ -457,21 +457,21 @@ AGENTS.md updates:
 - [x] Verify all local-mode scenarios pass
 
 **Commit:**
-- [ ] `test(e2e): add local mode E2E tests and verify remote mode regression`
+- [x] `test(e2e): add local mode E2E tests and verify remote mode regression`
 
 ---
 
 ### Task 10: Final Validation
 
 **Checks:**
-- [ ] Full unit test suite passes: `npx vitest run`
-- [ ] Server type check passes: `npx tsc --noEmit -p server/tsconfig.json`
-- [ ] Frontend type check passes: `npx tsc --noEmit`
-- [ ] Lint clean: `npx eslint src/ server/`
-- [ ] Format clean: `npx prettier --check src/ server/`
-- [ ] E2E passes (existing + new): `npx playwright test`
-- [ ] Production build succeeds: `npm run build`
-- [ ] Local server starts and serves the built frontend: `npm run serve -- ./proposals`
-- [ ] Manual smoke test: open browser, navigate proposals, edit, verify file writes to disk
-- [ ] README is accurate and all links resolve
-- [ ] AGENTS.md reflects new commands and structure
+- [x] Full unit test suite passes: `npx vitest run`
+- [x] Server type check passes: `npx tsc --noEmit -p server/tsconfig.json`
+- [x] Frontend type check passes: `npx tsc --noEmit`
+- [x] Lint clean: `npx eslint src/ server/`
+- [x] Format clean: `npx prettier --check src/ server/`
+- [x] E2E passes (existing + new): `npx playwright test`
+- [x] Production build succeeds: `npm run build`
+- [x] Local server starts and serves the built frontend: `npm run serve -- ./proposals`
+- [x] Manual smoke test: open browser, navigate proposals, edit, verify file writes to disk
+- [x] README is accurate and all links resolve
+- [x] AGENTS.md reflects new commands and structure

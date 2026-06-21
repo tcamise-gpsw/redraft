@@ -5,11 +5,7 @@ import { resolve } from 'node:path';
 import { Command } from 'commander';
 
 import { startWatcher } from './fs/watcher.js';
-import {
-  resolveUiRoot,
-  startDraftspaceServer,
-  verifyUiBuild,
-} from './app.js';
+import { resolveUiRoot, startDraftspaceServer, verifyUiBuild } from './app.js';
 
 interface ServeOptions {
   port?: number;
@@ -41,7 +37,10 @@ function triggerBrowserOpen(url: string): void {
   exec(browserOpenCommand(url));
 }
 
-async function runServe(directory = './proposals', options: ServeOptions = {}): Promise<void> {
+async function runServe(
+  directory = './proposals',
+  options: ServeOptions = {},
+): Promise<void> {
   const basePath = resolve(directory);
   await ensureDirectoryExists(basePath);
 
@@ -84,10 +83,16 @@ async function runServe(directory = './proposals', options: ServeOptions = {}): 
 
 function registerServeOptions(command: Command): Command {
   return command
-    .option('--port <number>', 'Port to listen on (default: 4200)', (value) => Number(value))
+    .option('--port <number>', 'Port to listen on (default: 4200)', (value) =>
+      Number(value),
+    )
     .option('--open', 'Open the Draftspace UI in the default browser', false)
     .option('--no-ui', 'Skip serving the static frontend', false)
-    .option('--host <string>', 'Bind address (default: 127.0.0.1)', '127.0.0.1');
+    .option(
+      '--host <string>',
+      'Bind address (default: 127.0.0.1)',
+      '127.0.0.1',
+    );
 }
 
 const program = registerServeOptions(

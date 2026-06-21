@@ -1,10 +1,23 @@
-import { mkdtemp, mkdir, readFile as readFileText, rm, writeFile as writeFileText } from 'node:fs/promises';
+import {
+  mkdtemp,
+  mkdir,
+  readFile as readFileText,
+  rm,
+  writeFile as writeFileText,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { computeBlobSha, createFile, deleteFile, listFiles, readFile, writeFile } from './operations.js';
+import {
+  computeBlobSha,
+  createFile,
+  deleteFile,
+  listFiles,
+  readFile,
+  writeFile,
+} from './operations.js';
 import { FileOperationError } from '../types.js';
 
 describe('filesystem operations', () => {
@@ -68,7 +81,11 @@ describe('filesystem operations', () => {
       'utf8',
     );
     await writeFileText(join(basePath, 'notes.txt'), 'ignore me', 'utf8');
-    await writeFileText(join(basePath, 'nested', 'diagram.md'), '# Nested\n', 'utf8');
+    await writeFileText(
+      join(basePath, 'nested', 'diagram.md'),
+      '# Nested\n',
+      'utf8',
+    );
 
     const files = await listFiles(basePath);
 
@@ -80,27 +97,45 @@ describe('filesystem operations', () => {
   });
 
   it('creates a new file and returns its computed sha', async () => {
-    const result = await createFile(basePath, 'new.md', Buffer.from('# New\n', 'utf8'));
+    const result = await createFile(
+      basePath,
+      'new.md',
+      Buffer.from('# New\n', 'utf8'),
+    );
 
     expect(result.sha).toBe(computeBlobSha(Buffer.from('# New\n', 'utf8')));
-    await expect(readFileText(join(basePath, 'new.md'), 'utf8')).resolves.toBe('# New\n');
+    await expect(readFileText(join(basePath, 'new.md'), 'utf8')).resolves.toBe(
+      '# New\n',
+    );
   });
 
   it('deletes a file when the expected sha matches', async () => {
-    await writeFileText(join(basePath, 'delete-me.md'), '# Delete me\n', 'utf8');
+    await writeFileText(
+      join(basePath, 'delete-me.md'),
+      '# Delete me\n',
+      'utf8',
+    );
     const existing = await readFile(basePath, 'delete-me.md');
 
     await deleteFile(basePath, 'delete-me.md', existing.sha);
 
-    await expect(readFileText(join(basePath, 'delete-me.md'), 'utf8')).rejects.toMatchObject({
+    await expect(
+      readFileText(join(basePath, 'delete-me.md'), 'utf8'),
+    ).rejects.toMatchObject({
       code: 'ENOENT',
     });
   });
 
   it('rejects deleting a file when the expected sha is stale', async () => {
-    await writeFileText(join(basePath, 'delete-me.md'), '# Delete me\n', 'utf8');
+    await writeFileText(
+      join(basePath, 'delete-me.md'),
+      '# Delete me\n',
+      'utf8',
+    );
 
-    await expect(deleteFile(basePath, 'delete-me.md', 'stale-sha')).rejects.toMatchObject({
+    await expect(
+      deleteFile(basePath, 'delete-me.md', 'stale-sha'),
+    ).rejects.toMatchObject({
       status: 409,
     } satisfies Partial<FileOperationError>);
   });

@@ -70,7 +70,9 @@ describe('GitHubClient', () => {
       baseUrl: 'http://127.0.0.1:4200/api/github',
     });
 
-    expect(state.instances[0]?.baseUrl).toBe('http://127.0.0.1:4200/api/github');
+    expect(state.instances[0]?.baseUrl).toBe(
+      'http://127.0.0.1:4200/api/github',
+    );
   });
 
   it('validateAuth returns normalized user data on success', async () => {
@@ -191,9 +193,9 @@ describe('GitHubClient', () => {
       response: { headers: responseHeaders },
     });
 
-    await expect(client.getFileContent('proposals/missing.md')).rejects.toBeInstanceOf(
-      NotFoundError,
-    );
+    await expect(
+      client.getFileContent('proposals/missing.md'),
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it('createFile writes without sha and returns the new sha', async () => {
@@ -306,7 +308,9 @@ describe('GitHubClient', () => {
     });
     const octokit = state.instances[0]!;
 
-    octokit.users.getAuthenticated.mockRejectedValue(new Error('socket hang up'));
+    octokit.users.getAuthenticated.mockRejectedValue(
+      new Error('socket hang up'),
+    );
 
     await expect(client.validateAuth()).rejects.toEqual(
       new NetworkError('socket hang up'),

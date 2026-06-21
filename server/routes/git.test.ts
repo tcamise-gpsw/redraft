@@ -31,10 +31,16 @@ describe('Git convenience routes', () => {
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Auth\n', 'utf8');
 
     await execGit('git', ['init'], { cwd: repoRoot });
-    await execGit('git', ['config', 'user.name', 'Draftspace Test'], { cwd: repoRoot });
-    await execGit('git', ['config', 'user.email', 'draftspace@example.com'], { cwd: repoRoot });
+    await execGit('git', ['config', 'user.name', 'Draftspace Test'], {
+      cwd: repoRoot,
+    });
+    await execGit('git', ['config', 'user.email', 'draftspace@example.com'], {
+      cwd: repoRoot,
+    });
     await execGit('git', ['add', 'proposals'], { cwd: repoRoot });
-    await execGit('git', ['commit', '-m', 'Initial proposals'], { cwd: repoRoot });
+    await execGit('git', ['commit', '-m', 'Initial proposals'], {
+      cwd: repoRoot,
+    });
   });
 
   afterEach(async () => {
@@ -71,7 +77,9 @@ describe('Git convenience routes', () => {
     expect(body.message).toBe('Update proposals via Draftspace');
     expect(body.sha).toMatch(/^[a-f0-9]{40}$/);
 
-    const { stdout } = await execGit('git', ['log', '-1', '--pretty=%s'], { cwd: repoRoot });
+    const { stdout } = await execGit('git', ['log', '-1', '--pretty=%s'], {
+      cwd: repoRoot,
+    });
     expect(stdout.trim()).toBe('Update proposals via Draftspace');
   });
 
@@ -107,7 +115,9 @@ describe('Git convenience routes', () => {
     expect(response.status).toBe(200);
     expect(body.message).toMatch(/Update proposals via Draftspace/);
 
-    const { stdout } = await execGit('git', ['log', '-1', '--pretty=%s'], { cwd: repoRoot });
+    const { stdout } = await execGit('git', ['log', '-1', '--pretty=%s'], {
+      cwd: repoRoot,
+    });
     expect(stdout.trim()).toBe(body.message);
   });
 

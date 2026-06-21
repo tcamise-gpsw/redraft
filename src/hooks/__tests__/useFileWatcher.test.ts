@@ -37,9 +37,7 @@ class MockWebSocket {
 }
 
 function setModeMeta(content: string | null) {
-  document.head
-    .querySelector('meta[name="draftspace-mode"]')
-    ?.remove();
+  document.head.querySelector('meta[name="draftspace-mode"]')?.remove();
 
   if (content) {
     const meta = document.createElement('meta');
@@ -49,7 +47,13 @@ function setModeMeta(content: string | null) {
   }
 }
 
-function wrapper({ children, client }: { children: ReactNode; client: QueryClient }) {
+function wrapper({
+  children,
+  client,
+}: {
+  children: ReactNode;
+  client: QueryClient;
+}) {
   return createElement(QueryClientProvider, { client }, children);
 }
 
@@ -88,8 +92,16 @@ describe('useFileWatcher', () => {
     expect(MockWebSocket.instances).toHaveLength(1);
     const socket = MockWebSocket.instances[0]!;
 
-    socket.emitMessage({ type: 'file:changed', path: 'proposals/auth-overhaul.md', sha: 'abc' });
-    socket.emitMessage({ type: 'file:changed', path: 'proposals/auth-overhaul.comments.json', sha: 'def' });
+    socket.emitMessage({
+      type: 'file:changed',
+      path: 'proposals/auth-overhaul.md',
+      sha: 'abc',
+    });
+    socket.emitMessage({
+      type: 'file:changed',
+      path: 'proposals/auth-overhaul.comments.json',
+      sha: 'def',
+    });
     socket.emitMessage({ type: 'file:created', path: 'proposals/new.md' });
     socket.emitMessage({ type: 'file:deleted', path: 'proposals/old.md' });
 

@@ -18,7 +18,12 @@ export function useProposalEdit(path: string) {
       return null;
     }
 
-    return new GitHubClient({ pat, owner: repo.owner, repo: repo.repo, baseUrl: getApiBaseUrl() });
+    return new GitHubClient({
+      pat,
+      owner: repo.owner,
+      repo: repo.repo,
+      baseUrl: getApiBaseUrl(),
+    });
   }, [pat, repo]);
 
   async function save(content: string, sha: string): Promise<void> {

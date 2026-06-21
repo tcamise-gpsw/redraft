@@ -1,4 +1,8 @@
-import { createServer, type IncomingMessage, type Server as HttpServer } from 'node:http';
+import {
+  createServer,
+  type IncomingMessage,
+  type Server as HttpServer,
+} from 'node:http';
 import { access, readFile, stat } from 'node:fs/promises';
 import { extname, resolve } from 'node:path';
 import { Readable } from 'node:stream';
@@ -57,9 +61,13 @@ function contentTypeFor(path: string): string {
   return CONTENT_TYPE_BY_EXTENSION[extname(path)] ?? 'application/octet-stream';
 }
 
-async function loadStaticResponse(uiRoot: string, requestPath: string): Promise<Response | null> {
+async function loadStaticResponse(
+  uiRoot: string,
+  requestPath: string,
+): Promise<Response | null> {
   const resolvedUiRoot = resolve(uiRoot);
-  const normalizedPath = requestPath === '/' ? 'index.html' : requestPath.replace(/^\//, '');
+  const normalizedPath =
+    requestPath === '/' ? 'index.html' : requestPath.replace(/^\//, '');
   const staticPath = resolve(resolvedUiRoot, normalizedPath);
 
   if (!staticPath.startsWith(resolvedUiRoot)) {
@@ -76,7 +84,10 @@ async function loadStaticResponse(uiRoot: string, requestPath: string): Promise<
   }
 
   const file = await readFile(staticPath);
-  const body = normalizedPath === 'index.html' ? injectLocalModeMeta(file.toString('utf8')) : file;
+  const body =
+    normalizedPath === 'index.html'
+      ? injectLocalModeMeta(file.toString('utf8'))
+      : file;
   return new Response(body, {
     headers: { 'content-type': contentTypeFor(normalizedPath) },
   });
@@ -134,7 +145,10 @@ function toRequest(request: IncomingMessage, fallbackOrigin: string): Request {
   return new Request(url, init);
 }
 
-async function sendResponse(response: Response, nodeResponse: import('node:http').ServerResponse): Promise<void> {
+async function sendResponse(
+  response: Response,
+  nodeResponse: import('node:http').ServerResponse,
+): Promise<void> {
   nodeResponse.statusCode = response.status;
   response.headers.forEach((value, key) => {
     nodeResponse.setHeader(key, value);
@@ -167,7 +181,10 @@ export async function startDraftspaceServer(
   });
 
   server.on('upgrade', (request, socket, head) => {
-    const url = new URL(request.url ?? '/', `http://${request.headers.host ?? `${host}:${port}`}`);
+    const url = new URL(
+      request.url ?? '/',
+      `http://${request.headers.host ?? `${host}:${port}`}`,
+    );
     if (url.pathname !== '/ws') {
       socket.destroy();
       return;
@@ -176,7 +193,11 @@ export async function startDraftspaceServer(
     hub.handleUpgrade(request, socket, head);
   });
 
-  const { promise, resolve: resolveListen, reject: rejectListen } = Promise.withResolvers<void>();
+  const {
+    promise,
+    resolve: resolveListen,
+    reject: rejectListen,
+  } = Promise.withResolvers<void>();
   server.listen(port, host, () => resolveListen());
   server.once('error', rejectListen);
   await promise;
@@ -188,7 +209,11 @@ export async function startDraftspaceServer(
     url: `http://${host}:${port}`,
     close: async () => {
       await hub.close();
-      const { promise: closePromise, resolve: resolveClose, reject: rejectClose } = Promise.withResolvers<void>();
+      const {
+        promise: closePromise,
+        resolve: resolveClose,
+        reject: rejectClose,
+      } = Promise.withResolvers<void>();
       server.close((error) => {
         if (error) {
           rejectClose(error);

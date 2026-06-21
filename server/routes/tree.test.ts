@@ -17,9 +17,17 @@ describe('GitHub tree-style routes', () => {
     basePath = await mkdtemp(join(tmpdir(), 'draftspace-tree-'));
     await mkdir(join(basePath, 'nested'), { recursive: true });
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Auth\n', 'utf8');
-    await writeFile(join(basePath, 'auth-overhaul.comments.json'), '{"version":1,"comments":[]}', 'utf8');
+    await writeFile(
+      join(basePath, 'auth-overhaul.comments.json'),
+      '{"version":1,"comments":[]}',
+      'utf8',
+    );
     await writeFile(join(basePath, 'notes.txt'), 'ignore', 'utf8');
-    await writeFile(join(basePath, 'nested', 'api-design-v2.md'), '# API\n', 'utf8');
+    await writeFile(
+      join(basePath, 'nested', 'api-design-v2.md'),
+      '# API\n',
+      'utf8',
+    );
   });
 
   afterEach(async () => {
