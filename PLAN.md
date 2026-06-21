@@ -66,7 +66,7 @@
 - [x] No tests needed for this task — scaffolding only
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -100,24 +100,24 @@
 - Rate limit info is extracted from every response's `x-ratelimit-*` headers and stored on the client instance
 
 **Checklist:**
-- [ ] All type interfaces match the spec's data model exactly
-- [ ] GitHubClient constructs an Octokit instance with the provided PAT
-- [ ] `validateAuth` correctly calls GET /user and extracts login + avatar_url
-- [ ] `getTree` filters to proposals/ prefix and parses tree entries
-- [ ] `getFileContent` base64-decodes content and returns sha
-- [ ] `updateFile` sends sha and handles conflict errors
-- [ ] `createFile` works without sha
-- [ ] `getLatestCommit` returns the most recent commit for a path
-- [ ] Error classes are properly typed and distinguishable
-- [ ] Rate limit info is extracted and stored
+- [x] All type interfaces match the spec's data model exactly
+- [x] GitHubClient constructs an Octokit instance with the provided PAT
+- [x] `validateAuth` correctly calls GET /user and extracts login + avatar_url
+- [x] `getTree` filters to proposals/ prefix and parses tree entries
+- [x] `getFileContent` base64-decodes content and returns sha
+- [x] `updateFile` sends sha and handles conflict errors
+- [x] `createFile` works without sha
+- [x] `getLatestCommit` returns the most recent commit for a path
+- [x] Error classes are properly typed and distinguishable
+- [x] Rate limit info is extracted and stored
 
 **Tests:**
-- [ ] `npx vitest run src/lib/github`
-- [ ] Test `validateAuth` with mocked 200 and 401 responses
-- [ ] Test `getFileContent` with valid response and 404
-- [ ] Test `updateFile` with sha match and sha mismatch (conflict)
-- [ ] Test `getTree` parses tree response and filters to proposals/
-- [ ] Test error classification (401→AuthError, 404→NotFoundError, etc.)
+- [x] `npx vitest run src/lib/github`
+- [x] Test `validateAuth` with mocked 200 and 401 responses
+- [x] Test `getFileContent` with valid response and 404
+- [x] Test `updateFile` with sha match and sha mismatch (conflict)
+- [x] Test `getTree` parses tree response and filters to proposals/
+- [x] Test error classification (401→AuthError, 404→NotFoundError, etc.)
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
