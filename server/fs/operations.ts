@@ -9,7 +9,16 @@ import {
 } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 
-import { FileOperationError, type TreeEntry } from '../types.js';
+import ignore, { type Ignore } from 'ignore';
+
+import {
+  FileOperationError,
+  type ReviewEntry,
+  type TreeEntry,
+} from '../types.js';
+
+const COMMENTS_ROOT = '.redraft/comments';
+const BUILT_IN_EXCLUDES = ['.git/', '.redraft/', 'node_modules/'];
 
 function resolvePath(basePath: string, relativePath: string): string {
   const resolvedBase = resolve(basePath);
@@ -17,35 +26,94 @@ function resolvePath(basePath: string, relativePath: string): string {
   const relativePathToBase = relative(resolvedBase, resolvedPath);
 
   if (relativePathToBase.startsWith('..')) {
-    throw new FileOperationError(400, 'Path escapes the proposals root.');
+    throw new FileOperationError(400, 'Path escapes the workspace root.');
   }
 
   return resolvedPath;
 }
 
-function isTrackedProposalFile(path: string): boolean {
-  return path.endsWith('.md') || path.endsWith('.comments.json');
+function isMarkdownFile(path: string): boolean {
+  return path.endsWith('.md');
 }
 
-async function walkFiles(
+function isCommentFile(path: string): boolean {
+  return path.endsWith('.comments.json');
+}
+
+function scopeGitignorePattern(currentPath: string, pattern: string): string {
+  if (!currentPath || !pattern || pattern.startsWith('#')) {
+    return pattern;
+  }
+
+  const negated = pattern.startsWith('!');
+  const body = negated ? pattern.slice(1) : pattern;
+  if (!body) {
+    return pattern;
+  }
+
+  const normalized = body.startsWith('/') ? body.slice(1) : body;
+  const scoped = `${currentPath}/${normalized}`;
+  return `${negated ? '!' : ''}${scoped}`;
+}
+
+async function addGitignoreRules(
   basePath: string,
+  currentPath: string,
+  matcher: Ignore,
+): Promise<void> {
+  const gitignorePath = resolvePath(
+    basePath,
+    currentPath ? `${currentPath}/.gitignore` : '.gitignore',
+  );
+
+  try {
+    const content = await readFileFromDisk(gitignorePath, 'utf8');
+    matcher.add(
+      content
+        .split(/\r?\n/u)
+        .map((pattern) => scopeGitignorePattern(currentPath, pattern)),
+    );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw error;
+    }
+  }
+}
+
+async function walkMarkdownFilesInternal(
+  basePath: string,
+  matcher: Ignore,
   currentPath = '',
 ): Promise<TreeEntry[]> {
   const directoryPath = resolvePath(basePath, currentPath || '.');
+  await addGitignoreRules(basePath, currentPath, matcher);
   const entries = await readdir(directoryPath, { withFileTypes: true });
   const files: TreeEntry[] = [];
 
   for (const entry of entries) {
+    if (entry.name === '.gitignore') {
+      continue;
+    }
+
     const nextRelativePath = currentPath
       ? `${currentPath}/${entry.name}`
       : entry.name;
 
-    if (entry.isDirectory()) {
-      files.push(...(await walkFiles(basePath, nextRelativePath)));
+    if (
+      matcher.ignores(nextRelativePath) ||
+      (entry.isDirectory() && matcher.ignores(`${nextRelativePath}/`))
+    ) {
       continue;
     }
 
-    if (!entry.isFile() || !isTrackedProposalFile(nextRelativePath)) {
+    if (entry.isDirectory()) {
+      files.push(
+        ...(await walkMarkdownFilesInternal(basePath, matcher, nextRelativePath)),
+      );
+      continue;
+    }
+
+    if (!entry.isFile() || !isMarkdownFile(nextRelativePath)) {
       continue;
     }
 
@@ -53,6 +121,49 @@ async function walkFiles(
   }
 
   return files;
+}
+
+async function walkCommentFiles(
+  basePath: string,
+  currentPath = COMMENTS_ROOT,
+): Promise<string[]> {
+  const directoryPath = resolvePath(basePath, currentPath);
+
+  let entries;
+  try {
+    entries = await readdir(directoryPath, { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return [];
+    }
+
+    throw error;
+  }
+
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const nextRelativePath = `${currentPath}/${entry.name}`;
+
+    if (entry.isDirectory()) {
+      files.push(...(await walkCommentFiles(basePath, nextRelativePath)));
+      continue;
+    }
+
+    if (!entry.isFile() || !isCommentFile(nextRelativePath)) {
+      continue;
+    }
+
+    files.push(nextRelativePath);
+  }
+
+  return files;
+}
+
+function documentPathFromCommentPath(commentPath: string): string {
+  return commentPath
+    .slice(`${COMMENTS_ROOT}/`.length)
+    .replace(/\.comments\.json$/u, '.md');
 }
 
 export function computeBlobSha(content: Buffer): string {
@@ -139,7 +250,34 @@ export async function deleteFile(
   await unlink(filePath);
 }
 
-export async function listFiles(basePath: string): Promise<TreeEntry[]> {
-  const files = await walkFiles(basePath);
+export async function walkMarkdownFiles(basePath: string): Promise<TreeEntry[]> {
+  const matcher = ignore();
+  matcher.add(BUILT_IN_EXCLUDES);
+  const files = await walkMarkdownFilesInternal(basePath, matcher);
   return files.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+export async function listReviewEntries(basePath: string): Promise<ReviewEntry[]> {
+  const commentFiles = await walkCommentFiles(basePath);
+  const entries = await Promise.all(
+    commentFiles.map(async (commentPath) => {
+      const { content } = await readFile(basePath, commentPath);
+      const parsed = JSON.parse(content.toString('utf8')) as {
+        comments?: Array<{ resolved?: boolean }>;
+      };
+
+      return {
+        path: documentPathFromCommentPath(commentPath),
+        unresolvedCount:
+          parsed.comments?.filter((comment) => comment.resolved !== true)
+            .length ?? 0,
+      };
+    }),
+  );
+
+  return entries.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+export async function listFiles(basePath: string): Promise<TreeEntry[]> {
+  return walkMarkdownFiles(basePath);
 }

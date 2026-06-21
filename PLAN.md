@@ -50,21 +50,21 @@ The existing `readFile`, `writeFile`, `createFile`, `deleteFile` functions are u
 Remove the old `isTrackedProposalFile` function (no longer needed by this module — the watcher handles its own filter).
 
 **Checklist:**
-- [ ] `ignore` package installed and importable
-- [ ] `walkMarkdownFiles` returns only `.md` files
-- [ ] `.git/`, `.redraft/`, `node_modules/` are always excluded even without a `.gitignore`
-- [ ] Nested `.gitignore` files are respected (e.g. `docs/.gitignore` with `drafts/`)
-- [ ] `listReviewEntries` returns correct `unresolvedCount` per document
-- [ ] `listReviewEntries` returns `[]` when `.redraft/comments/` doesn't exist
-- [ ] Path mirroring is correct: sidecar `a/b.comments.json` → document `a/b.md`
+- [x] `ignore` package installed and importable
+- [x] `walkMarkdownFiles` returns only `.md` files
+- [x] `.git/`, `.redraft/`, `node_modules/` are always excluded even without a `.gitignore`
+- [x] Nested `.gitignore` files are respected (e.g. `docs/.gitignore` with `drafts/`)
+- [x] `listReviewEntries` returns correct `unresolvedCount` per document
+- [x] `listReviewEntries` returns `[]` when `.redraft/comments/` doesn't exist
+- [x] Path mirroring is correct: sidecar `a/b.comments.json` → document `a/b.md`
 
 **Tests:**
-- [ ] Run `npx vitest run server/fs/operations.test.ts`
-- [ ] Test: walks a temp directory with mixed files, returns only `.md`
-- [ ] Test: respects a `.gitignore` that excludes a subdirectory
-- [ ] Test: hardcoded exclusions work without any `.gitignore` present
-- [ ] Test: `listReviewEntries` counts unresolved threads correctly
-- [ ] Test: `listReviewEntries` handles missing `.redraft/comments/` gracefully
+- [x] Run `npx vitest run server/fs/operations.test.ts`
+- [x] Test: walks a temp directory with mixed files, returns only `.md`
+- [x] Test: respects a `.gitignore` that excludes a subdirectory
+- [x] Test: hardcoded exclusions work without any `.gitignore` present
+- [x] Test: `listReviewEntries` counts unresolved threads correctly
+- [x] Test: `listReviewEntries` handles missing `.redraft/comments/` gracefully
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage relevant untracked files, commit with `git commit -m` in Conventional Commits format

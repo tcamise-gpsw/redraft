@@ -3,6 +3,11 @@ export interface TreeEntry {
   type: 'blob';
 }
 
+export interface ReviewEntry {
+  path: string;
+  unresolvedCount: number;
+}
+
 export class FileOperationError extends Error {
   readonly status: number;
 
