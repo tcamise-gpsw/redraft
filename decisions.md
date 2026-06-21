@@ -5,3 +5,6 @@
 
 - 2026-06-21 — Task 2: Kept the GitHub client browser-safe by using `TextEncoder`/`TextDecoder` plus `btoa`/`atob` for content encoding instead of Node `Buffer`. The app runs in GitHub Pages, so the client cannot depend on Node globals.
 - 2026-06-21 — Task 2: Wrapped Octokit failures into explicit `AuthError`, `NotFoundError`, `ConflictError`, `RateLimitError`, and `NetworkError` classes at the client boundary. This keeps later hooks and components from branching on raw Octokit response shapes.
+
+- 2026-06-21 — Task 3: Kept auth state in a dedicated `AuthProvider`/`useAuth` pair, but stored the provider in `src/hooks/useAuth.ts` without JSX by returning `createElement`. That preserves the approved file path while keeping the auth boundary centralized for later routing work.
+- 2026-06-21 — Task 3: Added `AUTH_ERROR_EVENT` plus `dispatchAuthError()` as the minimal cross-cutting hook for later 401 recovery. It avoids coupling the GitHub client directly to React state while still letting the app clear stored auth on unauthorized responses.

@@ -120,7 +120,7 @@
 - [x] Test error classification (401→AuthError, 404→NotFoundError, etc.)
 
 **Commit:**
-- [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
+- [x] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
 
 ---
 
@@ -162,21 +162,21 @@
 - Logout clears localStorage and returns to AuthGate
 
 **Checklist:**
-- [ ] localStorage read/write/clear works correctly
-- [ ] AuthGate renders AuthForm when no stored auth
-- [ ] AuthGate renders children when auth exists
-- [ ] AuthForm validates PAT against GitHub API before storing
-- [ ] AuthForm validates repo format (owner/repo)
-- [ ] Error messages display for invalid PAT and network errors
-- [ ] Settings page shows user info and allows logout
-- [ ] Logout clears all stored data and returns to auth screen
-- [ ] If stored PAT becomes invalid (401 on any API call), auth is cleared
+- [x] localStorage read/write/clear works correctly
+- [x] AuthGate renders AuthForm when no stored auth
+- [x] AuthGate renders children when auth exists
+- [x] AuthForm validates PAT against GitHub API before storing
+- [x] AuthForm validates repo format (owner/repo)
+- [x] Error messages display for invalid PAT and network errors
+- [x] Settings page shows user info and allows logout
+- [x] Logout clears all stored data and returns to auth screen
+- [x] If stored PAT becomes invalid (401 on any API call), auth is cleared
 
 **Tests:**
-- [ ] `npx vitest run src/lib/auth src/components/auth`
-- [ ] Storage: set/get/clear round-trips correctly
-- [ ] AuthGate: renders form when unauthenticated, children when authenticated
-- [ ] AuthForm: shows error on invalid PAT, calls login on valid submit
+- [x] `npx vitest run src/lib/auth src/components/auth`
+- [x] Storage: set/get/clear round-trips correctly
+- [x] AuthGate: renders form when unauthenticated, children when authenticated
+- [x] AuthForm: shows error on invalid PAT, calls login on valid submit
 
 **Commit:**
 - [ ] `git status --short`, `git add` relevant untracked files, `aicommits --all -y` with `pty: true`
