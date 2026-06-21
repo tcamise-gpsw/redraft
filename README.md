@@ -64,15 +64,40 @@ Local mode serves the same UI from your machine, but reads and writes local file
 
 ### Quick start
 
-From this repository:
+**Install once globally, or use directly via npx:**
+
+```bash
+npx redraft-local ./proposals
+```
+
+Or install globally and reuse:
+
+```bash
+npm install -g redraft-local
+redraft-local ./proposals
+```
+
+This starts a local ReDraft server at `http://127.0.0.1:4200` by default. The frontend is bundled into the package — no separate build step required.
+
+**Options:**
+
+```
+redraft [directory] [options]
+redraft serve [directory] [options]
+
+  --port <number>   Port to listen on (default: 4200)
+  --host <string>   Bind address (default: 127.0.0.1)
+  --open            Open the browser automatically
+  --no-ui           API-only mode, skip serving the frontend
+```
+
+**Contributing / running from source:**
 
 ```bash
 npm install
 npm run build
 npm run serve -- ./proposals
 ```
-
-This starts a local ReDraft server and serves the app at `http://127.0.0.1:4200` by default.
 
 What local mode gives you:
 - No PAT prompt
