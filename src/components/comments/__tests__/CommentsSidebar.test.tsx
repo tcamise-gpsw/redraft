@@ -8,7 +8,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommentThread } from '../../../types/comments';
 
 const addComment = vi.hoisted(() => vi.fn());
@@ -233,7 +233,24 @@ describe('CommentsSidebar', () => {
 });
 
 describe('SelectionPopover', () => {
-  it('shows a popover for selections inside the markdown root', async () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    // Reset any scrollY overrides
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+  });
+
+  function makeSelection(quote: string, rectTop = 40, rootId = 'document-markdown-root') {
+    return {
+      toString: () => quote,
+      rangeCount: 1,
+      getRangeAt: () => ({
+        commonAncestorContainer: document.getElementById(rootId)!.firstChild!,
+        getBoundingClientRect: () => ({ left: 20, top: rectTop }),
+      }),
+    } as unknown as Selection;
+  }
+
+  it('shows a popover on mouseup when text is selected inside the root', () => {
     const onSelect = vi.fn();
     const quote = 'initialize lazily';
 
@@ -249,25 +266,10 @@ describe('SelectionPopover', () => {
       </div>,
     );
 
-    const selection = {
-      toString: () => quote,
-      rangeCount: 1,
-      getRangeAt: () => ({
-        commonAncestorContainer: document.getElementById(
-          'document-markdown-root',
-        )!.firstChild!,
-        getBoundingClientRect: () => ({ left: 20, top: 40 }),
-      }),
-    };
+    vi.spyOn(window, 'getSelection').mockReturnValue(makeSelection(quote));
+    act(() => { document.dispatchEvent(new Event('mouseup')); });
 
-    vi.spyOn(window, 'getSelection').mockReturnValue(
-      selection as unknown as Selection,
-    );
-    await act(async () => {
-      document.dispatchEvent(new Event('selectionchange'));
-    });
-
-    fireEvent.click(await screen.findByRole('button', { name: /comment/i }));
+    fireEvent.click(screen.getByRole('button', { name: /comment/i }));
 
     expect(onSelect).toHaveBeenCalledWith({
       quote,
@@ -276,5 +278,95 @@ describe('SelectionPopover', () => {
         suffix: ' when preview starts.',
       },
     });
+  });
+
+  it('shows a popover on keyup for keyboard-driven selections', () => {
+    const quote = 'initialize lazily';
+    render(
+      <div>
+        <div id="document-markdown-root">
+          The camera should initialize lazily when preview starts.
+        </div>
+        <SelectionPopover rootSelector="#document-markdown-root" onSelect={vi.fn()} />
+      </div>,
+    );
+
+    vi.spyOn(window, 'getSelection').mockReturnValue(makeSelection(quote));
+    act(() => { document.dispatchEvent(new Event('keyup')); });
+
+    expect(screen.getByRole('button', { name: /comment/i })).toBeInTheDocument();
+  });
+
+  it('does not show the popover during selection drag (no mouseup yet)', () => {
+    render(
+      <div>
+        <div id="document-markdown-root">initialize lazily</div>
+        <SelectionPopover rootSelector="#document-markdown-root" onSelect={vi.fn()} />
+      </div>,
+    );
+
+    vi.spyOn(window, 'getSelection').mockReturnValue(makeSelection('initialize lazily'));
+    // selectionchange fires during drag — must NOT show button
+    act(() => { document.dispatchEvent(new Event('selectionchange')); });
+
+    expect(screen.queryByRole('button', { name: /comment/i })).not.toBeInTheDocument();
+  });
+
+  it('positions the button using viewport coords only — no scroll offset', () => {
+    render(
+      <div>
+        <div id="document-markdown-root">initialize lazily</div>
+        <SelectionPopover rootSelector="#document-markdown-root" onSelect={vi.fn()} />
+      </div>,
+    );
+
+    Object.defineProperty(window, 'scrollY', { value: 800, configurable: true });
+    vi.spyOn(window, 'getSelection').mockReturnValue(makeSelection('initialize lazily', 400));
+    act(() => { document.dispatchEvent(new Event('mouseup')); });
+
+    const container = screen.getByRole('button', { name: /comment/i }).closest('[style]') as HTMLElement;
+    const top = parseFloat(container.style.top ?? '0');
+    // rect.top(400) - 40 = 360; with old bug: 400 + 800 - 40 = 1160
+    expect(top).toBe(360);
+  });
+
+  it('clears the popover when the selection is emptied', () => {
+    render(
+      <div>
+        <div id="document-markdown-root">initialize lazily</div>
+        <SelectionPopover rootSelector="#document-markdown-root" onSelect={vi.fn()} />
+      </div>,
+    );
+
+    // Appear on mouseup
+    vi.spyOn(window, 'getSelection').mockReturnValue(makeSelection('initialize lazily'));
+    act(() => { document.dispatchEvent(new Event('mouseup')); });
+    expect(screen.getByRole('button', { name: /comment/i })).toBeInTheDocument();
+
+    // Disappear when selection is cleared (user clicks away)
+    vi.spyOn(window, 'getSelection').mockReturnValue({
+      toString: () => '',
+      rangeCount: 0,
+      getRangeAt: () => null,
+    } as unknown as Selection);
+    act(() => { document.dispatchEvent(new Event('selectionchange')); });
+    expect(screen.queryByRole('button', { name: /comment/i })).not.toBeInTheDocument();
+  });
+
+  it('clears a ghost popover when the selected text is not found in the root', () => {
+    render(
+      <div>
+        <div id="document-markdown-root">initialize lazily</div>
+        <SelectionPopover rootSelector="#document-markdown-root" onSelect={vi.fn()} />
+      </div>,
+    );
+
+    vi.spyOn(window, 'getSelection').mockReturnValue(makeSelection('initialize lazily'));
+    act(() => { document.dispatchEvent(new Event('mouseup')); });
+    expect(screen.getByRole('button', { name: /comment/i })).toBeInTheDocument();
+
+    vi.spyOn(window, 'getSelection').mockReturnValue(makeSelection('text not in root'));
+    act(() => { document.dispatchEvent(new Event('mouseup')); });
+    expect(screen.queryByRole('button', { name: /comment/i })).not.toBeInTheDocument();
   });
 });

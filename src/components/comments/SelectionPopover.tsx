@@ -24,7 +24,7 @@ export function SelectionPopover({
   } | null>(null);
 
   useEffect(() => {
-    const handleSelectionChange = () => {
+    const evaluate = () => {
       const selected = window.getSelection();
       const quote = selected?.toString().trim() ?? '';
       const range = selected?.rangeCount ? selected.getRangeAt(0) : null;
@@ -39,6 +39,8 @@ export function SelectionPopover({
       const rootText = root.textContent ?? '';
       const start = rootText.indexOf(quote);
       if (start < 0) {
+        setSelection(null);
+        setPosition(null);
         return;
       }
 
@@ -53,15 +55,31 @@ export function SelectionPopover({
           ),
         },
       });
+      // The popover is `position: fixed` — viewport-relative coordinates.
+      // getBoundingClientRect() already returns viewport coords; do NOT add
+      // window.scrollX/Y or the button drifts off-screen when scrolled.
       setPosition({
-        left: rect.left + window.scrollX,
-        top: rect.top + window.scrollY - 40,
+        left: rect.left,
+        top: Math.max(8, rect.top - 40),
       });
     };
 
-    document.addEventListener('selectionchange', handleSelectionChange);
+    // Only show/update when the user *finishes* selecting (mouseup / keyup).
+    // Listening to selectionchange fires on every drag pixel causing flicker.
+    const clearIfEmpty = () => {
+      if (!window.getSelection()?.toString().trim()) {
+        setSelection(null);
+        setPosition(null);
+      }
+    };
+
+    document.addEventListener('mouseup', evaluate);
+    document.addEventListener('keyup', evaluate);
+    document.addEventListener('selectionchange', clearIfEmpty);
     return () => {
-      document.removeEventListener('selectionchange', handleSelectionChange);
+      document.removeEventListener('mouseup', evaluate);
+      document.removeEventListener('keyup', evaluate);
+      document.removeEventListener('selectionchange', clearIfEmpty);
     };
   }, [rootSelector]);
 
