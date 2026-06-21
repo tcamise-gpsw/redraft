@@ -5,25 +5,142 @@ import '@testing-library/jest-dom/vitest';
 import { Milkdown, MilkdownProvider } from '@milkdown/react';
 import { forwardRef, useImperativeHandle } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { CrepeEditor, useCrepeInstance } from './CrepeEditor';
+import type { CrepeEditorHandle } from './CrepeEditor';
 
 const {
   commentPluginKey,
   createdInstances,
   editorViewCtx,
+  FakeCrepe,
   mockMakeCommentPlugin,
   mockReplaceAll,
   mockUseSelectionCapture,
 } = vi.hoisted(() => {
-  const fakeInstances: FakeCrepe[] = [];
+  const hoistedEditorViewCtx = Symbol('editorViewCtx');
+
+  class HoistedFakeEditor {
+    status = 'Idle';
+    readonly view = {
+      dom: document.createElement('div'),
+      state: {
+        tr: {
+          setMeta: (_key: unknown, meta: unknown) => ({ meta }),
+        },
+      },
+      dispatch: vi.fn((transaction: unknown) => {
+        this.dispatchedTransactions.push(transaction);
+      }),
+      setProps: vi.fn(),
+    };
+    readonly plugins: unknown[] = [];
+    readonly dispatchedTransactions: unknown[] = [];
+    readonly replaceAllCalls: string[] = [];
+
+    use(plugin: unknown) {
+      this.plugins.push(plugin);
+      return this;
+    }
+
+    action<T>(
+      callback: (ctx: {
+        get: (key: unknown) => unknown;
+        replaceAllTarget: HoistedFakeEditor;
+      }) => T,
+    ): T {
+      return callback({
+        get: (key) => {
+          if (key === hoistedEditorViewCtx) {
+            return this.view;
+          }
+
+          return undefined;
+        },
+        replaceAllTarget: this,
+      });
+    }
+
+    applyReplaceAll(markdown: string) {
+      this.replaceAllCalls.push(markdown);
+    }
+  }
+
+  const fakeInstances: HoistedFakeCrepe[] = [];
+
+  class HoistedFakeCrepe {
+    readonly editor = new HoistedFakeEditor();
+    readonly markdownListeners: Array<
+      (_ctx: unknown, markdown: string, prevMarkdown: string) => void
+    > = [];
+    readonly setReadonlyCalls: boolean[] = [];
+    root: HTMLElement;
+    markdown: string;
+    readonlyState = false;
+
+    constructor({ root, defaultValue = '' }: { root: HTMLElement; defaultValue?: string }) {
+      this.root = root;
+      this.markdown = defaultValue;
+      fakeInstances.push(this);
+    }
+
+    create = vi.fn(async () => {
+      this.editor.status = 'Created';
+      this.editor.view.dom.textContent = this.markdown;
+      this.editor.view.dom.setAttribute('contenteditable', String(!this.readonlyState));
+      this.root.replaceChildren(this.editor.view.dom);
+      return this.editor;
+    });
+
+    destroy = vi.fn(async () => {
+      this.editor.status = 'Destroyed';
+    });
+
+    setReadonly = vi.fn((value: boolean) => {
+      this.readonlyState = value;
+      this.setReadonlyCalls.push(value);
+      this.editor.view.dom.setAttribute('contenteditable', String(!value));
+      return this;
+    });
+
+    getMarkdown = vi.fn(() => this.markdown);
+
+    on = vi.fn(
+      (
+        register: (api: {
+          markdownUpdated: typeof HoistedFakeCrepe.prototype.markdownUpdated;
+        }) => void,
+      ) => {
+        register({ markdownUpdated: this.markdownUpdated });
+        return this;
+      },
+    );
+
+    markdownUpdated = (
+      callback: (_ctx: unknown, markdown: string, prevMarkdown: string) => void,
+    ) => {
+      this.markdownListeners.push(callback);
+      return this;
+    };
+
+    emitMarkdown(markdown: string, previousMarkdown = this.markdown) {
+      this.markdown = markdown;
+      this.editor.view.dom.textContent = markdown;
+      this.markdownListeners.forEach((listener) => {
+        listener({}, markdown, previousMarkdown);
+      });
+    }
+  }
 
   return {
     commentPluginKey: { key: 'comment-plugin-key' },
     createdInstances: fakeInstances,
-    editorViewCtx: Symbol('editorViewCtx'),
+    editorViewCtx: hoistedEditorViewCtx,
+    FakeCrepe: HoistedFakeCrepe,
     mockMakeCommentPlugin: vi.fn(() => ({ name: 'comment-plugin' })),
     mockReplaceAll: vi.fn((markdown: string) => {
-      return (ctx: { replaceAllTarget: FakeEditor }) => {
+      return (ctx: { replaceAllTarget: HoistedFakeEditor }) => {
         ctx.replaceAllTarget.applyReplaceAll(markdown);
       };
     }),
@@ -31,148 +148,36 @@ const {
   };
 });
 
-class FakeEditor {
-  status = 'Idle';
-  readonly view = {
-    dom: document.createElement('div'),
-    state: {
-      tr: {
-        setMeta: (_key: unknown, meta: unknown) => ({ meta }),
-      },
-    },
-    dispatch: vi.fn((transaction: unknown) => {
-      this.dispatchedTransactions.push(transaction);
-    }),
-    setProps: vi.fn(),
-  };
-  readonly plugins: unknown[] = [];
-  readonly dispatchedTransactions: unknown[] = [];
-  readonly replaceAllCalls: string[] = [];
+type FakeCrepeInstance = InstanceType<typeof FakeCrepe>;
 
-  use(plugin: unknown) {
-    this.plugins.push(plugin);
-    return this;
-  }
+vi.mock('@milkdown/crepe', () => ({
+  Crepe: FakeCrepe,
+}));
 
-  action<T>(callback: (ctx: { get: (key: unknown) => unknown; replaceAllTarget: FakeEditor }) => T): T {
-    return callback({
-      get: (key) => {
-        if (key === editorViewCtx) {
-          return this.view;
-        }
+vi.mock('@milkdown/kit/core', () => ({
+  EditorStatus: {
+    Created: 'Created',
+  },
+  editorViewCtx,
+}));
 
-        return undefined;
-      },
-      replaceAllTarget: this,
-    });
-  }
+vi.mock('@milkdown/utils', () => ({
+  $prose: (factory: unknown) => ({ factory }),
+  replaceAll: mockReplaceAll,
+}));
 
-  applyReplaceAll(markdown: string) {
-    this.replaceAllCalls.push(markdown);
-  }
-}
+vi.mock('./commentPlugin', () => ({
+  commentPluginKey,
+  makeCommentPlugin: mockMakeCommentPlugin,
+}));
 
-class FakeCrepe {
-  readonly editor = new FakeEditor();
-  readonly markdownListeners: Array<
-    (_ctx: unknown, markdown: string, prevMarkdown: string) => void
-  > = [];
-  readonly setReadonlyCalls: boolean[] = [];
-  root: HTMLElement;
-  markdown: string;
-  readonlyState = false;
-
-  constructor({ root, defaultValue = '' }: { root: HTMLElement; defaultValue?: string }) {
-    this.root = root;
-    this.markdown = defaultValue;
-    createdInstances.push(this);
-  }
-
-  create = vi.fn(async () => {
-    this.editor.status = 'Created';
-    this.editor.view.dom.textContent = this.markdown;
-    this.editor.view.dom.setAttribute('contenteditable', String(!this.readonlyState));
-    this.root.replaceChildren(this.editor.view.dom);
-    return this.editor;
-  });
-
-  destroy = vi.fn(async () => {
-    this.editor.status = 'Destroyed';
-  });
-
-  setReadonly = vi.fn((value: boolean) => {
-    this.readonlyState = value;
-    this.setReadonlyCalls.push(value);
-    this.editor.view.dom.setAttribute('contenteditable', String(!value));
-    return this;
-  });
-
-  getMarkdown = vi.fn(() => this.markdown);
-
-  on = vi.fn(
-    (
-      register: (api: { markdownUpdated: typeof FakeCrepe.prototype.markdownUpdated }) => void,
-    ) => {
-      register({ markdownUpdated: this.markdownUpdated });
-      return this;
-    },
-  );
-
-  markdownUpdated = (
-    callback: (_ctx: unknown, markdown: string, prevMarkdown: string) => void,
-  ) => {
-    this.markdownListeners.push(callback);
-    return this;
-  };
-
-  emitMarkdown(markdown: string, previousMarkdown = this.markdown) {
-    this.markdown = markdown;
-    this.editor.view.dom.textContent = markdown;
-    this.markdownListeners.forEach((listener) => {
-      listener({}, markdown, previousMarkdown);
-    });
-  }
-}
-
-import type { CrepeEditorHandle } from './CrepeEditor';
-
-let CrepeEditor: typeof import('./CrepeEditor').CrepeEditor;
-let useCrepeInstance: typeof import('./CrepeEditor').useCrepeInstance;
-
-beforeAll(async () => {
-  vi.doMock('@milkdown/crepe', () => ({
-    Crepe: FakeCrepe,
-  }));
-
-  vi.doMock('@milkdown/kit/core', () => ({
-    EditorStatus: {
-      Created: 'Created',
-    },
-    editorViewCtx,
-  }));
-
-  vi.doMock('@milkdown/utils', () => ({
-    $prose: (factory: unknown) => ({ factory }),
-    replaceAll: mockReplaceAll,
-  }));
-
-  vi.doMock('./commentPlugin', () => ({
-    commentPluginKey,
-    makeCommentPlugin: mockMakeCommentPlugin,
-  }));
-
-  vi.doMock('./selectionCapture', () => ({
-    useSelectionCapture: mockUseSelectionCapture,
-  }));
-
-  const module = await import('./CrepeEditor');
-  CrepeEditor = module.CrepeEditor;
-  useCrepeInstance = module.useCrepeInstance;
-});
+vi.mock('./selectionCapture', () => ({
+  useSelectionCapture: mockUseSelectionCapture,
+}));
 
 interface HookHarnessHandle {
   getMarkdown: () => string;
-  getCrepe: () => FakeCrepe | null;
+  getCrepe: () => FakeCrepeInstance | null;
 }
 
 interface HookHarnessProps {
@@ -188,32 +193,37 @@ interface HookHarnessProps {
   readOnly: boolean;
 }
 
-const HookHarness = forwardRef<HookHarnessHandle, HookHarnessProps>(function HookHarness(
-  { content, comments, onMarkdownChange, onSelectComment, onTextSelect, readOnly },
-  ref,
-) {
-  const { crepeRef, getMarkdown } = useCrepeInstance({
-    content,
-    comments,
-    onMarkdownChange,
-    onSelectComment,
-    onTextSelect,
-    readOnly,
-  });
-
-  useImperativeHandle(
+const HookHarness = forwardRef<HookHarnessHandle, HookHarnessProps>(
+  function HookHarness(
+    { content, comments, onMarkdownChange, onSelectComment, onTextSelect, readOnly },
     ref,
-    () => ({
-      getMarkdown,
-      getCrepe: () => crepeRef.current as FakeCrepe | null,
-    }),
-    [crepeRef, getMarkdown],
-  );
+  ) {
+    const { crepeRef, getMarkdown } = useCrepeInstance({
+      content,
+      comments,
+      onMarkdownChange,
+      onSelectComment,
+      onTextSelect,
+      readOnly,
+    });
 
-  return <Milkdown />;
-});
+    useImperativeHandle(
+      ref,
+      () => ({
+        getMarkdown,
+        getCrepe: () => crepeRef.current as FakeCrepeInstance | null,
+      }),
+      [crepeRef, getMarkdown],
+    );
 
-function renderHookHarness(props: HookHarnessProps, ref: React.RefObject<HookHarnessHandle | null>) {
+    return <Milkdown />;
+  },
+);
+
+function renderHookHarness(
+  props: HookHarnessProps,
+  ref: { current: HookHarnessHandle | null },
+) {
   return render(
     <MilkdownProvider>
       <HookHarness ref={ref} {...props} />
@@ -235,11 +245,7 @@ describe('CrepeEditor and useCrepeInstance', () => {
 
   it('renders without error with minimal content', async () => {
     render(
-      <CrepeEditor
-        content="# Heading"
-        readOnly={true}
-        comments={[]}
-      />,
+      <CrepeEditor content="# Heading" readOnly={true} comments={[]} />,
     );
 
     await waitFor(() => {
@@ -252,11 +258,7 @@ describe('CrepeEditor and useCrepeInstance', () => {
 
   it('renders non-editable content when readOnly is true', async () => {
     render(
-      <CrepeEditor
-        content="# Heading"
-        readOnly={true}
-        comments={[]}
-      />,
+      <CrepeEditor content="# Heading" readOnly={true} comments={[]} />,
     );
 
     await waitFor(() => {
@@ -268,11 +270,7 @@ describe('CrepeEditor and useCrepeInstance', () => {
 
   it('toggles readonly without remounting the editor instance', async () => {
     const { rerender } = render(
-      <CrepeEditor
-        content="# Heading"
-        readOnly={true}
-        comments={[]}
-      />,
+      <CrepeEditor content="# Heading" readOnly={true} comments={[]} />,
     );
 
     await waitFor(() => {
@@ -282,11 +280,7 @@ describe('CrepeEditor and useCrepeInstance', () => {
     const firstInstance = createdInstances[0];
 
     rerender(
-      <CrepeEditor
-        content="# Heading"
-        readOnly={false}
-        comments={[]}
-      />,
+      <CrepeEditor content="# Heading" readOnly={false} comments={[]} />,
     );
 
     await waitFor(() => {

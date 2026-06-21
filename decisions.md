@@ -20,3 +20,9 @@
 - Kept the Crepe instance stable by giving `useEditor` an empty dependency list and moving mutable behavior into effects. `readOnly`, comment updates, and external view-mode content sync now update the existing instance instead of recreating the editor.
 - Registered the comment plugin and markdown listener during Crepe construction, before React's Milkdown wrapper calls `create()`. That guarantees decorations and change notifications exist from the first render.
 - Added a forwarded `CrepeEditorHandle` with `getMarkdown()` so later document-mode controls can save from the live editor without coupling to Milkdown internals.
+
+## Task 4 — MilkdownDocument and RawEditor
+
+- Kept one shared `baselineContent` and `draftContent` in `MilkdownDocument` so mode switches, save flows, and discard prompts all reason about the same markdown source of truth.
+- Extended `RawEditor` with an optional `onChange` callback. That lets the parent enforce cross-mode dirty-state prompts without changing the textarea-focused save/cancel behavior that already existed in `MarkdownEditor`.
+- Handled selection confirmation in `MilkdownDocument` instead of a separate global popover component. The document now owns both the captured selection payload and the viewport positioning needed to place the inline comment button.

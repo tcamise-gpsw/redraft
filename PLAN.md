@@ -201,7 +201,7 @@ export function useCrepeInstance(options: UseCrepeInstanceOptions): {
 - [x] Test: toggling readOnly does not remount (check that editor instance ref is stable)
 
 **Commit:**
-- [ ] Read `skill://conventional-commit`, stage, commit
+- [x] Read `skill://conventional-commit`, stage, commit
 
 
 ---
@@ -247,20 +247,20 @@ type Mode = 'view' | 'wysiwyg' | 'raw';
 - `onCancel` switches back to View mode (parent handles this)
 
 **Checklist:**
-- [ ] Three mode tabs render correctly
-- [ ] View mode shows read-only rendered markdown
-- [ ] WYSIWYG mode shows editable Crepe with Save button
-- [ ] Raw mode shows textarea with Save/Cancel buttons
-- [ ] Mode switching preserves latest content (no data loss between modes)
-- [ ] Unsaved-changes confirmation on mode switch with dirty state
-- [ ] Selection popover positioned via ProseMirror coords (replaces external `SelectionPopover`)
+- [x] Three mode tabs render correctly
+- [x] View mode shows read-only rendered markdown
+- [x] WYSIWYG mode shows editable Crepe with Save button
+- [x] Raw mode shows textarea with Save/Cancel buttons
+- [x] Mode switching preserves latest content (no data loss between modes)
+- [x] Unsaved-changes confirmation on mode switch with dirty state
+- [x] Selection popover positioned via ProseMirror coords (replaces external `SelectionPopover`)
 
 **Tests:**
-- [ ] Run `npx vitest run src/components/document/MilkdownDocument` to verify
-- [ ] Test: mode toggle switches between view/wysiwyg/raw
-- [ ] Test: Save in WYSIWYG mode calls onSave with markdown
-- [ ] Test: Save in Raw mode calls onSave with textarea content
-- [ ] Test: unsaved-changes guard fires confirm dialog on mode switch
+- [x] Run `npx vitest run src/components/document/MilkdownDocument` to verify
+- [x] Test: mode toggle switches between view/wysiwyg/raw
+- [x] Test: Save in WYSIWYG mode calls onSave with markdown
+- [x] Test: Save in Raw mode calls onSave with textarea content
+- [x] Test: unsaved-changes guard fires confirm dialog on mode switch
 
 **Commit:**
 - [ ] Read `skill://conventional-commit`, stage, commit

@@ -16,3 +16,7 @@
 ## Task 3 — Crepe Editor Wrapper and Instance Hook
 
 - The easiest reliable test seam was mocking Crepe and letting `@milkdown/react` drive lifecycle for real. That preserved the provider/useEditor contract while keeping tests fast and deterministic.
+
+## Task 4 — MilkdownDocument and RawEditor
+
+- The plan's discard prompt means unsaved mode switches cannot blindly carry edits across modes. Tracking draft state in the parent made that tradeoff explicit and kept both raw and WYSIWYG flows consistent.
