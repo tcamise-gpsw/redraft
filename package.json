@@ -2,6 +2,10 @@
   "name": "redraft-local",
   "version": "0.1.0",
   "description": "Local-first proposal review tool — serve and review Markdown proposals from any directory",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tcamise-gpsw/redraft"
+  },
   "keywords": [
     "markdown",
     "review",
