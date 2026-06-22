@@ -1,5 +1,10 @@
 import chokidar from 'chokidar';
-import { readdirSync, readFileSync } from 'node:fs';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  watch as fsWatch,
+} from 'node:fs';
 import { relative, resolve } from 'node:path';
 
 import ignore, { type Ignore } from 'ignore';
@@ -114,13 +119,18 @@ function toRelativePath(basePath: string, filePath: string): string | null {
 export function startWatcher(
   basePath: string,
   onEvent: (event: FileEvent) => void,
+  // Injected in tests so the native watcher can be faked without mocking
+  // the entire node:fs built-in module.  Only `on` and `close` are used.
+  watchFn: (
+    path: string,
+    options: { recursive: boolean; persistent: boolean },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ) => { on(event: string, listener: (...args: any[]) => void): unknown; close(): void } = (
+    path,
+    opts,
+  ) => fsWatch(path, opts),
 ): () => void {
-  const watcher = chokidar.watch(basePath, {
-    ignoreInitial: true,
-    persistent: true,
-  });
   const ignoreMatcher = loadIgnoreMatcher(basePath);
-
   const pendingEvents = new Map<string, PendingEventType>();
   let flushTimer: NodeJS.Timeout | undefined;
 
@@ -170,15 +180,66 @@ export function startWatcher(
     }, 100);
   };
 
-  watcher.on('add', (filePath) => queueEvent('file:created', filePath));
-  watcher.on('change', (filePath) => queueEvent('file:changed', filePath));
-  watcher.on('unlink', (filePath) => queueEvent('file:deleted', filePath));
-
-  return () => {
+  const stopFlush = (): void => {
     if (flushTimer) {
       clearTimeout(flushTimer);
       flushTimer = undefined;
     }
+  };
+
+  if (process.platform === 'darwin' || process.platform === 'win32') {
+    const nativeWatcher = watchFn(basePath, {
+      recursive: true,
+      persistent: true,
+    });
+
+    nativeWatcher.on(
+      'change',
+      (eventType: string, filename: string | Buffer | null) => {
+        if (!filename) {
+          return;
+        }
+        const name = Buffer.isBuffer(filename)
+          ? filename.toString()
+          : filename;
+        const absolutePath = resolve(basePath, name);
+
+        if (eventType === 'rename') {
+          const type: PendingEventType = existsSync(absolutePath)
+            ? 'file:created'
+            : 'file:deleted';
+          queueEvent(type, absolutePath);
+        } else {
+          queueEvent('file:changed', absolutePath);
+        }
+      },
+    );
+
+    nativeWatcher.on('error', (err: Error) => {
+      console.error('[redraft] watcher error:', err);
+    });
+
+    return () => {
+      stopFlush();
+      nativeWatcher.close();
+    };
+  }
+
+  // Chokidar fallback for platforms that do not support recursive fs.watch.
+  const watcher = chokidar.watch(basePath, {
+    ignoreInitial: true,
+    persistent: true,
+  });
+
+  watcher.on('add', (filePath) => queueEvent('file:created', filePath));
+  watcher.on('change', (filePath) => queueEvent('file:changed', filePath));
+  watcher.on('unlink', (filePath) => queueEvent('file:deleted', filePath));
+  watcher.on('error', (err) => {
+    console.error('[redraft] watcher error:', err);
+  });
+
+  return () => {
+    stopFlush();
     void watcher.close();
   };
 }
