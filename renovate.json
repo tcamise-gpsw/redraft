@@ -1,17 +1,34 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "labels": ["dependencies"],
-  "schedule": ["before 6am on monday"],
-  "git-submodules": {
-    "enabled": true
-  },
+  "timezone": "America/Los_Angeles",
+  "schedule": ["before 9am on monday"],
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "non-major dependencies",
-      "automerge": true,
-      "platformAutomerge": true
+      "groupName": "Milkdown",
+      "matchPackagePatterns": ["^@milkdown/"]
+    },
+    {
+      "groupName": "React",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"]
+    },
+    {
+      "groupName": "Vite",
+      "matchPackageNames": ["vite", "vitest", "@vitejs/plugin-react"]
+    },
+    {
+      "groupName": "TypeScript ESLint",
+      "matchPackagePatterns": ["^@typescript-eslint/"]
+    },
+    {
+      "groupName": "Testing",
+      "matchPackageNames": [
+        "jsdom",
+        "@playwright/test",
+        "@testing-library/jest-dom",
+        "@testing-library/react",
+        "@testing-library/user-event"
+      ]
     }
   ]
 }
