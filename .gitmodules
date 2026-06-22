@@ -1,0 +1,4 @@
+[submodule "test-fixtures"]
+	path = test-fixtures
+	url = git@github.com:tcamise-gpsw/redraft-test-repo.git
+	branch = main
