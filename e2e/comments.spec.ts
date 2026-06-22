@@ -51,7 +51,13 @@ test('comment flow selects text, opens the form, and writes a centralized sideca
         status: 200,
         headers,
         body: JSON.stringify({
-          tree: [{ path: 'camera-session.md', type: 'blob' }],
+          tree: [
+            { path: 'camera-session.md', type: 'blob' },
+            {
+              path: '.redraft/comments/camera-session.comments.json',
+              type: 'blob',
+            },
+          ],
         }),
       });
       return;
