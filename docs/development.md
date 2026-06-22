@@ -18,15 +18,20 @@
 - `npm run build:server` — compile server TypeScript to `dist-server/cli.mjs` via esbuild
 - `npm run typecheck` — run TypeScript without emitting
 - `npm run format` — format the repository
-- `npm run format:check` — verify formatting under `src/`
+- `npm run format:check` — verify formatting across the tracked repository (respecting `.prettierignore`)
 - `npm run e2e` — run Playwright tests
+
+- `npm run prepare` — set `git config core.hooksPath .githooks` for this checkout
 
 ## Local workflow
 
 1. Install dependencies with `npm install`.
-2. Start the app with `npm run dev`.
-3. Work against a development PAT supplied by the project owner when GitHub API verification is needed.
-4. Use Playwright for real-browser verification of interactive flows as tasks land.
+2. Confirm hooks are wired for this checkout with `git config --local --get core.hooksPath` — expected value: `.githooks`.
+3. If hooks are unset, run `npm run prepare` once.
+4. Commiting runs `.githooks/pre-commit`, which formats staged files with Prettier, re-stages them, and then runs `npm run lint`.
+5. Start the app with `npm run dev`.
+6. Work against a development PAT supplied by the project owner when GitHub API verification is needed.
+7. Use Playwright for real-browser verification of interactive flows as tasks land.
 
 ## Deployment
 
