@@ -47,7 +47,7 @@ jobs:
         run: npm run build
 
       - name: Publish
-        run: npm publish --ignore-scripts --provenance
+        run: npm publish --ignore-scripts --provenance --access public
 
       - name: Commit, tag, and release
         run: |
