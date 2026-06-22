@@ -15,7 +15,7 @@ jobs:
     name: Bump, build, and publish
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push version commit + tag
+      contents: write # push version commit + tag, create GitHub release
       id-token: write # OIDC token for npm trusted publishing
 
     steps:
@@ -38,6 +38,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+      - name: Require bypass token for protected main pushes
+        env:
+          WORKFLOW_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+        run: |
+          if [ -z "$WORKFLOW_TOKEN" ]; then
+            echo "WORKFLOW_TOKEN secret is required for release pushes to protected main."
+            echo "Add a PAT for a user on the branch-rule bypass list, then rerun."
+            exit 1
+          fi
+          git remote set-url origin "https://x-access-token:${WORKFLOW_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
       - name: Configure git identity
         run: |
@@ -54,8 +64,11 @@ jobs:
         run: npm publish --access public
 
       - name: Commit, tag, and release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
+
           git add package.json package-lock.json
           git commit -m "chore(publish): release v${VERSION}"
           git tag "v${VERSION}"
@@ -99,5 +112,3 @@ jobs:
             --title "v${VERSION}" \
             --notes-file "$notes_file" \
             --latest
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
