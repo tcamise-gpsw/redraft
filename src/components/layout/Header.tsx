@@ -35,7 +35,7 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
 
         <div className="flex items-center gap-4 text-sm text-slate-300">
           <span className={lowRateLimit ? 'text-amber-300' : ''}>
-            API: {rateLimit?.remaining ?? 0}/{rateLimit?.limit ?? 0}
+            {rateLimit?.remaining ?? 0} / {rateLimit?.limit ?? 0} remaining
           </span>
           <Link
             className="rounded-md border border-slate-700 px-3 py-2 font-medium hover:border-slate-500"

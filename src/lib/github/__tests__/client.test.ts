@@ -115,7 +115,7 @@ describe('GitHubClient', () => {
     await expect(client.validateAuth()).rejects.toBeInstanceOf(AuthError);
   });
 
-  it('getTree filters entries to markdown files and excludes .redraft metadata', async () => {
+  it('getTree includes markdown blobs and comment sidecars, excludes other files', async () => {
     const client = new GitHubClient({
       pat: 'ghp_test',
       owner: 'acme',
@@ -133,6 +133,7 @@ describe('GitHubClient', () => {
             path: '.redraft/comments/docs/auth-overhaul.comments.json',
             type: 'blob',
           },
+          { path: '.redraft/other-metadata.json', type: 'blob' },
           { path: 'notes.txt', type: 'blob' },
         ],
       },
@@ -142,6 +143,10 @@ describe('GitHubClient', () => {
     await expect(client.getTree()).resolves.toEqual([
       { path: 'docs/auth-overhaul.md', type: 'blob' },
       { path: 'README.md', type: 'blob' },
+      {
+        path: '.redraft/comments/docs/auth-overhaul.comments.json',
+        type: 'blob',
+      },
     ]);
   });
 

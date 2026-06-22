@@ -72,18 +72,17 @@ describe('DocumentTree', () => {
   });
 
   it('shows under-review documents and keeps the documents tree collapsed by default', async () => {
+    // Sidecar blob for media/overview.md is included in the tree response —
+    // no per-file getFileContent probing required.
     getTree.mockResolvedValueOnce([
       { path: 'rest.md', type: 'blob' },
       { path: 'media/overview.md', type: 'blob' },
       { path: 'api/graphql.md', type: 'blob' },
+      {
+        path: '.redraft/comments/media/overview.comments.json',
+        type: 'blob',
+      },
     ]);
-    getFileContent.mockImplementation(async (path: string) => {
-      if (path === '.redraft/comments/media/overview.comments.json') {
-        return { content: '{"version":1,"comments":[]}', sha: 'sidecar-sha' };
-      }
-
-      return null;
-    });
 
     renderTree();
 

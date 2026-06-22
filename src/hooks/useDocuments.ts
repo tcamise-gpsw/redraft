@@ -126,28 +126,25 @@ export function useDocuments() {
       }
 
       const items = await client.getTree();
+
+      // Separate markdown blobs from comment sidecars.
+      // getTree() returns both in a single API call — no per-file probing.
       const markdownItems = items.filter((item) => item.path.endsWith('.md'));
-      const underReview = (
-        await Promise.all(
-          markdownItems.map(async (item) => {
-            const commentFile = await client.getFileContent(
-              commentPath(item.path),
-              {
-                optional: true,
-              },
-            );
+      const sidecarPaths = new Set(
+        items
+          .filter((item) => item.path.startsWith('.redraft/comments/'))
+          .map((item) => item.path),
+      );
 
-            if (!commentFile) {
-              return null;
-            }
-
-            return {
-              path: item.path,
-              unresolvedCount: 0,
-            } satisfies ReviewEntry;
-          }),
-        )
-      ).filter((entry): entry is ReviewEntry => entry !== null);
+      // A markdown document is under review when its expected sidecar path
+      // appears anywhere in the tree.  unresolvedCount stays 0 because exact
+      // counts require loading the sidecar files (deferred to document open).
+      const underReview = markdownItems
+        .filter((item) => sidecarPaths.has(commentPath(item.path)))
+        .map(
+          (item) =>
+            ({ path: item.path, unresolvedCount: 0 }) satisfies ReviewEntry,
+        );
 
       return {
         documents: buildTree(markdownItems),

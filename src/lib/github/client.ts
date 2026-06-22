@@ -164,12 +164,18 @@ export class GitHubClient {
 
     return (response.data.tree ?? [])
       .filter((item) => {
-        return (
-          typeof item.path === 'string' &&
-          item.type === 'blob' &&
-          item.path.endsWith('.md') &&
-          !item.path.startsWith('.redraft/')
-        );
+        if (typeof item.path !== 'string' || item.type !== 'blob') {
+          return false;
+        }
+        // Always include comment sidecars so callers can infer review status
+        // from a single tree fetch without probing individual files.
+        if (
+          item.path.startsWith('.redraft/comments/') &&
+          item.path.endsWith('.comments.json')
+        ) {
+          return true;
+        }
+        return item.path.endsWith('.md') && !item.path.startsWith('.redraft/');
       })
       .map((item) => ({
         path: item.path,
