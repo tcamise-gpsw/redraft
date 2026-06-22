@@ -19,18 +19,23 @@ jobs:
       id-token: write  # OIDC token for npm trusted publishing
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
           fetch-depth: 0 # git describe needs full tag history
           # PAT so the version-bump push can re-trigger CI; falls back to GITHUB_TOKEN.
           token: ${{ secrets.WORKFLOW_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Verify trusted publishing toolchain
+        run: |
+          node --version
+          npm --version
 
       - name: Install dependencies
         run: npm ci
@@ -47,7 +52,7 @@ jobs:
         run: npm run build
 
       - name: Publish
-        run: npm publish --ignore-scripts --provenance --access public
+        run: npm publish --access public
 
       - name: Commit, tag, and release
         run: |
