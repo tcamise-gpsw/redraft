@@ -25,6 +25,7 @@ jobs:
           fetch-depth: 0 # git describe needs full tag history
           # PAT so the version-bump push can re-trigger CI; falls back to GITHUB_TOKEN.
           token: ${{ secrets.WORKFLOW_TOKEN || secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
