@@ -2,6 +2,10 @@
 
 # ReDraft
 
+[![npm](https://img.shields.io/npm/v/redraft-local)](https://www.npmjs.com/package/redraft-local)
+[![npm downloads](https://img.shields.io/npm/dm/redraft-local)](https://www.npmjs.com/package/redraft-local)
+[![CI](https://github.com/tcamise-gpsw/redraft/actions/workflows/ci.yml/badge.svg)](https://github.com/tcamise-gpsw/redraft/actions/workflows/ci.yml)
+
 ReDraft is a review workspace for markdown documents. It lets teams browse repository docs, discuss them with inline comment threads, and edit them in either a rich-text editor or raw markdown — backed by GitHub in remote mode or the local filesystem in local mode.
 
 ## What it does
