@@ -94,9 +94,7 @@ Response shape changes from a flat file list to a structured response:
     { "path": "README.md", "type": "blob" },
     { "path": "docs/architecture.md", "type": "blob" }
   ],
-  "underReview": [
-    { "path": "docs/api-design.md", "unresolvedCount": 3 }
-  ]
+  "underReview": [{ "path": "docs/api-design.md", "unresolvedCount": 3 }]
 }
 ```
 
@@ -115,6 +113,7 @@ The local-mode URL base changes from `local/proposals` to `local/redraft` to ref
 ### Watcher (Local Only)
 
 Emits events for:
+
 - Any `.md` file change (respecting `.gitignore`).
 - Any `.comments.json` change inside `.redraft/comments/`.
 
@@ -134,13 +133,13 @@ npx redraft-local [directory]
 
 ## Frontend Component Changes
 
-| Current | New |
-|---------|-----|
-| `ProposalTree` | `DocumentTree` |
-| `CreateProposalDialog` | `CreateDocumentDialog` |
-| `useProposals` hook | `useDocuments` hook |
-| `ProposalNode` type | `DocumentNode` type |
-| Header text "Proposals" | Removed / section headers instead |
+| Current                         | New                                           |
+| ------------------------------- | --------------------------------------------- |
+| `ProposalTree`                  | `DocumentTree`                                |
+| `CreateProposalDialog`          | `CreateDocumentDialog`                        |
+| `useProposals` hook             | `useDocuments` hook                           |
+| `ProposalNode` type             | `DocumentNode` type                           |
+| Header text "Proposals"         | Removed / section headers instead             |
 | Tree strips `proposals/` prefix | No prefix stripping — paths are root-relative |
 
 ### Hook: `useDocuments`
@@ -182,11 +181,10 @@ npx redraft-local [directory]
 - No structural change — already handles arbitrary paths relative to `basePath`.
 - The comment file path `.redraft/comments/...` is just another valid path.
 
-
 ## Dependencies
 
-| Package | Purpose | Type |
-|---------|---------|------|
+| Package  | Purpose                                            | Type    |
+| -------- | -------------------------------------------------- | ------- |
 | `ignore` | `.gitignore` parsing for local mode file discovery | runtime |
 
 ---

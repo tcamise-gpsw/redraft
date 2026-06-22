@@ -13,7 +13,10 @@ const { getWatcher, watchMock, getFsWatcher, fsWatchMock, resetWatchers } =
     // Simulates a chokidar FSWatcher — emits add/change/unlink/error with a
     // single path argument, matching the chokidar event contract.
     class FakeChokidarWatcher {
-      readonly handlers = new Map<string, Array<(arg: string | Error) => void>>();
+      readonly handlers = new Map<
+        string,
+        Array<(arg: string | Error) => void>
+      >();
       close = vi.fn(async () => undefined);
 
       on(event: string, handler: (arg: string | Error) => void): this {

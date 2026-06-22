@@ -18,7 +18,10 @@ module.exports = {
     'prettier',
   ],
   rules: {
-    'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    'react-refresh/only-export-components': [
+      'warn',
+      { allowConstantExport: true },
+    ],
   },
   ignorePatterns: ['dist', 'node_modules', 'playwright-report', 'test-results'],
 };

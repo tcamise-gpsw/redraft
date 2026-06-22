@@ -28,9 +28,10 @@
     "lint": "eslint src/ server/",
     "typecheck": "tsc --noEmit && tsc --noEmit -p server/tsconfig.json",
     "format": "prettier --write .",
-    "format:check": "prettier --check src/ server/",
+    "format:check": "prettier --check .",
     "e2e": "playwright test",
     "serve": "tsx server/cli.ts",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {

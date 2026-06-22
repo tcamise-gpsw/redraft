@@ -54,6 +54,7 @@ A small engineering team can create, review, discuss, and evolve technical propo
 ```
 
 **Key properties:**
+
 - Single repository holds both the React app source and the `proposals/` directory
 - GitHub Pages serves the built React app from a `gh-pages` branch, deployed via GitHub Actions
 - All data access goes through the GitHub REST API using a fine-grained PAT
@@ -61,25 +62,25 @@ A small engineering team can create, review, discuss, and evolve technical propo
 
 ### Tech Stack
 
-| Layer | Choice |
-|-------|--------|
-| Build | Vite |
-| UI | React 19, TypeScript |
-| Styling | Tailwind CSS |
-| Routing | React Router (hash-based for GitHub Pages SPA compatibility) |
-| Data fetching | TanStack Query |
-| Markdown | Milkdown Crepe (`@milkdown/crepe`, `@milkdown/react`, `@milkdown/kit`) |
-| GitHub API | Octokit REST client (@octokit/rest) |
+| Layer         | Choice                                                                 |
+| ------------- | ---------------------------------------------------------------------- |
+| Build         | Vite                                                                   |
+| UI            | React 19, TypeScript                                                   |
+| Styling       | Tailwind CSS                                                           |
+| Routing       | React Router (hash-based for GitHub Pages SPA compatibility)           |
+| Data fetching | TanStack Query                                                         |
+| Markdown      | Milkdown Crepe (`@milkdown/crepe`, `@milkdown/react`, `@milkdown/kit`) |
+| GitHub API    | Octokit REST client (@octokit/rest)                                    |
 
 ### Routing
 
 Hash-based routing is required because GitHub Pages doesn't support SPA fallback routing. All routes are `/#/...`:
 
-| Route | View |
-|-------|------|
-| `/#/` | Proposal tree (root) |
+| Route                | View                              |
+| -------------------- | --------------------------------- |
+| `/#/`                | Proposal tree (root)              |
 | `/#/proposals/:path` | View and edit a specific proposal |
-| `/#/settings` | PAT and repository configuration |
+| `/#/settings`        | PAT and repository configuration  |
 
 ---
 
@@ -109,7 +110,6 @@ Hash-based routing is required because GitHub Pages doesn't support SPA fallback
 - The PAT is stored in `localStorage` — acceptable for an internal team tool, but documented as a known limitation
 - The PAT never leaves the browser (no backend to leak it to)
 - The repo should be private to prevent unauthenticated access to proposal content
-
 
 ### Repository Configuration
 
@@ -238,9 +238,9 @@ App
 
 ### Non-UI Modules
 
-| Module | Responsibility |
-|--------|---------------|
-| `lib/github/` | GitHub API client: auth validation, file CRUD, tree listing, commits, user info. Wraps @octokit/rest. |
+| Module          | Responsibility                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/github/`   | GitHub API client: auth validation, file CRUD, tree listing, commits, user info. Wraps @octokit/rest.                           |
 | `lib/comments/` | Comment anchoring: create anchors from text selection, resolve anchors to document positions, fuzzy matching, orphan detection. |
 
 ---
@@ -287,11 +287,13 @@ App
    - File path (relative to `proposals/`, e.g. `api-design/graphql-schema.md`)
    - Title (used as the initial `# heading` in the file)
 3. App creates the new `.md` file via the GitHub Contents API with initial content:
+
    ```markdown
    # {title}
 
    <!-- Write your proposal here -->
    ```
+
 4. App navigates to the new proposal's view
 
 ### Concurrency
@@ -314,13 +316,13 @@ The app uses a two-layer approach to handle concurrent edits:
 
 ### Endpoints Used
 
-| Operation | Endpoint | Method |
-|-----------|----------|--------|
-| Validate PAT | `GET /user` | GET |
-| List proposal tree | `GET /repos/:owner/:repo/git/trees/:branch?recursive=1` | GET |
-| Read file | `GET /repos/:owner/:repo/contents/:path` | GET |
-| Create file | `PUT /repos/:owner/:repo/contents/:path` | PUT |
-| Update file | `PUT /repos/:owner/:repo/contents/:path` (with SHA) | PUT |
+| Operation          | Endpoint                                                | Method |
+| ------------------ | ------------------------------------------------------- | ------ |
+| Validate PAT       | `GET /user`                                             | GET    |
+| List proposal tree | `GET /repos/:owner/:repo/git/trees/:branch?recursive=1` | GET    |
+| Read file          | `GET /repos/:owner/:repo/contents/:path`                | GET    |
+| Create file        | `PUT /repos/:owner/:repo/contents/:path`                | PUT    |
+| Update file        | `PUT /repos/:owner/:repo/contents/:path` (with SHA)     | PUT    |
 
 ### Rate Limiting
 
@@ -332,6 +334,7 @@ The app uses a two-layer approach to handle concurrent edits:
 ### Commit Messages
 
 Auto-generated, descriptive:
+
 - `"Create proposal: camera-session.md"`
 - `"Update proposal: camera-session.md"`
 - `"Add comment on camera-session.md"`
@@ -387,15 +390,15 @@ When the user selects text in the document surface:
 
 ## Error Handling
 
-| Scenario | Behavior |
-|----------|----------|
-| Invalid PAT | AuthGate shows error, prompts re-entry |
-| PAT expired / revoked | 401 → clear PAT, return to AuthGate with message |
-| File conflict (SHA mismatch) | Error banner with "Refresh and retry" message |
-| Network error | Toast notification with retry button |
-| Rate limit exceeded | Banner showing when limit resets |
-| Comment anchor orphaned | Comment moves to "Orphaned" section with warning |
-| File not found (deleted externally) | Navigate to tree root with notification |
+| Scenario                            | Behavior                                         |
+| ----------------------------------- | ------------------------------------------------ |
+| Invalid PAT                         | AuthGate shows error, prompts re-entry           |
+| PAT expired / revoked               | 401 → clear PAT, return to AuthGate with message |
+| File conflict (SHA mismatch)        | Error banner with "Refresh and retry" message    |
+| Network error                       | Toast notification with retry button             |
+| Rate limit exceeded                 | Banner showing when limit resets                 |
+| Comment anchor orphaned             | Comment moves to "Orphaned" section with warning |
+| File not found (deleted externally) | Navigate to tree root with notification          |
 
 ---
 
@@ -426,12 +429,13 @@ When the user selects text in the document surface:
 
 ### Documentation
 
-| File | Purpose |
-|------|---------|
-| `README.md` | Project overview, architecture summary, setup instructions, development commands, deployment guide. Kept accurate as the codebase evolves. |
+| File        | Purpose                                                                                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md` | Project overview, architecture summary, setup instructions, development commands, deployment guide. Kept accurate as the codebase evolves.                        |
 | `AGENTS.md` | AI agent coding guidelines: project conventions, directory structure, key patterns, testing approach, and common pitfalls. Updated whenever architecture changes. |
 
 **README.md** includes:
+
 - What the project is and how it works (architecture diagram)
 - Prerequisites (Node.js, GitHub PAT)
 - Local development setup (`npm install`, `npm run dev`)
@@ -440,6 +444,7 @@ When the user selects text in the document surface:
 - Directory structure overview
 
 **AGENTS.md** includes:
+
 - Project structure and module responsibilities
 - Coding conventions (TypeScript strict, Tailwind utility classes, TanStack Query patterns)
 - How to add new components, routes, and API calls
@@ -448,15 +453,15 @@ When the user selects text in the document surface:
 
 ### Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `package.json` | Dependencies and scripts |
-| `vite.config.ts` | Vite configuration with GitHub Pages base path |
-| `tsconfig.json` | TypeScript strict configuration |
-| `tailwind.config.ts` | Tailwind configuration |
-| `.eslintrc.cjs` | ESLint configuration |
-| `.prettierrc` | Prettier configuration |
-| `.gitignore` | Standard Vite/Node ignores |
+| File                           | Purpose                                                           |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `package.json`                 | Dependencies and scripts                                          |
+| `vite.config.ts`               | Vite configuration with GitHub Pages base path                    |
+| `tsconfig.json`                | TypeScript strict configuration                                   |
+| `tailwind.config.ts`           | Tailwind configuration                                            |
+| `.eslintrc.cjs`                | ESLint configuration                                              |
+| `.prettierrc`                  | Prettier configuration                                            |
+| `.gitignore`                   | Standard Vite/Node ignores                                        |
 | `.github/workflows/deploy.yml` | GitHub Actions: build + deploy to gh-pages branch on push to main |
 
 ### Directory Structure
@@ -499,15 +504,15 @@ This enables AI-assisted development where the agent can make changes, push them
 
 ## Open Questions Resolved
 
-| Question | Decision |
-|----------|----------|
-| Same repo or separate repos? | Same repo |
-| Public or private repo? | Private (PAT required for all access) |
-| Editing experience? | View mode with edit toggle (not split-pane) |
-| Comment anchoring? | Text-selection with quote + context |
-| Commenter identity? | Derived from GitHub PAT user |
-| State management? | TanStack Query + React useState/useReducer |
-| Styling? | Tailwind CSS |
-| Routing? | Hash-based (React Router) for GitHub Pages |
-| Read method? | GitHub REST API for all reads (always fresh, PAT required anyway) |
-| Concurrency? | Activity indicator + SHA-based optimistic locking |
+| Question                     | Decision                                                          |
+| ---------------------------- | ----------------------------------------------------------------- |
+| Same repo or separate repos? | Same repo                                                         |
+| Public or private repo?      | Private (PAT required for all access)                             |
+| Editing experience?          | View mode with edit toggle (not split-pane)                       |
+| Comment anchoring?           | Text-selection with quote + context                               |
+| Commenter identity?          | Derived from GitHub PAT user                                      |
+| State management?            | TanStack Query + React useState/useReducer                        |
+| Styling?                     | Tailwind CSS                                                      |
+| Routing?                     | Hash-based (React Router) for GitHub Pages                        |
+| Read method?                 | GitHub REST API for all reads (always fresh, PAT required anyway) |
+| Concurrency?                 | Activity indicator + SHA-based optimistic locking                 |

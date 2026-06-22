@@ -6,15 +6,16 @@ Replace the write-through comment model (every mutation = 2–3 GitHub API calls
 
 The original `useComments` hook wrote to GitHub on every user action:
 
-| Action | API calls |
-|---|---|
-| `addComment` | GET comments + PUT new file + GET refetch = **3** |
-| `addReply` | GET comments + PUT update + GET refetch = **3** |
-| `resolveThread` | GET comments + PUT update + GET refetch = **3** |
+| Action          | API calls                                         |
+| --------------- | ------------------------------------------------- |
+| `addComment`    | GET comments + PUT new file + GET refetch = **3** |
+| `addReply`      | GET comments + PUT update + GET refetch = **3**   |
+| `resolveThread` | GET comments + PUT update + GET refetch = **3**   |
 
 A reviewer adding five comments and resolving two burned **21 API calls** before touching the proposal itself. On a new proposal with three reviewers active in the same session, rate limits were routinely hit.
 
 Contributing factors:
+
 - `staleTime: 10_000` (10 seconds) meant every window focus event re-fetched all three proposal queries (content, comments, latest commit)
 - `useProposal` fired those three queries on every mount; both `ProposalView` and `DocumentView` mounted it — TanStack Query deduplicated the network requests but the re-fetch triggers stacked up
 
@@ -29,13 +30,13 @@ Local-first comment store with explicit save.
 
 ## API rate limit comparison
 
-| Scenario | Before | After |
-|---|---|---|
-| Page load | 3 calls (content + comments + commit) | 2 calls (content + commit) |
-| Add 5 comments | +15 calls | 0 calls |
-| Resolve 3 threads | +9 calls | 0 calls |
-| Explicit save | — | 1 call |
-| **Total (same session)** | **27 calls** | **3 calls** |
+| Scenario                 | Before                                | After                      |
+| ------------------------ | ------------------------------------- | -------------------------- |
+| Page load                | 3 calls (content + comments + commit) | 2 calls (content + commit) |
+| Add 5 comments           | +15 calls                             | 0 calls                    |
+| Resolve 3 threads        | +9 calls                              | 0 calls                    |
+| Explicit save            | —                                     | 1 call                     |
+| **Total (same session)** | **27 calls**                          | **3 calls**                |
 
 ---
 
@@ -79,19 +80,22 @@ SAVING ──(error)────────────► DIRTY   (isDirty sta
 
 ```typescript
 function useComments(path: string): {
-  threads:      CommentThread[];   // current (possibly unsaved) state
-  isLoading:    boolean;           // true only during the initial fetch
-  isDirty:      boolean;           // unsaved changes exist
-  isSaving:     boolean;           // save in flight
+  threads: CommentThread[]; // current (possibly unsaved) state
+  isLoading: boolean; // true only during the initial fetch
+  isDirty: boolean; // unsaved changes exist
+  isSaving: boolean; // save in flight
 
   // Synchronous — update local state only, no network calls
   addComment(thread: Omit<CommentThread, 'id' | 'createdAt' | 'replies'>): void;
-  addReply(threadId: string, reply: Omit<CommentReply, 'id' | 'createdAt'>): void;
+  addReply(
+    threadId: string,
+    reply: Omit<CommentReply, 'id' | 'createdAt'>,
+  ): void;
   resolveThread(threadId: string): void;
 
   // Async — one GitHub write; throws on conflict with a user-readable message
   saveComments(): Promise<void>;
-}
+};
 ```
 
 ### Load → seed → mutate → save sequence
@@ -123,14 +127,14 @@ User clicks Save
 
 ## Changed files
 
-| File | Change |
-|---|---|
-| `src/hooks/useComments.ts` | Full rewrite — local store, explicit save |
-| `src/hooks/useProposal.ts` | Drop `commentsQuery`; return no longer includes `comments`/`commentsSha` |
-| `src/routes/ProposalView.tsx` | Call `useComments(path)`; thread `threads` + mutations down as props |
-| `src/components/document/DocumentView.tsx` | Accept `comments: CommentThread[]` as a prop instead of reading from `useProposal` |
+| File                                          | Change                                                                                      |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `src/hooks/useComments.ts`                    | Full rewrite — local store, explicit save                                                   |
+| `src/hooks/useProposal.ts`                    | Drop `commentsQuery`; return no longer includes `comments`/`commentsSha`                    |
+| `src/routes/ProposalView.tsx`                 | Call `useComments(path)`; thread `threads` + mutations down as props                        |
+| `src/components/document/DocumentView.tsx`    | Accept `comments: CommentThread[]` as a prop instead of reading from `useProposal`          |
 | `src/components/comments/CommentsSidebar.tsx` | Remove internal `useComments` call; accept mutations + save state as props; add save banner |
-| `src/App.tsx` | `staleTime`: 10 s → 5 min |
+| `src/App.tsx`                                 | `staleTime`: 10 s → 5 min                                                                   |
 
 ## Trade-offs and known behavior
 

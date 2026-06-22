@@ -124,11 +124,11 @@ export function startWatcher(
   watchFn: (
     path: string,
     options: { recursive: boolean; persistent: boolean },
+  ) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ) => { on(event: string, listener: (...args: any[]) => void): unknown; close(): void } = (
-    path,
-    opts,
-  ) => fsWatch(path, opts),
+    on(event: string, listener: (...args: any[]) => void): unknown;
+    close(): void;
+  } = (path, opts) => fsWatch(path, opts),
 ): () => void {
   const ignoreMatcher = loadIgnoreMatcher(basePath);
   const pendingEvents = new Map<string, PendingEventType>();
@@ -199,9 +199,7 @@ export function startWatcher(
         if (!filename) {
           return;
         }
-        const name = Buffer.isBuffer(filename)
-          ? filename.toString()
-          : filename;
+        const name = Buffer.isBuffer(filename) ? filename.toString() : filename;
         const absolutePath = resolve(basePath, name);
 
         if (eventType === 'rename') {

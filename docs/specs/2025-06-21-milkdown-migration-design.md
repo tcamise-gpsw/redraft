@@ -14,6 +14,7 @@ The current markdown pipeline has structural weaknesses:
 ## Solution
 
 A single `MilkdownDocument` component backed by Milkdown Crepe that provides three modes:
+
 - **View** — read-only rendered markdown with comment decorations and text selection
 - **WYSIWYG** — editable rich-text with the same comment decorations
 - **Raw** — plain textarea for power users who prefer raw markdown
@@ -47,12 +48,14 @@ Comment highlights use ProseMirror `DecorationSet` (no markdown string surgery).
 ### Dependencies
 
 **Add:**
+
 - `@milkdown/crepe` — batteries-included WYSIWYG editor
 - `@milkdown/react` — React bindings (`MilkdownProvider`, `useEditor`, `useInstance`)
 - `@milkdown/kit` — core utilities (`$prose`, `$view`, `editorViewCtx`, presets)
 - `mermaid` — diagram rendering library
 
 **Remove:**
+
 - `react-markdown`
 - `rehype-highlight`
 - `rehype-raw`
@@ -121,6 +124,7 @@ interface TextSelection {
 ```
 
 **Behavior:**
+
 - Defaults to **View** mode (read-only Crepe)
 - Mode toggle at top-right: `View | WYSIWYG | Raw`
 - In View and WYSIWYG modes, the same Crepe instance is used — switching between them calls `crepe.setReadonly(bool)` without remounting
@@ -139,6 +143,7 @@ A ProseMirror `Plugin<DecorationSet>` registered before `crepe.create()`:
 4. **`props.handleClick`** — Checks `event.target.closest('[data-comment-id]')` and calls `onSelectComment(id)`
 
 **Multi-node text search (fix from main worktree):**
+
 ```
 1. Flatten doc to plain text via doc.textBetween(0, doc.content.size, '\n', '\0')
 2. For each comment quote, find its char offset in the flat string
@@ -154,6 +159,7 @@ When the `comments` prop changes, the hook dispatches `view.state.tr.setMeta(com
 ### Selection Capture (`selectionCapture.ts`)
 
 A `mouseup` listener on `view.dom` that:
+
 1. Reads `view.state.selection.{from, to}`
 2. If `selection.empty`, returns (no-op)
 3. Calls `doc.textBetween(from, to, ' ')` for the quote
@@ -175,6 +181,7 @@ Implementation: Use Milkdown's `$view()` utility to register a React component a
 ### `RawEditor` (textarea fallback)
 
 Extracted from the current `MarkdownEditor.tsx` with minimal changes:
+
 - Same textarea with tab-insert, character/line count
 - Same Save/Cancel buttons
 - Receives content from `MilkdownDocument` parent when switching to Raw mode
@@ -187,10 +194,10 @@ Extracted from the current `MarkdownEditor.tsx` with minimal changes:
 
 The separate `/proposals/:path/edit` route is **removed**. Editing happens inline via the mode toggle:
 
-| Before | After |
-|--------|-------|
-| `/#/proposals/:path` → view only | `/#/proposals/:path` → view + mode toggle (View/WYSIWYG/Raw) |
-| `/#/proposals/:path/edit` → textarea | Removed — WYSIWYG/Raw accessible from toggle |
+| Before                               | After                                                        |
+| ------------------------------------ | ------------------------------------------------------------ |
+| `/#/proposals/:path` → view only     | `/#/proposals/:path` → view + mode toggle (View/WYSIWYG/Raw) |
+| `/#/proposals/:path/edit` → textarea | Removed — WYSIWYG/Raw accessible from toggle                 |
 
 The "Edit" link in `DocumentView` becomes the WYSIWYG mode toggle button, not a route navigation. This eliminates the full remount and re-fetch when switching between view and edit.
 
@@ -205,9 +212,9 @@ Crepe ships with `frame-dark.css`. We override CSS variables scoped to `.milkdow
 ```css
 .milkdown-document-wrapper .milkdown {
   --crepe-color-background: transparent;
-  --crepe-color-surface: rgb(15 23 42);      /* slate-900 */
+  --crepe-color-surface: rgb(15 23 42); /* slate-900 */
   --crepe-color-on-background: rgb(241 245 249); /* slate-100 */
-  --crepe-color-border: rgb(30 41 59);       /* slate-800 */
+  --crepe-color-border: rgb(30 41 59); /* slate-800 */
 }
 ```
 
@@ -215,8 +222,8 @@ Crepe ships with `frame-dark.css`. We override CSS variables scoped to `.milkdow
 
 ```css
 .milkdown-comment-highlight {
-  background-color: rgb(251 191 36 / 0.2);  /* amber-400/20 */
-  border-bottom: 2px solid rgb(251 191 36);  /* amber-400 */
+  background-color: rgb(251 191 36 / 0.2); /* amber-400/20 */
+  border-bottom: 2px solid rgb(251 191 36); /* amber-400 */
   cursor: pointer;
   border-radius: 2px;
   transition: background-color 150ms;
@@ -265,12 +272,12 @@ Crepe handles typography (headings, paragraphs, lists, code blocks) internally. 
 
 ## Error Handling
 
-| Scenario | Behavior |
-|----------|----------|
-| Crepe fails to initialize | Show fallback: raw markdown in a `<pre>` block + error banner |
-| Mermaid parse error | Show the raw code block with syntax error indicator |
-| Save conflict (SHA mismatch) | Toast: "File was modified since you loaded it" (existing behavior) |
-| Mode switch with unsaved WYSIWYG changes | Confirm dialog: "You have unsaved changes. Discard?" |
+| Scenario                                 | Behavior                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| Crepe fails to initialize                | Show fallback: raw markdown in a `<pre>` block + error banner      |
+| Mermaid parse error                      | Show the raw code block with syntax error indicator                |
+| Save conflict (SHA mismatch)             | Toast: "File was modified since you loaded it" (existing behavior) |
+| Mode switch with unsaved WYSIWYG changes | Confirm dialog: "You have unsaved changes. Discard?"               |
 
 Wrap `CrepeEditor` in a React error boundary that catches ProseMirror/Crepe initialization errors and degrades to raw content display.
 
@@ -304,6 +311,7 @@ Wrap `CrepeEditor` in a React error boundary that catches ProseMirror/Crepe init
 ### E2E Tests (Playwright)
 
 Update existing specs:
+
 - `proposals.spec.ts` — verify rendered markdown appears correctly
 - `comments.spec.ts` — verify text selection produces comment popover, comment highlights are visible and clickable
 - `editing.spec.ts` — verify WYSIWYG editing + save, Raw editing + save, mode toggle
@@ -316,10 +324,10 @@ After all implementation is complete, run a real browser E2E session (`npx playw
 
 ## Risks and Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Crepe CSS conflicts with Tailwind | Medium | Low | Scope all Crepe overrides under `.milkdown-document-wrapper`; Crepe uses BEM-style classes that won't clash |
-| Performance with large documents (>500 lines) | Low | Medium | ProseMirror is designed for large docs; Crepe adds minimal overhead. Profile if needed. |
-| Crepe version upgrade breaks API | Low | Medium | Pin `@milkdown/crepe` version; Milkdown has stable v7 API |
-| Multi-node decoration positions drift during WYSIWYG edits | Medium | Medium | Plugin's `state.apply` maps decorations through `tr.mapping`; rebuilds on comment prop changes |
-| Mermaid rendering blocks the main thread | Low | High | Use `mermaid.render()` which is async; show a skeleton placeholder while rendering |
+| Risk                                                       | Likelihood | Impact | Mitigation                                                                                                  |
+| ---------------------------------------------------------- | ---------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| Crepe CSS conflicts with Tailwind                          | Medium     | Low    | Scope all Crepe overrides under `.milkdown-document-wrapper`; Crepe uses BEM-style classes that won't clash |
+| Performance with large documents (>500 lines)              | Low        | Medium | ProseMirror is designed for large docs; Crepe adds minimal overhead. Profile if needed.                     |
+| Crepe version upgrade breaks API                           | Low        | Medium | Pin `@milkdown/crepe` version; Milkdown has stable v7 API                                                   |
+| Multi-node decoration positions drift during WYSIWYG edits | Medium     | Medium | Plugin's `state.apply` maps decorations through `tr.mapping`; rebuilds on comment prop changes              |
+| Mermaid rendering blocks the main thread                   | Low        | High   | Use `mermaid.render()` which is async; show a skeleton placeholder while rendering                          |

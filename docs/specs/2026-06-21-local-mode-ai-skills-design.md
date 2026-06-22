@@ -14,11 +14,11 @@ ReDraft today is remote-only: a GitHub Pages static site that reads/writes propo
 
 A three-tier access model:
 
-| Mode | User | Data path | Editing |
-|---|---|---|---|
-| **Remote (WYSIWYG)** | Non-technical reviewer | GitHub Pages → GitHub API | Milkdown rich-text editor |
-| **Remote (Markdown)** | Technical contributor | GitHub Pages → GitHub API | Raw markdown + view toggle |
-| **Local** | Power user / AI agent | CLI server → local filesystem | Files on disk + browser UI |
+| Mode                  | User                   | Data path                     | Editing                    |
+| --------------------- | ---------------------- | ----------------------------- | -------------------------- |
+| **Remote (WYSIWYG)**  | Non-technical reviewer | GitHub Pages → GitHub API     | Milkdown rich-text editor  |
+| **Remote (Markdown)** | Technical contributor  | GitHub Pages → GitHub API     | Raw markdown + view toggle |
+| **Local**             | Power user / AI agent  | CLI server → local filesystem | Files on disk + browser UI |
 
 All three modes share the same React frontend. The local server mimics the GitHub Contents API shape so the frontend doesn't need a separate code path for data access.
 
@@ -93,6 +93,7 @@ npx redraft serve ./proposals --no-ui   # API-only (for headless AI use)
 ```
 
 The CLI:
+
 1. Resolves the target directory (default: `./proposals`)
 2. Starts a Hono HTTP server on the specified port (default: 4200)
 3. Starts a file watcher (chokidar) on the target directory
@@ -143,15 +144,15 @@ The CLI:
 
 The local server exposes these endpoints under `/api/github/repos/:owner/:repo/`:
 
-| Method | Path | Behavior |
-|---|---|---|
-| `GET` | `/user` | Returns a local user identity (configurable) |
-| `GET` | `/repos/:owner/:repo/git/trees/:ref` | Lists all `.md` and `.comments.json` files in the proposals directory |
-| `GET` | `/repos/:owner/:repo/contents/:path` | Returns `{ content (base64), sha (file hash), type: "file" }` |
-| `PUT` | `/repos/:owner/:repo/contents/:path` | Decodes base64 content, verifies SHA matches current file hash, writes to disk, returns new SHA |
-| `POST` | `/repos/:owner/:repo/contents/:path` | Creates a new file (rejects if already exists) |
-| `DELETE` | `/repos/:owner/:repo/contents/:path` | Deletes a file |
-| `GET` | `/repos/:owner/:repo/commits` | Returns file modification metadata from `fs.stat` |
+| Method   | Path                                 | Behavior                                                                                        |
+| -------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `GET`    | `/user`                              | Returns a local user identity (configurable)                                                    |
+| `GET`    | `/repos/:owner/:repo/git/trees/:ref` | Lists all `.md` and `.comments.json` files in the proposals directory                           |
+| `GET`    | `/repos/:owner/:repo/contents/:path` | Returns `{ content (base64), sha (file hash), type: "file" }`                                   |
+| `PUT`    | `/repos/:owner/:repo/contents/:path` | Decodes base64 content, verifies SHA matches current file hash, writes to disk, returns new SHA |
+| `POST`   | `/repos/:owner/:repo/contents/:path` | Creates a new file (rejects if already exists)                                                  |
+| `DELETE` | `/repos/:owner/:repo/contents/:path` | Deletes a file                                                                                  |
+| `GET`    | `/repos/:owner/:repo/commits`        | Returns file modification metadata from `fs.stat`                                               |
 
 **SHA generation**: The server computes SHA-1 of the file content (same algorithm GitHub uses for blob SHAs: `sha1("blob {size}\0{content}")`). This makes the optimistic locking behavior identical to remote mode.
 
@@ -161,9 +162,9 @@ The local server exposes these endpoints under `/api/github/repos/:owner/:repo/`
 
 All file writes go directly to the working tree — no git involvement is required for any functionality. The server optionally exposes a convenience endpoint for committing:
 
-| Method | Path | Behavior |
-|---|---|---|
-| `GET` | `/api/git/status` | Returns list of modified/untracked files in the proposals directory |
+| Method | Path              | Behavior                                                                       |
+| ------ | ----------------- | ------------------------------------------------------------------------------ |
+| `GET`  | `/api/git/status` | Returns list of modified/untracked files in the proposals directory            |
 | `POST` | `/api/git/commit` | Stages all proposal changes, commits with a provided or auto-generated message |
 
 The frontend shows a non-blocking "Commit" indicator when the working tree has uncommitted proposal changes. Clicking it commits all pending changes. This is purely a convenience — the user can always run `git add` / `git commit` manually, and no feature depends on committing through the UI.
@@ -175,6 +176,7 @@ The AI skill can also call `POST /api/git/commit` after completing a workflow (e
 Connection: `ws://localhost:4200/ws`
 
 Server → Client events (JSON):
+
 ```json
 { "type": "file:changed", "path": "proposals/auth-overhaul.md", "sha": "abc123" }
 { "type": "file:created", "path": "proposals/new-proposal.md" }
@@ -182,6 +184,7 @@ Server → Client events (JSON):
 ```
 
 The frontend subscribes on mount and:
+
 - `file:changed` → invalidates the TanStack Query for that path's content and comments
 - `file:created` / `file:deleted` → invalidates the proposal tree query
 
@@ -211,14 +214,14 @@ Uses `chokidar` to watch the proposals directory recursively. Debounces events b
 
 The AI agent interacts with ReDraft through two channels:
 
-| Operation | Channel | Why |
-|---|---|---|
-| Read proposal content | File I/O (direct disk read) | Natural for agents; instant; no API overhead |
-| Edit proposal content | File I/O (write to disk) | The file watcher picks it up and pushes to UI |
-| List open comments | REST API `GET /contents/:path.comments.json` | Gets structured data, not raw JSON parsing |
-| Add reply to thread | REST API `PUT /contents/:path.comments.json` | Ensures proper SHA locking, ID generation |
-| Resolve thread | REST API `PUT /contents/:path.comments.json` | Same — structured mutation |
-| Create new proposal | File I/O (write new .md) | Watcher notifies UI |
+| Operation             | Channel                                      | Why                                           |
+| --------------------- | -------------------------------------------- | --------------------------------------------- |
+| Read proposal content | File I/O (direct disk read)                  | Natural for agents; instant; no API overhead  |
+| Edit proposal content | File I/O (write to disk)                     | The file watcher picks it up and pushes to UI |
+| List open comments    | REST API `GET /contents/:path.comments.json` | Gets structured data, not raw JSON parsing    |
+| Add reply to thread   | REST API `PUT /contents/:path.comments.json` | Ensures proper SHA locking, ID generation     |
+| Resolve thread        | REST API `PUT /contents/:path.comments.json` | Same — structured mutation                    |
+| Create new proposal   | File I/O (write new .md)                     | Watcher notifies UI                           |
 
 ### Skill Surface
 
@@ -227,6 +230,7 @@ An OMP skill (`redraft`) with the following slash commands:
 #### `/redraft-review`
 
 **Comment review walkthrough.** The agent:
+
 1. Scans all `.comments.json` files in the proposals directory
 2. Collects unresolved threads
 3. For each thread (in order of proposal, then document position):
@@ -238,6 +242,7 @@ An OMP skill (`redraft`) with the following slash commands:
 #### `/redraft-revise <proposal-path>`
 
 **AI-assisted proposal revision.** The agent:
+
 1. Reads the proposal `.md` from disk
 2. Reads all comment threads for that proposal
 3. Generates a revised version addressing the feedback
@@ -247,6 +252,7 @@ An OMP skill (`redraft`) with the following slash commands:
 #### `/redraft-create <topic>`
 
 **Create a new proposal.** The agent:
+
 1. Asks clarifying questions about the topic
 2. Generates a proposal draft
 3. Writes it to `proposals/<topic>.md`
@@ -255,6 +261,7 @@ An OMP skill (`redraft`) with the following slash commands:
 #### `/redraft-summarize`
 
 **Summarize open discussions.** The agent:
+
 1. Scans all proposals and their comment files
 2. Produces a summary: which proposals have unresolved threads, what the key discussion points are, what's been resolved recently
 3. Outputs as markdown (displayed in the agent's response)
@@ -262,6 +269,7 @@ An OMP skill (`redraft`) with the following slash commands:
 ### Skill Prerequisites
 
 The skill requires:
+
 - The local ReDraft server running (auto-starts if not detected)
 - The proposals directory path (from skill config or cwd detection)
 - Network access to `localhost:<port>` for comment API calls
@@ -290,31 +298,31 @@ The skill requires:
 
 ## Technology Choices
 
-| Component | Choice | Rationale |
-|---|---|---|
-| Local server | Hono (Node.js) | Lightweight, TypeScript-first, fast cold start |
-| File watcher | chokidar | Reliable cross-platform fs watching, handles symlinks |
-| WebSocket | `ws` (via Hono upgrade) | Standard, no framework lock-in |
-| SHA computation | Node.js `crypto` | Built-in, matches GitHub's blob SHA algorithm |
-| CLI argument parsing | `commander` or `yargs` | Mature, supports subcommands |
-| Frontend WS client | Native `WebSocket` API | No dependency needed |
+| Component            | Choice                  | Rationale                                             |
+| -------------------- | ----------------------- | ----------------------------------------------------- |
+| Local server         | Hono (Node.js)          | Lightweight, TypeScript-first, fast cold start        |
+| File watcher         | chokidar                | Reliable cross-platform fs watching, handles symlinks |
+| WebSocket            | `ws` (via Hono upgrade) | Standard, no framework lock-in                        |
+| SHA computation      | Node.js `crypto`        | Built-in, matches GitHub's blob SHA algorithm         |
+| CLI argument parsing | `commander` or `yargs`  | Mature, supports subcommands                          |
+| Frontend WS client   | Native `WebSocket` API  | No dependency needed                                  |
 
 ## Error Handling
 
-| Scenario | Behavior |
-|---|---|
-| File deleted while UI has it open | WebSocket `file:deleted` → UI shows "file removed" state |
-| SHA conflict (file changed between read and write) | Same 409 response as GitHub → existing conflict toast works |
-| WebSocket disconnects | Auto-reconnect with exponential backoff; stale indicator in UI |
-| Proposals directory doesn't exist | CLI exits with clear error message |
-| Port already in use | CLI suggests next available port |
+| Scenario                                           | Behavior                                                       |
+| -------------------------------------------------- | -------------------------------------------------------------- |
+| File deleted while UI has it open                  | WebSocket `file:deleted` → UI shows "file removed" state       |
+| SHA conflict (file changed between read and write) | Same 409 response as GitHub → existing conflict toast works    |
+| WebSocket disconnects                              | Auto-reconnect with exponential backoff; stale indicator in UI |
+| Proposals directory doesn't exist                  | CLI exits with clear error message                             |
+| Port already in use                                | CLI suggests next available port                               |
 
 ## Testing Strategy
 
-| Layer | Approach |
-|---|---|
-| Local server routes | Vitest: mock filesystem, verify API shape matches GitHub |
-| File watcher → WebSocket | Integration test: write file, assert WS event received |
-| Frontend WebSocket hook | Vitest: mock WS, verify query invalidation |
-| AI skill | Manual E2E initially; structured tests once skill format stabilizes |
-| Full flow | Playwright: start local server, navigate, verify file changes appear |
+| Layer                    | Approach                                                             |
+| ------------------------ | -------------------------------------------------------------------- |
+| Local server routes      | Vitest: mock filesystem, verify API shape matches GitHub             |
+| File watcher → WebSocket | Integration test: write file, assert WS event received               |
+| Frontend WebSocket hook  | Vitest: mock WS, verify query invalidation                           |
+| AI skill                 | Manual E2E initially; structured tests once skill format stabilizes  |
+| Full flow                | Playwright: start local server, navigate, verify file changes appear |

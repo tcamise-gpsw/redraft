@@ -15,11 +15,11 @@ ReDraft is a review workspace for markdown documents. It lets teams browse repos
 - Supports inline comment threads, replies, and resolution
 - Lets different users work in the mode that fits them best
 
-| Mode | Best for | Data source | Editing style |
-|---|---|---|---|
-| **Remote WYSIWYG** | Non-technical reviewers | GitHub repository | Rich-text editing in the browser |
-| **Remote Markdown** | Technical contributors | GitHub repository | Raw markdown + preview |
-| **Local + AI** | Power users and AI agents | Local files on disk | Browser UI + direct file edits |
+| Mode                | Best for                  | Data source         | Editing style                    |
+| ------------------- | ------------------------- | ------------------- | -------------------------------- |
+| **Remote WYSIWYG**  | Non-technical reviewers   | GitHub repository   | Rich-text editing in the browser |
+| **Remote Markdown** | Technical contributors    | GitHub repository   | Raw markdown + preview           |
+| **Local + AI**      | Power users and AI agents | Local files on disk | Browser UI + direct file edits   |
 
 ---
 
@@ -32,6 +32,7 @@ Remote mode is the hosted GitHub-backed experience. You connect ReDraft to a rep
 Use **View** and **WYSIWYG** modes when you want to read, comment, and make light edits without working directly in markdown syntax.
 
 Typical workflow:
+
 1. Open the hosted ReDraft site.
 2. Enter a fine-grained GitHub PAT and `owner/repo`.
 3. Choose a document from the tree.
@@ -43,6 +44,7 @@ Typical workflow:
 Use **Raw** mode when you want direct markdown control while still keeping the browser review workflow.
 
 Typical workflow:
+
 1. Connect to the target repository.
 2. Open a document from the tree.
 3. Switch between **View**, **WYSIWYG**, and **Raw** as needed.
@@ -52,10 +54,12 @@ Typical workflow:
 ### Remote mode requirements
 
 ReDraft expects a fine-grained GitHub PAT with:
+
 - **Contents: Read/Write**
 - **Metadata: Read**
 
 Repository conventions:
+
 - Markdown documents can live anywhere in the repo
 - Comment threads live under `.redraft/comments/<mirrored-path>.comments.json`
 - Document content and comment files are written with SHA checks for conflict detection
@@ -105,7 +109,10 @@ npm run build
 npm run serve
 ```
 
+`npm install` also wires up pre-commit hooks via `git config core.hooksPath .githooks`. The hook runs `format:check` and `lint` before every commit. To activate manually: `npm run prepare`.
+
 What local mode gives you:
+
 - No PAT prompt
 - Direct read/write access to local `.md` files
 - Structured review threads stored under `.redraft/comments/`
@@ -117,10 +124,12 @@ What local mode gives you:
 Local mode is the intended environment for AI-assisted document workflows.
 
 The design target is:
+
 - Agents edit markdown documents directly on disk
 - Agents use the local ReDraft API for structured comment operations
 
 Planned/common AI workflows include:
+
 - Review unresolved comment threads one by one
 - Draft or post replies
 - Resolve completed threads

@@ -23,16 +23,16 @@ jobs:
         run: npm ci
 
       - name: Type-check
-        run: npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json
+        run: npm run typecheck
 
       - name: Lint
-        run: npx eslint src/ server/
+        run: npm run lint
 
       - name: Format
-        run: npx prettier --check src/ server/
+        run: npm run format:check
 
       - name: Unit tests
-        run: npx vitest run
+        run: npm test
 
       - name: Build
         run: npm run build

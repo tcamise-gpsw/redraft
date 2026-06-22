@@ -15,22 +15,21 @@ jobs:
     name: Bump, build, and publish
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # push version commit + tag
-      id-token: write  # OIDC token for npm trusted publishing
+      contents: write # push version commit + tag
+      id-token: write # OIDC token for npm trusted publishing
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           submodules: true
           fetch-depth: 0 # git describe needs full tag history
           # PAT so the version-bump push can re-trigger CI; falls back to GITHUB_TOKEN.
           token: ${{ secrets.WORKFLOW_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-          package-manager-cache: false
 
       - name: Verify trusted publishing toolchain
         run: |
@@ -72,7 +71,9 @@ jobs:
             local lines
             lines=$(git log "$RANGE" --no-merges --pretty=format:"- %s (\`%h\`)" \
               | grep -E "^- ${pat}" || true)
-            [ -n "$lines" ] && printf "### %s\n%s\n\n" "$title" "$lines"
+            if [ -n "$lines" ]; then
+              printf "### %s\n%s\n\n" "$title" "$lines"
+            fi
           }
 
           NOTES=""
