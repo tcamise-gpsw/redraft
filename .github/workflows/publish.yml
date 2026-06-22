@@ -66,31 +66,38 @@ jobs:
           RANGE="${PREV:+${PREV}..}v${VERSION}^"
 
           # Group by conventional-commit type prefix.
+          notes_file=$(mktemp)
+
           section() {
             local title="$1" pat="$2"
             local lines
             lines=$(git log "$RANGE" --no-merges --pretty=format:"- %s (\`%h\`)" \
               | grep -E "^- ${pat}" || true)
             if [ -n "$lines" ]; then
-              printf "### %s\n%s\n\n" "$title" "$lines"
+              {
+                printf "### %s\n" "$title"
+                printf "%s\n\n" "$lines"
+              } >> "$notes_file"
             fi
           }
 
-          NOTES=""
-          NOTES+="$(section '🚀 Features'       'feat[:(]'       )"
-          NOTES+="$(section '🐛 Bug Fixes'       'fix[:(]'        )"
-          NOTES+="$(section '⚡ Performance'     'perf[:(]'       )"
-          NOTES+="$(section '📚 Documentation'  'docs[:(]'       )"
-          NOTES+="$(section '♻️  Refactoring'    'refactor[:(]'   )"
-          NOTES+="$(section '🔧 Build & CI'      '(build|ci)[:(]' )"
-          NOTES+="$(section '🧹 Chores'          'chore[:(]'      )"
-          [ -z "${NOTES// }" ] && NOTES="_No categorized changes._"
+          section '🚀 Features' 'feat[:(]'
+          section '🐛 Bug Fixes' 'fix[:(]'
+          section '⚡ Performance' 'perf[:(]'
+          section '📚 Documentation' 'docs[:(]'
+          section '♻️  Refactoring' 'refactor[:(]'
+          section '🔧 Build & CI' '(build|ci)[:(]'
+          section '🧹 Chores' 'chore[:(]'
+
+          if [ ! -s "$notes_file" ]; then
+            printf '_No categorized changes._\n' > "$notes_file"
+          fi
 
           git push origin main "v${VERSION}"
 
           gh release create "v${VERSION}" \
             --title "v${VERSION}" \
-            --notes "$NOTES" \
+            --notes-file "$notes_file" \
             --latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
