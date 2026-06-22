@@ -54,6 +54,10 @@ test('document viewing renders Milkdown content and the split tree', async ({
           tree: [
             { path: 'camera-session.md', type: 'blob' },
             { path: 'docs/auth-overhaul.md', type: 'blob' },
+            {
+              path: '.redraft/comments/camera-session.comments.json',
+              type: 'blob',
+            },
           ],
         }),
       });
