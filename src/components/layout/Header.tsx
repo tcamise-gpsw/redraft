@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { useAuth } from '../../hooks/useAuth';
 import type { RateLimitInfo } from '../../types/github';
+import { Avatar } from '../ui/Avatar';
 
 export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
   const { user } = useAuth();
@@ -15,11 +16,7 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 lg:px-6">
         <div className="flex items-center gap-3">
           {user ? (
-            <img
-              src={user.avatarUrl}
-              alt={`${user.login} avatar`}
-              className="h-10 w-10 rounded-full border border-slate-700"
-            />
+            <Avatar login={user.login} avatarUrl={user.avatarUrl} size="md" />
           ) : null}
           <div>
             <img
@@ -34,9 +31,11 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
         </div>
 
         <div className="flex items-center gap-4 text-sm text-slate-300">
-          <span className={lowRateLimit ? 'text-amber-300' : ''}>
-            {rateLimit?.remaining ?? 0} / {rateLimit?.limit ?? 0} remaining
-          </span>
+          {rateLimit != null && (
+            <span className={lowRateLimit ? 'text-amber-300' : ''}>
+              {rateLimit.remaining} / {rateLimit.limit} remaining
+            </span>
+          )}
           <Link
             className="rounded-md border border-slate-700 px-3 py-2 font-medium hover:border-slate-500"
             to="/settings"

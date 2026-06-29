@@ -71,7 +71,7 @@ describe('DocumentTree', () => {
     createFile.mockReset();
   });
 
-  it('shows under-review documents and keeps the documents tree collapsed by default', async () => {
+  it('shows under-review documents and renders the documents tree expanded by default', async () => {
     // Sidecar blob for media/overview.md is included in the tree response —
     // no per-file getFileContent probing required.
     getTree.mockResolvedValueOnce([
@@ -90,13 +90,17 @@ describe('DocumentTree', () => {
     expect(
       await screen.findByRole('link', { name: /media\/overview\.md/ }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'rest.md' })).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Documents' }));
-
-    expect(await screen.findByText('api')).toBeInTheDocument();
+    // Tree is expanded by default — files visible without any interaction.
+    expect(
+      await screen.findByRole('link', { name: 'rest.md' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('api')).toBeInTheDocument();
     expect(screen.getByText('media')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'rest.md' })).toBeInTheDocument();
+
+    // Clicking the toggle collapses the tree.
+    fireEvent.click(screen.getByRole('button', { name: 'Documents' }));
+    expect(screen.queryByRole('link', { name: 'rest.md' })).toBeNull();
   });
 
   it('highlights the active document route', async () => {
@@ -105,7 +109,6 @@ describe('DocumentTree', () => {
     ]);
 
     renderTree();
-    fireEvent.click(await screen.findByRole('button', { name: 'Documents' }));
 
     const activeLink = await screen.findByRole('link', { name: 'overview.md' });
     expect(activeLink).toHaveClass('bg-cyan-500/10');
@@ -117,7 +120,6 @@ describe('DocumentTree', () => {
     ]);
 
     renderTree();
-    fireEvent.click(await screen.findByRole('button', { name: 'Documents' }));
 
     const link = await screen.findByRole('link', { name: 'overview.md' });
     expect(link).toHaveAttribute('href', '#/d/media/overview.md');

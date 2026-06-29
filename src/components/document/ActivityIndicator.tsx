@@ -1,5 +1,5 @@
+import { Avatar } from '../ui/Avatar';
 import type { CommitInfo } from '../../types/github';
-
 function formatRelativeTime(date: string): string {
   const diffMs = Date.now() - new Date(date).getTime();
   const diffMinutes = Math.round(diffMs / (1000 * 60));
@@ -20,10 +20,10 @@ export function ActivityIndicator({ commit }: { commit: CommitInfo | null }) {
 
   return (
     <div className="mb-4 flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-300">
-      <img
-        src={commit.author.avatarUrl}
-        alt={`${commit.author.login} avatar`}
-        className="h-9 w-9 rounded-full border border-slate-700"
+      <Avatar
+        login={commit.author.login}
+        avatarUrl={commit.author.avatarUrl}
+        size="md"
       />
       <div>
         <p>

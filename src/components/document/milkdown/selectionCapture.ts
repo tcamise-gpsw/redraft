@@ -32,6 +32,41 @@ function getEditorView(
   }
 }
 
+/**
+ * Expands a selection that starts or ends mid-word to the nearest word boundary.
+ * A word character is \w (letter, digit, underscore).
+ */
+export function snapToWordBoundaries(
+  prefix: string,
+  quote: string,
+  suffix: string,
+): { quote: string; prefix: string; suffix: string } {
+  let snappedQuote = quote;
+  let snappedPrefix = prefix;
+  let snappedSuffix = suffix;
+
+  // Snap start: if prefix ends with a word-char AND quote starts with a word-char,
+  // the selection started mid-word — pull the trailing word fragment from prefix.
+  const leadFragment = snappedPrefix.match(/(\w+)$/);
+  if (leadFragment && /^\w/.test(snappedQuote)) {
+    snappedQuote = leadFragment[1] + snappedQuote;
+    snappedPrefix = snappedPrefix.slice(
+      0,
+      snappedPrefix.length - leadFragment[1].length,
+    );
+  }
+
+  // Snap end: if quote ends with a word-char AND suffix starts with a word-char,
+  // the selection ended mid-word — pull the leading word fragment from suffix.
+  const trailFragment = snappedSuffix.match(/^(\w+)/);
+  if (trailFragment && /\w$/.test(snappedQuote)) {
+    snappedQuote = snappedQuote + trailFragment[1];
+    snappedSuffix = snappedSuffix.slice(trailFragment[1].length);
+  }
+
+  return { quote: snappedQuote, prefix: snappedPrefix, suffix: snappedSuffix };
+}
+
 export function useSelectionCapture(
   editorGetter: () => Editor | undefined,
   loading: boolean,
@@ -64,20 +99,27 @@ export function useSelectionCapture(
         return;
       }
 
-      const quote = doc.textBetween(selection.from, selection.to, ' ').trim();
-      if (!quote) {
+      const rawQuote = doc
+        .textBetween(selection.from, selection.to, ' ')
+        .trim();
+      if (!rawQuote) {
         return;
       }
 
-      const prefix = doc.textBetween(
+      const rawPrefix = doc.textBetween(
         Math.max(0, selection.from - 100),
         selection.from,
         ' ',
       );
-      const suffix = doc.textBetween(
+      const rawSuffix = doc.textBetween(
         selection.to,
         Math.min(doc.content.size, selection.to + 100),
         ' ',
+      );
+      const { quote, prefix, suffix } = snapToWordBoundaries(
+        rawPrefix,
+        rawQuote,
+        rawSuffix,
       );
       const coords = view.coordsAtPos(selection.from);
 

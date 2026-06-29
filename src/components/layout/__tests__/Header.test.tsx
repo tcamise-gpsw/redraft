@@ -50,10 +50,17 @@ describe('Header', () => {
     expect(label).not.toHaveClass('text-amber-300');
   });
 
-  it('shows zero remaining / zero limit when no rateLimit is provided', () => {
+  it('hides rate-limit display when no rateLimit is provided', () => {
     renderHeader(undefined);
 
-    expect(screen.getByText(/remaining/iu)).toBeInTheDocument();
-    expect(screen.getByText(/0/u)).toBeInTheDocument();
+    expect(screen.queryByText(/remaining/iu)).toBeNull();
+  });
+
+  it('shows rate-limit display when rateLimit is provided', () => {
+    renderHeader({ remaining: 1234, limit: 5000, reset: new Date() });
+
+    const label = screen.getByText(/remaining/iu);
+    expect(label).toBeInTheDocument();
+    expect(label.textContent).toMatch(/1234/u);
   });
 });

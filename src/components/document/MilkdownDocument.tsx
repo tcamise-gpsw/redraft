@@ -118,17 +118,27 @@ export function MilkdownDocument({
         </div>
 
         {mode === 'wysiwyg' ? (
-          <Button
-            disabled={isSaving}
-            onClick={() => void handleSave(draftContent)}
-            type="button"
-          >
-            {isSaving ? 'Saving…' : 'Save'}
-          </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-cyan-400/70">Editing</span>
+            <Button
+              disabled={isSaving}
+              onClick={() => void handleSave(draftContent)}
+              type="button"
+            >
+              {isSaving ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
         ) : null}
       </div>
 
-      <div className="relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div
+        className={[
+          'relative rounded-2xl border p-6',
+          mode === 'wysiwyg'
+            ? 'border-cyan-800/60 bg-slate-900/70'
+            : 'border-slate-800 bg-slate-900/50',
+        ].join(' ')}
+      >
         {mode === 'raw' ? (
           <RawEditor
             initialContent={draftContent}

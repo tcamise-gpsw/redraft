@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useDocuments } from '../../hooks/useDocuments';
-import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { CreateDocumentDialog } from './CreateDocumentDialog';
 import { TreeNode } from './TreeNode';
@@ -11,7 +10,7 @@ export function DocumentTree() {
   const { documents, underReview, isLoading, error } = useDocuments();
   const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [documentsExpanded, setDocumentsExpanded] = useState(false);
+  const [documentsExpanded, setDocumentsExpanded] = useState(true);
   const reviewPaths = useMemo(
     () => new Set(underReview.map((entry) => entry.path)),
     [underReview],
@@ -23,13 +22,13 @@ export function DocumentTree() {
         <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
           Documents
         </h2>
-        <Button
-          className="px-3 py-1.5 text-sm"
-          onClick={() => setDialogOpen(true)}
+        <button
           type="button"
+          onClick={() => setDialogOpen(true)}
+          className="whitespace-nowrap rounded-md bg-cyan-500 px-2 py-1 text-xs font-medium text-slate-950 transition hover:bg-cyan-400"
         >
           New Document
-        </Button>
+        </button>
       </div>
 
       {isLoading ? (

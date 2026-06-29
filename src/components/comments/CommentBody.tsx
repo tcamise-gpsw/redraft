@@ -1,3 +1,5 @@
+import { Avatar } from '../ui/Avatar';
+
 import type { Author } from '../../types/comments';
 
 export function CommentBody({
@@ -12,11 +14,7 @@ export function CommentBody({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3 text-sm text-slate-300">
-        <img
-          src={author.avatarUrl}
-          alt={`${author.login} avatar`}
-          className="h-8 w-8 rounded-full border border-slate-700"
-        />
+        <Avatar login={author.login} avatarUrl={author.avatarUrl} size="sm" />
         <div>
           <p className="font-medium text-slate-100">@{author.login}</p>
           <p className="text-xs text-slate-400">
