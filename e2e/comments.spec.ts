@@ -135,7 +135,10 @@ test('comment flow selects text, opens the form, and writes a centralized sideca
   await page.getByLabel('GitHub PAT').fill('ghp_test');
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
-  await page.getByRole('link', { name: /camera-session.md/ }).click();
+  await page
+    .getByRole('link', { name: /camera-session.md/ })
+    .first()
+    .click();
 
   await expect(page.getByText('Existing note')).toBeVisible();
 

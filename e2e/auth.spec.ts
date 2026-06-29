@@ -70,7 +70,6 @@ test('auth flow accepts a PAT and shows the documents tree', async ({
   await expect(
     page.getByRole('heading', { name: 'Under Review' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Documents' }).click();
   await expect(page.getByText('camera-session.md')).toBeVisible();
 });
 

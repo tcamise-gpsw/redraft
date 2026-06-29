@@ -115,7 +115,6 @@ test('editing flows save markdown and conflict handling shows a toast', async ({
   await page.getByLabel('GitHub PAT').fill('ghp_test');
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
-  await page.getByRole('button', { name: 'Documents' }).click();
   await page.getByRole('link', { name: 'camera-session.md' }).click();
 
   await page.getByRole('button', { name: 'WYSIWYG' }).click();

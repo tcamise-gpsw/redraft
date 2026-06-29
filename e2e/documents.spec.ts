@@ -141,12 +141,12 @@ test('document viewing renders Milkdown content and the split tree', async ({
 
   await expect(page.getByText('Under Review')).toBeVisible();
   await expect(
-    page.getByRole('link', { name: /camera-session.md/ }),
+    page.getByRole('link', { name: /camera-session.md/ }).first(),
   ).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'auth-overhaul.md' }),
-  ).toHaveCount(0);
-  await page.getByRole('link', { name: /camera-session.md/ }).click();
+  await page
+    .getByRole('link', { name: /camera-session.md/ })
+    .first()
+    .click();
 
   await expect(page.locator('.milkdown-document-wrapper')).toBeVisible();
   await expect(
@@ -157,7 +157,6 @@ test('document viewing renders Milkdown content and the split tree', async ({
   await expect(page.getByText('const ready = true;')).toBeVisible();
   await expect(page.locator('.milkdown-mermaid-block svg')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Documents' }).click();
   await expect(
     page.getByRole('link', { name: 'auth-overhaul.md' }),
   ).toBeVisible();
@@ -250,7 +249,6 @@ test('multiple mermaid diagram types render without id collision', async ({
   await page.getByLabel('GitHub PAT').fill('ghp_test');
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
-  await page.getByRole('button', { name: 'Documents' }).click();
   await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
 
   await expect(page.locator('.milkdown-mermaid-block svg')).toHaveCount(2);
