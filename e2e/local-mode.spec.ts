@@ -13,10 +13,9 @@ test('local mode auto-authenticates and renders the split document tree', async 
   await expect(page.getByRole('button', { name: 'Connect' })).toHaveCount(0);
   await expect(page.getByText('Under Review')).toBeVisible();
   await expect(
-    page.getByRole('link', { name: /api-design-v2.md/ }),
+    page.getByRole('link', { name: /api-design-v2.md/ }).first(),
   ).toBeVisible();
 
-  await page.getByRole('button', { name: 'Documents' }).click();
   await expect(page.getByText('auth-overhaul.md')).toBeVisible();
   await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
   await expect(
@@ -31,7 +30,6 @@ test('local mode writes markdown edits back to disk and reflects external file c
 
   try {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Documents' }).click();
     await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
     await page.getByRole('button', { name: 'Raw' }).click();
     await page
@@ -64,7 +62,6 @@ test('local mode writes saved comment threads to .redraft/comments', async ({
   try {
     await rm(AUTH_COMMENT_PATH, { force: true });
     await page.goto('/');
-    await page.getByRole('button', { name: 'Documents' }).click();
     await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
 
     await page.locator('.ProseMirror').evaluate((root) => {
@@ -123,7 +120,6 @@ test('local mode updates the documents tree and under-review section when files 
   const commentPath = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/playwright-local.comments.json`;
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Documents' }).click();
   await writeFile(
     documentPath,
     '# Playwright Local\n\nCreated by the E2E test.\n',
