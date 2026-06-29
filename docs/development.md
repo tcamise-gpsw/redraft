@@ -1,162 +1,186 @@
 # Development
 
-## Prerequisites
+## Dev loops
 
-- Node.js 22+
-- npm 10+
+| Goal                  | Run                                                            | URL                          |
+| --------------------- | -------------------------------------------------------------- | ---------------------------- |
+| Frontend, remote mode | `npm run dev`                                                  | `localhost:5173`             |
+| Frontend, local mode  | `npm run serve -- <dir> --port 5174` **+** `npm run dev:local` | `localhost:5173`             |
+| Backend change        | edit `server/` → restart `npm run serve`                       | `localhost:5173` (via proxy) |
+| Production path       | `npm run build` + `npm run serve -- <dir>`                     | `localhost:5174`             |
 
-## Two modes, two dev loops
+`dev:local` sets `VITE_LOCAL_MODE=true` → Vite injects the local-mode meta tag and proxies `/api` and `/ws` to the Hono server on port 5174. No PAT gate. Backend changes need a manual server restart — no HMR for `server/`.
 
-ReDraft has two distinct runtime modes. **Remote mode** is the original GitHub Pages product — a static SPA that reads and writes through the GitHub REST API, no server required. **Local mode** is the CLI server (`npx redraft-local`) — a Hono server that emulates the GitHub API against local files and serves the same pre-built React frontend.
-
-Both modes share the same React source. Picking the right dev loop depends on what you are changing.
-
----
-
-## Remote mode development
-
-The SPA talks directly to `https://api.github.com`. No backend process needed.
-
-```
-Terminal 1:
-  npm run dev          # Vite dev server → http://localhost:5173
-```
-
-Open `http://localhost:5173`. The PAT auth gate appears. Enter a fine-grained GitHub PAT with **Contents: Read/Write** and **Metadata: Read** on a test repository.
-
-The Vite dev server provides HMR — edits to `src/` appear in the browser within a second without a full reload.
-
-### Frontend changes (remote mode)
-
-All relevant code lives in `src/`. The typical loop is:
-
-1. Edit `src/`.
-2. Vite picks up the change and hot-reloads.
-3. Verify in the browser against the test repository.
-
-### No backend process
-
-`server/` is not involved in remote mode. The GitHub API is the only backend.
+Test fixtures live in `test-fixtures/` (git submodule → `tcamise-gpsw/redraft-test-repo`). Changes there must be committed and pushed from inside that directory.
 
 ---
 
-## Local mode development
+## Frontend map (`src/`)
 
-The React frontend talks to a local Hono server that emulates the GitHub Contents API against files on disk. The Vite dev server proxies `/api` and `/ws` to that server, so you get HMR for frontend changes _and_ a live local backend at the same time.
+### Authentication
 
-```
-Terminal 1 — backend (Hono server):
-  npm run serve -- <directory> --port 5174
-  # e.g. npm run serve -- test-fixtures --port 5174
+| File                               | What lives here                                            |
+| ---------------------------------- | ---------------------------------------------------------- |
+| `src/components/auth/AuthGate.tsx` | Wraps the app; bypassed in local mode                      |
+| `src/components/auth/AuthForm.tsx` | PAT + repo input form (remote mode only)                   |
+| `src/hooks/useAuth.ts`             | Auth state, login/logout, `LOCAL_AUTH` stub for local mode |
+| `src/lib/auth/storage.ts`          | `localStorage` key, `StoredAuth` shape                     |
+| `src/lib/mode.ts`                  | `isLocalMode()` (reads meta tag), `getApiBaseUrl()`        |
 
-Terminal 2 — frontend (Vite with proxy + local-mode meta):
-  npm run dev:local    # → http://localhost:5173
-```
+### Document tree (left sidebar)
 
-Open `http://localhost:5173`. Local mode is active — no PAT gate, auth is bypassed automatically.
+| File                                           | What lives here                                   |
+| ---------------------------------------------- | ------------------------------------------------- |
+| `src/components/tree/DocumentTree.tsx`         | Sidebar shell, under-review list, expand/collapse |
+| `src/components/tree/TreeNode.tsx`             | Recursive file/folder node                        |
+| `src/components/tree/CreateDocumentDialog.tsx` | New document dialog                               |
+| `src/hooks/useDocuments.ts`                    | Fetches the tree; derives `underReview` list      |
 
-The `dev:local` script sets `VITE_LOCAL_MODE=true`, which causes Vite to:
+### Document viewer/editor (center panel)
 
-- Inject `<meta name="redraft-mode" content="local">` into the served HTML (so `isLocalMode()` returns `true` and auth is bypassed).
-- Proxy `/api/*` → `http://localhost:5174` (REST file operations).
-- Proxy `/ws` → `ws://localhost:5174` (file-watcher WebSocket).
+| File                                                   | What lives here                                                |
+| ------------------------------------------------------ | -------------------------------------------------------------- |
+| `src/routes/ProposalView.tsx`                          | Route — wires tree, document, comments together                |
+| `src/components/document/DocumentView.tsx`             | Loads content, shows spinner/error, owns save                  |
+| `src/components/document/MilkdownDocument.tsx`         | View/WYSIWYG/Raw tab switcher, mode state                      |
+| `src/components/document/milkdown/CrepeEditor.tsx`     | Milkdown Crepe wrapper, comment highlight plugin wiring        |
+| `src/components/document/milkdown/selectionCapture.ts` | Captures ProseMirror text selections, snaps to word boundaries |
+| `src/components/document/milkdown/commentPlugin.ts`    | ProseMirror decoration plugin — highlights anchored text       |
+| `src/components/document/RawEditor.tsx`                | Plain textarea fallback                                        |
+| `src/components/document/ActivityIndicator.tsx`        | "Last edited by" bar                                           |
+| `src/hooks/useDocument.ts`                             | Fetches raw file content + commit info                         |
+| `src/hooks/useDocumentEdit.ts`                         | Wraps save — base64 encode, SHA check, PUT                     |
 
-The Hono server process watches the target directory for changes and pushes `file:changed` / `file:created` / `file:deleted` events over the WebSocket. The frontend invalidates TanStack Query caches on receipt, so external edits (e.g. saving a file in your editor) appear in the browser within ~1 second.
+### Comments (right sidebar)
 
-### Frontend changes (local mode)
+| File                                           | What lives here                                          |
+| ---------------------------------------------- | -------------------------------------------------------- |
+| `src/components/comments/CommentsSidebar.tsx`  | Ordered threads + orphan section + pending form          |
+| `src/components/comments/CommentThread.tsx`    | Single thread card — quote, body, replies, resolve/reply |
+| `src/components/comments/CommentBody.tsx`      | Author chip + timestamp + body text                      |
+| `src/components/comments/CommentForm.tsx`      | New comment input (appears after text selection)         |
+| `src/components/comments/ReplyForm.tsx`        | Reply textarea                                           |
+| `src/components/comments/OrphanedComments.tsx` | Threads whose anchor no longer resolves                  |
+| `src/hooks/useComments.ts`                     | Loads, caches, and mutates comment threads; owns save    |
+| `src/lib/comments/anchoring.ts`                | `resolveAnchor`, `createAnchor`, fuzzy match logic       |
 
-Same as remote mode — edit `src/`, Vite hot-reloads. The backend proxy means API calls keep working.
+### Layout / shell
 
-### Backend changes (server/)
+| File                                  | What lives here                                     |
+| ------------------------------------- | --------------------------------------------------- |
+| `src/components/layout/AppLayout.tsx` | Three-panel responsive grid, mobile toggles         |
+| `src/components/layout/Header.tsx`    | Logo, avatar, rate-limit display, Settings link     |
+| `src/routes/Home.tsx`                 | Welcome screen (no document selected)               |
+| `src/routes/Settings.tsx`             | PAT/repo settings (remote) or local-mode info panel |
+| `src/hooks/useFileWatcher.ts`         | WebSocket → `queryClient.invalidateQueries` bridge  |
+| `src/hooks/useToast.ts`               | Toast queue                                         |
 
-`server/` is TypeScript compiled by `tsx` at dev time (not Vite). Changes to `server/` require restarting the Hono server process in Terminal 1:
+### Shared primitives
 
-```
-# Stop Terminal 1 (Ctrl-C), then:
-npm run serve -- <directory> --port 5174
-```
+| File                            | What lives here                      |
+| ------------------------------- | ------------------------------------ |
+| `src/components/ui/Avatar.tsx`  | Renders `<img>` or initials fallback |
+| `src/components/ui/Button.tsx`  | Primary/secondary button             |
+| `src/components/ui/Dialog.tsx`  | Modal wrapper                        |
+| `src/components/ui/Spinner.tsx` | Loading indicator                    |
+| `src/components/ui/Toast.tsx`   | Toast notification                   |
 
-There is no hot-reload for server code. After restarting, the Vite proxy reconnects automatically.
+### GitHub API client
 
-The server entry point is `server/cli.ts`. Key internal paths:
+| File                       | What lives here                                                   |
+| -------------------------- | ----------------------------------------------------------------- |
+| `src/lib/github/client.ts` | All GitHub REST calls; emits `auth-error` and `rate-limit` events |
+| `src/lib/github/errors.ts` | `AuthError`, `RateLimitError`, `NetworkError`, `ConflictError`    |
+| `src/lib/github/index.ts`  | Re-exports                                                        |
 
-| Path                   | Responsibility                                      |
-| ---------------------- | --------------------------------------------------- |
-| `server/app.ts`        | Hono app factory, static file serving, route wiring |
-| `server/fs/adapter.ts` | GitHub Contents API emulation (read/write/hash)     |
-| `server/fs/watcher.ts` | chokidar wrapper, WebSocket push                    |
-| `server/routes/`       | Individual Hono route handlers                      |
+### Types
 
-### Production build for local mode
-
-`npm run build` compiles both the Vite frontend (`dist/`) and the server bundle (`dist-server/cli.mjs` via esbuild). The published `npx redraft-local` binary runs the esbuild output and serves the Vite output — no `tsx` or `node_modules` needed in a consumer install.
-
-To test the production path locally:
-
-```
-npm run build
-npm run serve -- test-fixtures --port 5174
-# open http://localhost:5174
-```
-
----
-
-## Quick-reference: which loop to use
-
-| What you're changing       | Command to run                                                     | URL to test             |
-| -------------------------- | ------------------------------------------------------------------ | ----------------------- |
-| Frontend only, remote mode | `npm run dev`                                                      | `http://localhost:5173` |
-| Frontend only, local mode  | `npm run serve -- <dir>` + `npm run dev:local`                     | `http://localhost:5173` |
-| Backend (`server/`)        | `npm run serve -- <dir>` (restart on change) + `npm run dev:local` | `http://localhost:5173` |
-| Full production path       | `npm run build` + `npm run serve -- <dir>`                         | `http://localhost:5174` |
-
----
-
-## All commands
-
-| Command                  | What it does                                                                                        |
-| ------------------------ | --------------------------------------------------------------------------------------------------- |
-| `npm run dev`            | Vite dev server for remote mode (HMR, no local backend)                                             |
-| `npm run dev:local`      | Vite dev server for local mode — sets `VITE_LOCAL_MODE=true`, proxies `/api` and `/ws` to port 5174 |
-| `npm run serve -- [dir]` | Start the Hono local server from source via `tsx`; default port 5174                                |
-| `npm run build`          | Production build: Vite frontend → `dist/`, esbuild server bundle → `dist-server/cli.mjs`            |
-| `npm run build:server`   | Server bundle only (esbuild)                                                                        |
-| `npm run preview`        | Preview the last Vite production build                                                              |
-| `npm run test`           | Run Vitest once                                                                                     |
-| `npm run typecheck`      | TypeScript check across `src/` and `server/`                                                        |
-| `npm run lint`           | ESLint across `src/` and `server/`                                                                  |
-| `npm run format`         | Prettier write across the repo                                                                      |
-| `npm run format:check`   | Prettier check (used in CI and pre-commit)                                                          |
-| `npm run e2e`            | Playwright end-to-end tests                                                                         |
-| `npm run prepare`        | Wire `.githooks` for this checkout (runs automatically on `npm install`)                            |
+| File                     | What lives here                           |
+| ------------------------ | ----------------------------------------- |
+| `src/types/comments.ts`  | `CommentThread`, `CommentReply`, `Author` |
+| `src/types/documents.ts` | `DocumentNode` (tree node)                |
+| `src/types/github.ts`    | `User`, `RateLimitInfo`                   |
 
 ---
 
-## Git hooks
+## Backend map (`server/`)
 
-`npm install` runs `prepare`, which sets `core.hooksPath = .githooks`. The pre-commit hook runs `format:check` then `lint`. If either fails the commit is rejected.
+### Entry points
 
-To verify hooks are active:
+| File              | What lives here                                                     |
+| ----------------- | ------------------------------------------------------------------- |
+| `server/cli.ts`   | Commander CLI — parses args, starts watcher + server                |
+| `server/app.ts`   | Hono app factory (`buildReDraftApp`), static serving, `/api/health` |
+| `server/types.ts` | Shared server-side types                                            |
 
-```
-git config --local --get core.hooksPath   # expected: .githooks
-```
+### GitHub API emulation
 
-If unset (e.g. after cloning without installing), run `npm run prepare` once.
+| File                        | What lives here                                                      |
+| --------------------------- | -------------------------------------------------------------------- |
+| `server/routes/index.ts`    | Mounts all route modules under `/api/github`                         |
+| `server/routes/user.ts`     | `GET /user` → local identity                                         |
+| `server/routes/tree.ts`     | `GET /repos/:o/:r/git/trees/:ref` → `.md` + `.comments.json` listing |
+| `server/routes/contents.ts` | `GET/PUT/POST/DELETE /repos/:o/:r/contents/:path` → file CRUD        |
+| `server/routes/commits.ts`  | `GET /repos/:o/:r/commits` → file mtime metadata                     |
+| `server/routes/git.ts`      | `GET /api/git/status`, `POST /api/git/commit` → convenience git ops  |
+| `server/fs/operations.ts`   | Low-level read/write/hash (git blob SHA-1)                           |
+
+### File watching / WebSocket
+
+| File                   | What lives here                                                |
+| ---------------------- | -------------------------------------------------------------- |
+| `server/fs/watcher.ts` | chokidar → debounced `file:changed/created/deleted` events     |
+| `server/ws/hub.ts`     | WebSocket broadcast hub — clients subscribe, watcher publishes |
 
 ---
 
-## Testing
+## Tests
 
-- **Unit / hook tests** — Vitest (`npm run test`). Tests live alongside source in `__tests__/` subdirectories and `.test.ts` files.
-- **End-to-end** — Playwright (`npm run e2e`). Tests in `e2e/`. Require a running dev server; see `playwright.config.ts` for the base URL.
+Unit and hook tests sit next to source in `__tests__/` subdirectories or `.test.ts` siblings. Key test files:
 
-Follow TDD for feature work: write the failing test first, confirm it fails, then implement.
+| Test file                                                    | What it covers                                    |
+| ------------------------------------------------------------ | ------------------------------------------------- |
+| `src/lib/comments/__tests__/anchoring.test.ts`               | Anchor resolve, fuzzy match, context match        |
+| `src/components/document/milkdown/selectionCapture.test.ts`  | Word-boundary snap                                |
+| `src/components/layout/__tests__/Header.test.tsx`            | Rate-limit display, avatar                        |
+| `src/components/tree/__tests__/DocumentTree.test.tsx`        | Tree expand/collapse, under-review, create dialog |
+| `src/components/comments/__tests__/CommentsSidebar.test.tsx` | Thread ordering, orphan detection                 |
+| `server/fs/operations.test.ts`                               | SHA generation, read/write round-trip             |
+| `server/routes/contents.test.ts`                             | PUT SHA conflict, POST creates, GET decodes       |
+| `server/ws/hub.test.ts`                                      | Broadcast, subscribe/unsubscribe                  |
+| `e2e/`                                                       | Playwright — full browser flows                   |
+
+Run unit tests: `npm run test`. Run E2E: `npm run e2e` (requires a dev server).
 
 ---
 
-## Deployment (remote mode)
+## Config and build
 
-GitHub Actions builds on every push to `main` and deploys `dist/` to the `gh-pages` branch. The workflow sets `VITE_BASE_PATH` to the repository name so the built app resolves assets correctly under GitHub Pages.
+| File                            | What lives here                                                          |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| `vite.config.ts`                | Vite build + test config; `local-mode-meta` plugin; `/api` + `/ws` proxy |
+| `server/tsconfig.json`          | TypeScript config for `server/`                                          |
+| `tailwind.config.js`            | Tailwind theme                                                           |
+| `eslint.config.js`              | ESLint rules                                                             |
+| `.prettierignore`               | Excluded from format checks                                              |
+| `.githooks/pre-commit`          | Runs `format:check` + `lint` before every commit                         |
+| `.github/workflows/ci.yml`      | Test + lint on push                                                      |
+| `.github/workflows/publish.yml` | Manual npm publish (`bump: patch/minor/major`)                           |
 
-The local mode server (`dist-server/cli.mjs`) is published to npm as `redraft-local` via the `publish.yml` workflow, triggered manually with a `bump` input (`patch` / `minor` / `major`).
+---
+
+## Commands
+
+```
+npm run dev              # remote mode frontend (HMR)
+npm run dev:local        # local mode frontend (HMR + proxy to port 5174)
+npm run serve -- <dir>   # local Hono server from source (restart on server changes)
+npm run build            # full production build (dist/ + dist-server/)
+npm run build:server     # server bundle only
+npm run test             # Vitest unit tests
+npm run typecheck        # tsc across src/ and server/
+npm run lint             # ESLint
+npm run format           # Prettier write
+npm run format:check     # Prettier check (CI + pre-commit)
+npm run e2e              # Playwright
+```
