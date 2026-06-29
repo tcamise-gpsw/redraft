@@ -96,6 +96,9 @@ async function loadStaticResponse(
 export function buildReDraftApp(options: ReDraftAppOptions): Hono {
   const app = buildGitHubApiRouter(options.basePath);
 
+  // Lightweight health probe — used to verify the server is reachable.
+  app.get('/api/health', (c) => c.json({ ok: true, mode: 'local' }));
+
   app.get('*', async (c) => {
     if (options.noUi) {
       return c.notFound();

@@ -21,6 +21,7 @@
   ],
   "scripts": {
     "dev": "vite",
+    "dev:local": "VITE_LOCAL_MODE=true vite",
     "build": "vite build && npm run build:server",
     "build:server": "esbuild server/cli.ts --bundle --platform=node --format=esm --outfile=dist-server/cli.mjs --packages=external",
     "preview": "vite preview",
