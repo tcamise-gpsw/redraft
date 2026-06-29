@@ -9,3 +9,4 @@ test-results/
 .DS_Store
 .env
 .env.*
+*.tsbuildinfo
