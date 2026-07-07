@@ -43,6 +43,8 @@ export function CommentsSidebar({
   saveComments,
   isDirty,
   isSaving,
+  sidecarBranchMissing = false,
+  sidecarBranchName,
 }: {
   comments: CommentThread[];
   documentText: string;
@@ -63,9 +65,13 @@ export function CommentsSidebar({
   saveComments: () => Promise<void>;
   isDirty: boolean;
   isSaving: boolean;
+  sidecarBranchMissing?: boolean;
+  sidecarBranchName?: string | null;
 }) {
-  const { user } = useAuth();
+  const { user, sidecarBranch } = useAuth();
   const { showToast } = useToast();
+  const displayedSidecarBranch =
+    sidecarBranchName ?? sidecarBranch ?? 'redraft';
 
   const { ordered, orphaned } = useMemo(() => {
     const resolved = comments.map((thread) => ({
@@ -227,7 +233,17 @@ export function CommentsSidebar({
 
   return (
     <section className="space-y-4">
-      {isDirty ? (
+      {sidecarBranchMissing ? (
+        <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">
+          <p className="font-medium">
+            Comments branch '{displayedSidecarBranch}' does not exist.
+          </p>
+          <p className="mt-1 text-rose-200/80">
+            Create it with the setup script or update the branch name in
+            Settings.
+          </p>
+        </div>
+      ) : isDirty ? (
         <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
           <span className="text-xs text-amber-300">
             Unsaved comment changes
@@ -243,7 +259,7 @@ export function CommentsSidebar({
         </div>
       ) : null}
 
-      {pendingSelection ? (
+      {pendingSelection && !sidecarBranchMissing ? (
         <CommentForm
           quote={pendingSelection.quote}
           onCancel={onClearSelection}

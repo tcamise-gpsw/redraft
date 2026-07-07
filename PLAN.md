@@ -462,24 +462,24 @@ This task ensures the error UX from the spec is fully wired. A key prerequisite 
 
 **Checklist:**
 
-- [ ] `useDocuments` catches `NotFoundError` from sidecar tree fetch and sets `sidecarBranchExists` flag
-- [ ] Toast fires on sidecar tree 404 in `useDocuments`
-- [ ] Toast fires only once per branch-change, not repeatedly
-- [ ] `sidecarBranchExists` flag exposed for comments sidebar consumption
-- [ ] Comments sidebar shows inline error when sidecar branch is missing
-- [ ] Save/comment actions disabled when sidecar branch is unavailable
-- [ ] Error state is visually consistent with existing app error patterns
+- [x] `useDocuments` catches `NotFoundError` from sidecar tree fetch and sets `sidecarBranchExists` flag
+- [x] Toast fires on sidecar tree 404 in `useDocuments`
+- [x] Toast fires only once per branch-change, not repeatedly
+- [x] `sidecarBranchExists` flag exposed for comments sidebar consumption
+- [x] Comments sidebar shows inline error when sidecar branch is missing
+- [x] Save/comment actions disabled when sidecar branch is unavailable
+- [x] Error state is visually consistent with existing app error patterns
 
 **Tests:**
 
-- [ ] Verify toast dispatch on sidecar branch 404
-- [ ] Verify `sidecarBranchExists` is false when sidecar tree fetch fails
-- [ ] Verify sidebar renders inline error message when sidecar branch is missing
-- [ ] Verify comment form is not shown / save is disabled in error state
+- [x] Verify toast dispatch on sidecar branch 404
+- [x] Verify `sidecarBranchExists` is false when sidecar tree fetch fails
+- [x] Verify sidebar renders inline error message when sidecar branch is missing
+- [x] Verify comment form is not shown / save is disabled in error state
 
 **Commit:**
 
-- [ ] Read `skill://commit`, commit with message like `feat: error UX for missing sidecar branch`
+- [x] Read `skill://commit`, commit with message like `feat: error UX for missing sidecar branch`
 
 ### Task 10: Test Fixtures Submodule Update
 

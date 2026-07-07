@@ -7,6 +7,7 @@ import { DocumentView } from '../components/document/DocumentView';
 import { DocumentTree } from '../components/tree/DocumentTree';
 import { useComments } from '../hooks/useComments';
 import { useDocument } from '../hooks/useDocument';
+import { useDocuments } from '../hooks/useDocuments';
 
 export function ProposalView() {
   const params = useParams();
@@ -29,6 +30,7 @@ export function ProposalView() {
   } = useComments(path);
 
   const { content } = useDocument(path);
+  const { sidecarBranchExists } = useDocuments();
 
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<{
@@ -78,6 +80,7 @@ export function ProposalView() {
           saveComments={saveComments}
           isDirty={isDirty}
           isSaving={isSaving}
+          sidecarBranchMissing={!sidecarBranchExists}
         />
       }
     />

@@ -266,6 +266,36 @@ describe('CommentsSidebar', () => {
 
     expect(saveComments).toHaveBeenCalled();
   });
+
+  it('shows an inline error and disables comment actions when sidecar branch is missing', () => {
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        isDirty={true}
+        comments={[]}
+        documentText="The camera should initialize lazily."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={{
+          quote: 'initialize lazily',
+          context: { prefix: 'should ', suffix: '.' },
+        }}
+        onClearSelection={vi.fn()}
+        sidecarBranchMissing={true}
+        sidecarBranchName="redraft"
+      />,
+    );
+
+    expect(
+      screen.getByText(/comments branch 'redraft' does not exist/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^save$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText(/add a comment/i),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe('CommentsSidebar delete', () => {

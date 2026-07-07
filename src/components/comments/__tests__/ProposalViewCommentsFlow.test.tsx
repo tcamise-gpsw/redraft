@@ -5,11 +5,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-const { documentViewPath, useDocument, useComments } = vi.hoisted(() => ({
-  documentViewPath: vi.fn(),
-  useDocument: vi.fn(),
-  useComments: vi.fn(),
-}));
+const { documentViewPath, useDocument, useComments, useDocuments } = vi.hoisted(
+  () => ({
+    documentViewPath: vi.fn(),
+    useDocument: vi.fn(),
+    useComments: vi.fn(),
+    useDocuments: vi.fn(),
+  }),
+);
 
 vi.mock('../../../hooks/useDocument', () => ({
   useDocument,
@@ -17,6 +20,10 @@ vi.mock('../../../hooks/useDocument', () => ({
 
 vi.mock('../../../hooks/useComments', () => ({
   useComments,
+}));
+
+vi.mock('../../../hooks/useDocuments', () => ({
+  useDocuments,
 }));
 
 vi.mock('../../tree/DocumentTree', () => ({
@@ -101,6 +108,7 @@ describe('ProposalView comment interactions', () => {
       resolveThread: vi.fn(),
       saveComments: vi.fn().mockResolvedValue(undefined),
     });
+    useDocuments.mockReturnValue({ sidecarBranchExists: true });
     Object.defineProperty(Element.prototype, 'scrollIntoView', {
       configurable: true,
       value: vi.fn(),

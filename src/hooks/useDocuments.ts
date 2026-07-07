@@ -110,6 +110,7 @@ export function useDocuments() {
         return {
           documents: [] as DocumentNode[],
           underReview: [] as ReviewEntry[],
+          sidecarBranchExists: true,
         };
       }
 
@@ -122,6 +123,7 @@ export function useDocuments() {
         return {
           documents: buildTree(response.documents),
           underReview: response.underReview,
+          sidecarBranchExists: true,
         };
       }
 
@@ -129,8 +131,11 @@ export function useDocuments() {
         return {
           documents: [] as DocumentNode[],
           underReview: [] as ReviewEntry[],
+          sidecarBranchExists: true,
         };
       }
+
+      let sidecarBranchExists = true;
 
       const documentItemsPromise = client.getTree(branch);
       const sidecarItemsPromise =
@@ -155,6 +160,7 @@ export function useDocuments() {
                   });
                 }
 
+                sidecarBranchExists = false;
                 return [] satisfies TreeItem[];
               });
 
@@ -185,6 +191,7 @@ export function useDocuments() {
       return {
         documents: buildTree(markdownItems),
         underReview,
+        sidecarBranchExists,
       };
     },
     enabled:
@@ -195,6 +202,7 @@ export function useDocuments() {
   return {
     documents: query.data?.documents ?? [],
     underReview: query.data?.underReview ?? [],
+    sidecarBranchExists: query.data?.sidecarBranchExists ?? true,
     isLoading: query.isLoading,
     error: query.error ?? null,
   };
