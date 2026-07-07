@@ -202,6 +202,7 @@ describe('useDocuments (remote mode)', () => {
     ]);
     expect(result.current.underReview).toEqual([]);
     expect(result.current.error).toBeNull();
+    expect(result.current.sidecarBranchExists).toBe(false);
     expect(showToast).toHaveBeenCalledWith({
       tone: 'error',
       title:
