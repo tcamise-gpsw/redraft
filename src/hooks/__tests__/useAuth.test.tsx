@@ -34,7 +34,9 @@ interface TestAuthContextValue {
   updateRepo: (owner: string, repo: string) => void;
   branch: string | null;
   defaultBranch: string | null;
+  sidecarBranch: string | null;
   setBranch: (name: string) => void;
+  setSidecarBranch: (name: string) => void;
 }
 
 function createLocalStorageMock() {
@@ -117,21 +119,88 @@ describe('useAuth branch state', () => {
     );
   });
 
-  it('keeps branch state null in local mode and ignores setBranch calls', () => {
+  it('detects the active git branch in local mode and ignores branch setters', async () => {
     isLocalMode.mockReturnValue(true);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ branch: 'feature/local-docs' }),
+      }),
+    );
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
-    expect(authState(result.current).branch).toBeNull();
+    await waitFor(() =>
+      expect(authState(result.current).branch).toBe('feature/local-docs'),
+    );
     expect(authState(result.current).defaultBranch).toBeNull();
+    expect(authState(result.current).sidecarBranch).toBeNull();
 
     act(() => {
       authState(result.current).setBranch('release/2026.09');
+      authState(result.current).setSidecarBranch('review-data');
     });
 
-    expect(authState(result.current).branch).toBeNull();
+    expect(authState(result.current).branch).toBe('feature/local-docs');
     expect(authState(result.current).defaultBranch).toBeNull();
+    expect(authState(result.current).sidecarBranch).toBeNull();
     expect(localStorage.getItem('redraft.branch.local/redraft')).toBeNull();
+    expect(
+      localStorage.getItem('redraft.sidecarBranch.local/redraft'),
+    ).toBeNull();
+  });
+
+  it('falls back to main for local mode namespacing when git branch detection fails', async () => {
+    isLocalMode.mockReturnValue(true);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(authState(result.current).branch).toBe('main'));
+    expect(authState(result.current).sidecarBranch).toBeNull();
+  });
+
+  it('login defaults sidecarBranch to redraft when no persisted override exists', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login('ghp_test', 'acme', 'workspace');
+    });
+
+    expect(authState(result.current).sidecarBranch).toBe('redraft');
+  });
+
+  it('login restores a persisted sidecar branch override for the authenticated repository', async () => {
+    localStorage.setItem(
+      'redraft.sidecarBranch.acme/workspace',
+      JSON.stringify('review-data'),
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login('ghp_test', 'acme', 'workspace');
+    });
+
+    expect(authState(result.current).sidecarBranch).toBe('review-data');
+  });
+
+  it('setSidecarBranch updates the active sidecar branch and persists it', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login('ghp_test', 'acme', 'workspace');
+    });
+
+    act(() => {
+      authState(result.current).setSidecarBranch('review-data');
+    });
+
+    expect(authState(result.current).sidecarBranch).toBe('review-data');
+    expect(localStorage.getItem('redraft.sidecarBranch.acme/workspace')).toBe(
+      JSON.stringify('review-data'),
+    );
   });
   it('restores persisted branch from localStorage on mount with stored auth', async () => {
     localStorage.setItem(
@@ -147,6 +216,10 @@ describe('useAuth branch state', () => {
       'redraft.branch.acme/workspace',
       JSON.stringify('feature/my-branch'),
     );
+    localStorage.setItem(
+      'redraft.sidecarBranch.acme/workspace',
+      JSON.stringify('review-data'),
+    );
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -154,6 +227,7 @@ describe('useAuth branch state', () => {
       expect(authState(result.current).branch).toBe('feature/my-branch'),
     );
     expect(authState(result.current).defaultBranch).toBe('main');
+    expect(authState(result.current).sidecarBranch).toBe('review-data');
   });
 
   it('dispatches BRANCH_WARNING_EVENT and falls back to stored branch when getDefaultBranch fails', async () => {
@@ -178,6 +252,7 @@ describe('useAuth branch state', () => {
     expect(warned.length).toBeGreaterThanOrEqual(1);
     expect(authState(result.current).defaultBranch).toBeNull();
     expect(authState(result.current).branch).toBe('feature/fallback');
+    expect(authState(result.current).sidecarBranch).toBe('redraft');
   });
 
   it('resets both branch and defaultBranch to null after logout', async () => {
@@ -188,6 +263,7 @@ describe('useAuth branch state', () => {
     });
 
     expect(authState(result.current).branch).toBe('main');
+    expect(authState(result.current).sidecarBranch).toBe('redraft');
 
     act(() => {
       authState(result.current).logout();
@@ -195,6 +271,7 @@ describe('useAuth branch state', () => {
 
     expect(authState(result.current).branch).toBeNull();
     expect(authState(result.current).defaultBranch).toBeNull();
+    expect(authState(result.current).sidecarBranch).toBeNull();
   });
 
   it('updateRepo resets branch state then resolves to new repo default', async () => {
@@ -211,6 +288,10 @@ describe('useAuth branch state', () => {
     // Now any new getDefaultBranch call (from updateRepo's loadBranchState) returns 'develop'.
     getDefaultBranch.mockResolvedValue('develop');
 
+    localStorage.setItem(
+      'redraft.sidecarBranch.acme/platform',
+      JSON.stringify('platform-reviews'),
+    );
     act(() => {
       authState(result.current).updateRepo('acme', 'platform');
     });
@@ -219,5 +300,6 @@ describe('useAuth branch state', () => {
       expect(authState(result.current).branch).toBe('develop'),
     );
     expect(authState(result.current).defaultBranch).toBe('develop');
+    expect(authState(result.current).sidecarBranch).toBe('platform-reviews');
   });
 });
