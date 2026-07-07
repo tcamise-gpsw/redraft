@@ -561,11 +561,11 @@ The script should be executable (`chmod +x`).
 
 **Checks:**
 
-- [ ] Full test suite passes: `npx vitest run`
-- [ ] Type check passes: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
-- [ ] Lint passes: `npx eslint src/ server/`
-- [ ] Format check passes: `npx prettier --check src/ server/`
-- [ ] All acceptance criteria verified:
+- [x] Full test suite passes: `npx vitest run`
+- [x] Type check passes: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
+- [x] Lint passes: `npx eslint src/ server/`
+- [x] Format check passes: `npx prettier --check src/ server/`
+- [x] All acceptance criteria verified:
   - Comment reads use sidecar branch ref
   - Comment writes target sidecar branch
   - Document tree detects under-review status from sidecar branch
@@ -580,4 +580,4 @@ The script should be executable (`chmod +x`).
   - Missing sidecar branch shows toast + inline error
   - Setup script creates orphan branch
   - Test-fixtures submodule updated with branch-namespaced paths
-- [ ] No regressions: existing document editing, branch switching, and local mode all still work
+- [x] No regressions: existing document editing, branch switching, and local mode all still work

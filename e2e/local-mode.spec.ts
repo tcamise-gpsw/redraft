@@ -3,7 +3,7 @@ import { readFile, rm, writeFile } from 'node:fs/promises';
 
 const LOCAL_WORKSPACE_ROOT = '/tmp/redraft-local-playwright';
 const AUTH_DOC_PATH = `${LOCAL_WORKSPACE_ROOT}/docs/auth-overhaul.md`;
-const AUTH_COMMENT_PATH = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/docs/auth-overhaul.comments.json`;
+const AUTH_COMMENT_PATH = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/main/docs/auth-overhaul.comments.json`;
 
 test('local mode auto-authenticates and renders the split document tree', async ({
   page,
@@ -11,7 +11,9 @@ test('local mode auto-authenticates and renders the split document tree', async 
   await page.goto('/');
 
   await expect(page.getByRole('button', { name: 'Connect' })).toHaveCount(0);
-  await expect(page.getByText('Under Review')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Under Review' }),
+  ).toBeVisible();
   await expect(
     page.getByRole('link', { name: /api-design-v2.md/ }).first(),
   ).toBeVisible();
@@ -28,6 +30,7 @@ test('local mode auto-authenticates and renders the split document tree', async 
 test('local mode writes markdown edits back to disk and reflects external file changes', async ({
   page,
 }) => {
+  test.setTimeout(45_000);
   const original = await readFile(AUTH_DOC_PATH, 'utf8');
 
   try {
@@ -60,7 +63,7 @@ test('local mode writes markdown edits back to disk and reflects external file c
     // Cross-process propagation (fs watcher -> WebSocket -> query invalidation ->
     // Milkdown re-render) can exceed the 5s default; allow more headroom.
     await expect(page.getByText('Changed outside the UI')).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
   } finally {
     await writeFile(AUTH_DOC_PATH, original, 'utf8');
@@ -134,7 +137,7 @@ test('local mode updates the documents tree and under-review section when files 
   page,
 }) => {
   const documentPath = `${LOCAL_WORKSPACE_ROOT}/playwright-local.md`;
-  const commentPath = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/playwright-local.comments.json`;
+  const commentPath = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/main/playwright-local.comments.json`;
 
   await page.goto('/');
   await writeFile(

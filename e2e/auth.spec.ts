@@ -25,6 +25,24 @@ test('auth flow accepts a PAT and shows the documents tree', async ({
       return;
     }
 
+    if (url.endsWith('/repos/acme/workspace')) {
+      await route.fulfill({
+        status: 200,
+        headers: rateHeaders,
+        body: JSON.stringify({ default_branch: 'main' }),
+      });
+      return;
+    }
+
+    if (url.includes('/branches')) {
+      await route.fulfill({
+        status: 200,
+        headers: rateHeaders,
+        body: JSON.stringify([{ name: 'main' }, { name: 'redraft' }]),
+      });
+      return;
+    }
+
     if (url.includes('/git/trees/')) {
       await route.fulfill({
         status: 200,
@@ -90,6 +108,24 @@ test('a 401 response clears auth and returns to the auth gate', async ({
           login: 'jdoe',
           avatar_url: 'https://example.com/avatar.png',
         }),
+      });
+      return;
+    }
+
+    if (url.endsWith('/repos/acme/workspace')) {
+      await route.fulfill({
+        status: 200,
+        headers: rateHeaders,
+        body: JSON.stringify({ default_branch: 'main' }),
+      });
+      return;
+    }
+
+    if (url.includes('/branches')) {
+      await route.fulfill({
+        status: 200,
+        headers: rateHeaders,
+        body: JSON.stringify([{ name: 'main' }, { name: 'redraft' }]),
       });
       return;
     }
