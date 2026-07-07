@@ -41,28 +41,28 @@ Both `listBranches()` and `getDefaultBranch()` go through the existing `withErro
 
 **Checklist:**
 
-- [ ] `listBranches()` added, calls `octokit.repos.listBranches`, returns `string[]`
-- [ ] `getDefaultBranch()` added, calls `octokit.repos.get`, returns `string`
-- [ ] `GetFileOptions` interface extended with optional `ref`
-- [ ] `getFileContent` passes `ref` to Octokit when provided
-- [ ] `getLatestCommit` passes `ref` as `sha` to `listCommits` when provided
-- [ ] `createFile` passes `branch` to `createOrUpdateFileContents` when provided
-- [ ] `updateFile` passes `branch` to `createOrUpdateFileContents` when provided
-- [ ] All existing tests still pass (no breaking changes to existing callers)
+- [x] `listBranches()` added, calls `octokit.repos.listBranches`, returns `string[]`
+- [x] `getDefaultBranch()` added, calls `octokit.repos.get`, returns `string`
+- [x] `GetFileOptions` interface extended with optional `ref`
+- [x] `getFileContent` passes `ref` to Octokit when provided
+- [x] `getLatestCommit` passes `ref` as `sha` to `listCommits` when provided
+- [x] `createFile` passes `branch` to `createOrUpdateFileContents` when provided
+- [x] `updateFile` passes `branch` to `createOrUpdateFileContents` when provided
+- [x] All existing tests still pass (no breaking changes to existing callers)
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/lib/github/__tests__/client.test.ts`
-- [ ] Test `listBranches()`: mock `octokit.repos.listBranches` returning `[{ name: 'main' }, { name: 'dev' }]`, verify returns `['main', 'dev']`
-- [ ] Test `getDefaultBranch()`: mock `octokit.repos.get` returning `{ default_branch: 'main' }`, verify returns `'main'`
-- [ ] Test `getFileContent` with `ref`: verify `octokit.repos.getContent` is called with `{ ref: 'dev' }` when option provided
-- [ ] Test `getLatestCommit` with `ref`: verify `octokit.repos.listCommits` is called with `{ sha: 'dev' }` when ref provided
-- [ ] Test `createFile` with `branch`: verify `createOrUpdateFileContents` receives `{ branch: 'dev' }`
-- [ ] Test `updateFile` with `branch`: verify `createOrUpdateFileContents` receives `{ branch: 'dev' }`
+- [x] Run: `npx vitest run src/lib/github/__tests__/client.test.ts`
+- [x] Test `listBranches()`: mock `octokit.repos.listBranches` returning `[{ name: 'main' }, { name: 'dev' }]`, verify returns `['main', 'dev']`
+- [x] Test `getDefaultBranch()`: mock `octokit.repos.get` returning `{ default_branch: 'main' }`, verify returns `'main'`
+- [x] Test `getFileContent` with `ref`: verify `octokit.repos.getContent` is called with `{ ref: 'dev' }` when option provided
+- [x] Test `getLatestCommit` with `ref`: verify `octokit.repos.listCommits` is called with `{ sha: 'dev' }` when ref provided
+- [x] Test `createFile` with `branch`: verify `createOrUpdateFileContents` receives `{ branch: 'dev' }`
+- [x] Test `updateFile` with `branch`: verify `createOrUpdateFileContents` receives `{ branch: 'dev' }`
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage relevant files, commit
+- [x] Read `skill://commit`, stage relevant files, commit
 
 ---
 

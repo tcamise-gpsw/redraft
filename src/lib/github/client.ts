@@ -18,6 +18,7 @@ interface GitHubClientOptions {
 
 interface GetFileOptions {
   optional?: boolean;
+  ref?: string;
 }
 
 interface RateLimitHeaders {
@@ -25,6 +26,7 @@ interface RateLimitHeaders {
   'x-ratelimit-limit'?: string;
   'x-ratelimit-remaining'?: string;
   'x-ratelimit-reset'?: string;
+  link?: string;
 }
 
 export const RATE_LIMIT_EVENT = 'redraft:rate-limit';
@@ -117,6 +119,11 @@ function isRateLimitError(
   return status === 403 && readHeader(headers, 'x-ratelimit-remaining') === '0';
 }
 
+function hasNextPage(headers: RateLimitHeaders | undefined): boolean {
+  const link = headers?.link;
+  return typeof link === 'string' && link.includes('rel="next"');
+}
+
 export class GitHubClient {
   private readonly octokit: Octokit;
   private readonly owner: string;
@@ -148,6 +155,43 @@ export class GitHubClient {
       login: response.data.login,
       avatarUrl: response.data.avatar_url,
     };
+  }
+
+  async listBranches(): Promise<string[]> {
+    const branches: string[] = [];
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await this.withErrorHandling(() =>
+        this.octokit.repos.listBranches({
+          owner: this.owner,
+          repo: this.repo,
+          per_page: 100,
+          ...(page > 1 ? { page } : {}),
+        }),
+      );
+
+      this.updateRateLimit(response.headers);
+      branches.push(...response.data.map((branch) => branch.name));
+      hasMore = hasNextPage(response.headers);
+      page += 1;
+    }
+
+    return branches;
+  }
+
+  async getDefaultBranch(): Promise<string> {
+    const response = await this.withErrorHandling(() =>
+      this.octokit.repos.get({
+        owner: this.owner,
+        repo: this.repo,
+      }),
+    );
+
+    this.updateRateLimit(response.headers);
+
+    return response.data.default_branch;
   }
 
   async getTree(branch = 'HEAD'): Promise<TreeItem[]> {
@@ -193,6 +237,7 @@ export class GitHubClient {
           owner: this.owner,
           repo: this.repo,
           path,
+          ...(options?.ref ? { ref: options.ref } : {}),
         }),
       );
 
@@ -218,6 +263,7 @@ export class GitHubClient {
     path: string,
     content: string,
     message: string,
+    branch?: string,
   ): Promise<{ sha: string }> {
     const response = await this.withErrorHandling(() =>
       this.octokit.repos.createOrUpdateFileContents({
@@ -226,6 +272,7 @@ export class GitHubClient {
         path,
         message,
         content: encodeBase64(content),
+        ...(branch ? { branch } : {}),
       }),
     );
 
@@ -241,6 +288,7 @@ export class GitHubClient {
     content: string,
     sha: string,
     message: string,
+    branch?: string,
   ): Promise<{ sha: string }> {
     const response = await this.withErrorHandling(() =>
       this.octokit.repos.createOrUpdateFileContents({
@@ -250,6 +298,7 @@ export class GitHubClient {
         message,
         sha,
         content: encodeBase64(content),
+        ...(branch ? { branch } : {}),
       }),
     );
 
@@ -260,13 +309,17 @@ export class GitHubClient {
     };
   }
 
-  async getLatestCommit(path: string): Promise<CommitInfo | null> {
+  async getLatestCommit(
+    path: string,
+    ref?: string,
+  ): Promise<CommitInfo | null> {
     const response = await this.withErrorHandling(() =>
       this.octokit.repos.listCommits({
         owner: this.owner,
         repo: this.repo,
         path,
         per_page: 1,
+        ...(ref ? { sha: ref } : {}),
       }),
     );
 
