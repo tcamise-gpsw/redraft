@@ -37,6 +37,11 @@ export function CreateDocumentDialog({
       return;
     }
 
+    if (branch === null) {
+      setError('Branch is still loading. Please wait and try again.');
+      return;
+    }
+
     const fullPath = normalizedPath.endsWith('.md')
       ? normalizedPath
       : `${normalizedPath}.md`;

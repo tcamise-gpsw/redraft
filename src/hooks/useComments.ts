@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 
 import { ConflictError, GitHubClient } from '../lib/github';
-import { getApiBaseUrl } from '../lib/mode';
+import { getApiBaseUrl, isLocalMode } from '../lib/mode';
 import { useAuth } from './useAuth';
 import type {
   CommentFile,
@@ -56,7 +56,7 @@ export function useComments(path: string) {
         })) ?? null
       );
     },
-    enabled: Boolean(client),
+    enabled: Boolean(client) && (isLocalMode() || branch !== null),
     staleTime: Infinity,
   });
 
@@ -65,7 +65,7 @@ export function useComments(path: string) {
     setLocalThreads(null);
     setLocalSha(null);
     setIsDirty(false);
-  }, [path]);
+  }, [path, branch]);
 
   // Seed from the initial fetch result (runs once per load).
   useEffect(() => {

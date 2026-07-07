@@ -9,12 +9,14 @@ import { HashRouter } from 'react-router-dom';
 const getTree = vi.hoisted(() => vi.fn());
 const getFileContent = vi.hoisted(() => vi.fn());
 const createFile = vi.hoisted(() => vi.fn());
+const getDefaultBranch = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../lib/github/client', () => ({
   GitHubClient: class GitHubClient {
     getTree = getTree;
     getFileContent = getFileContent;
     createFile = createFile;
+    getDefaultBranch = getDefaultBranch;
   },
 }));
 
@@ -69,6 +71,7 @@ describe('DocumentTree', () => {
     getTree.mockReset();
     getFileContent.mockReset().mockResolvedValue(null);
     createFile.mockReset();
+    getDefaultBranch.mockReset().mockRejectedValue(new Error('not mocked'));
   });
 
   it('shows under-review documents and renders the documents tree expanded by default', async () => {
@@ -141,8 +144,13 @@ describe('DocumentTree', () => {
   it('creates a document from the dialog and calls createFile with a root-relative path', async () => {
     getTree.mockResolvedValueOnce([]);
     createFile.mockResolvedValueOnce({ sha: 'new-sha' });
+    getDefaultBranch.mockResolvedValue('main');
 
     renderTree();
+
+    // Wait for AuthProvider's useEffect to resolve the default branch before
+    // submitting — branch === null blocks CreateDocumentDialog.
+    await waitFor(() => expect(getDefaultBranch).toHaveBeenCalled());
 
     fireEvent.click(
       await screen.findByRole('button', { name: /new document/i }),
@@ -160,7 +168,7 @@ describe('DocumentTree', () => {
         'api/new-document.md',
         '# New Document\n\n<!-- Write your document here -->',
         'Create document: new-document.md',
-        undefined,
+        'main',
       );
     });
   });
