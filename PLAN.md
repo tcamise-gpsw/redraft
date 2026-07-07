@@ -507,19 +507,19 @@ Update the test-fixtures repo to reflect the new sidecar path scheme:
 
 **Checklist:**
 
-- [ ] Old sidecar path removed from `main` branch of test-fixtures
-- [ ] Orphan `redraft` branch created in test-fixtures repo
-- [ ] Branch-namespaced sidecar files present on `redraft` branch
-- [ ] Submodule pointer updated in the main repo
-- [ ] Existing tests that reference test-fixtures data are updated if they depend on old sidecar paths
+- [x] Old sidecar path removed from `main` branch of test-fixtures
+- [x] Orphan `redraft` branch created in test-fixtures repo
+- [x] Branch-namespaced sidecar files present on `redraft` branch
+- [x] Submodule pointer updated in the main repo
+- [x] Existing tests that reference test-fixtures data are updated if they depend on old sidecar paths
 
 **Tests:**
 
-- [ ] `npx vitest run` — all tests pass with updated fixtures
+- [x] `npx vitest run` — all tests pass with updated fixtures
 
 **Commit:**
 
-- [ ] Read `'/Users/tcamise/.claude/skills/commit/SKILL.md'`, commit with message like `chore: update test-fixtures submodule for sidecar branch paths`
+- [x] Read `skill://commit`, commit with message like `chore: update test-fixtures submodule for sidecar branch paths`
 
 ### Task 11: Setup Script
 
