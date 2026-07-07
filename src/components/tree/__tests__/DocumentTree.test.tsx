@@ -74,9 +74,7 @@ describe('DocumentTree', () => {
     getDefaultBranch.mockReset().mockRejectedValue(new Error('not mocked'));
   });
 
-  it('shows under-review documents and renders the documents tree collapsed by default', async () => {
-    // Sidecar blob for media/overview.md is included in the tree response —
-    // no per-file getFileContent probing required.
+  it('shows under-review documents and renders the documents tree expanded by default with dirs collapsed', async () => {
     getTree.mockResolvedValueOnce([
       { path: 'rest.md', type: 'blob' },
       { path: 'media/overview.md', type: 'blob' },
@@ -94,16 +92,19 @@ describe('DocumentTree', () => {
       await screen.findByRole('link', { name: /media\/overview\.md/ }),
     ).toBeInTheDocument();
 
-    // Tree is collapsed by default — files not visible without interaction.
-    expect(screen.queryByRole('link', { name: 'rest.md' })).toBeNull();
-
-    // Clicking the toggle expands the tree.
-    fireEvent.click(screen.getByRole('button', { name: 'Documents' }));
+    // Top-level tree is expanded — root files and directory buttons visible.
     expect(
       await screen.findByRole('link', { name: 'rest.md' }),
     ).toBeInTheDocument();
     expect(screen.getByText('api')).toBeInTheDocument();
     expect(screen.getByText('media')).toBeInTheDocument();
+
+    // Subdirectory contents are collapsed — nested files not visible yet.
+    expect(screen.queryByRole('link', { name: 'graphql.md' })).toBeNull();
+
+    // Clicking the top-level toggle collapses everything.
+    fireEvent.click(screen.getByRole('button', { name: 'Documents' }));
+    expect(screen.queryByRole('link', { name: 'rest.md' })).toBeNull();
   });
 
   it('highlights the active document route', async () => {
@@ -113,8 +114,7 @@ describe('DocumentTree', () => {
 
     renderTree();
 
-    // Expand the top-level tree then the media directory (both collapsed by default).
-    fireEvent.click(await screen.findByRole('button', { name: 'Documents' }));
+    // Top-level tree is expanded by default; only need to expand the media directory.
     fireEvent.click(await screen.findByRole('button', { name: 'media' }));
     const activeLink = await screen.findByRole('link', { name: 'overview.md' });
     expect(activeLink).toHaveClass('bg-cyan-500/10');
@@ -127,8 +127,7 @@ describe('DocumentTree', () => {
 
     renderTree();
 
-    // Expand the top-level tree then the media directory (both collapsed by default).
-    fireEvent.click(await screen.findByRole('button', { name: 'Documents' }));
+    // Top-level tree is expanded by default; only need to expand the media directory.
     fireEvent.click(await screen.findByRole('button', { name: 'media' }));
     const link = await screen.findByRole('link', { name: 'overview.md' });
     expect(link).toHaveAttribute('href', '#/d/media/overview.md');
