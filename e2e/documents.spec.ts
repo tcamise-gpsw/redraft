@@ -157,6 +157,8 @@ test('document viewing renders Milkdown content and the split tree', async ({
   await expect(page.getByText('const ready = true;')).toBeVisible();
   await expect(page.locator('.milkdown-mermaid-block svg')).toBeVisible();
 
+  // Subdirectories are collapsed by default — expand `docs` to reveal the nested file.
+  await page.getByRole('button', { name: 'docs', exact: true }).click();
   await expect(
     page.getByRole('link', { name: 'auth-overhaul.md' }),
   ).toBeVisible();
@@ -249,6 +251,8 @@ test('multiple mermaid diagram types render without id collision', async ({
   await page.getByLabel('GitHub PAT').fill('ghp_test');
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
+  // Subdirectories are collapsed by default — expand `docs` before opening the nested file.
+  await page.getByRole('button', { name: 'docs', exact: true }).click();
   await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
 
   await expect(page.locator('.milkdown-mermaid-block svg')).toHaveCount(2);

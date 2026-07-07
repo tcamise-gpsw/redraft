@@ -16,6 +16,8 @@ test('local mode auto-authenticates and renders the split document tree', async 
     page.getByRole('link', { name: /api-design-v2.md/ }).first(),
   ).toBeVisible();
 
+  // Subdirectories are collapsed by default — expand `docs` to reveal the nested file.
+  await page.getByRole('button', { name: 'docs', exact: true }).click();
   await expect(page.getByText('auth-overhaul.md')).toBeVisible();
   await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
   await expect(
@@ -30,6 +32,8 @@ test('local mode writes markdown edits back to disk and reflects external file c
 
   try {
     await page.goto('/');
+    // Subdirectories are collapsed by default — expand `docs` before opening the nested file.
+    await page.getByRole('button', { name: 'docs', exact: true }).click();
     await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
     await page.getByRole('button', { name: 'Raw' }).click();
     await page
@@ -41,12 +45,23 @@ test('local mode writes markdown edits back to disk and reflects external file c
       'Saved from local mode',
     );
 
+    // Saving switches back to View mode. Wait for the saved content to render
+    // (and its watcher/WebSocket refetch cycle to drain) BEFORE writing the
+    // external change, so the two propagation cycles don't overlap and race.
+    await expect(page.locator('.ProseMirror')).toContainText(
+      'Saved from local mode',
+    );
+
     await writeFile(
       AUTH_DOC_PATH,
       '# Authentication Overhaul Proposal\n\nChanged outside the UI\n',
       'utf8',
     );
-    await expect(page.getByText('Changed outside the UI')).toBeVisible();
+    // Cross-process propagation (fs watcher -> WebSocket -> query invalidation ->
+    // Milkdown re-render) can exceed the 5s default; allow more headroom.
+    await expect(page.getByText('Changed outside the UI')).toBeVisible({
+      timeout: 15_000,
+    });
   } finally {
     await writeFile(AUTH_DOC_PATH, original, 'utf8');
   }
@@ -62,6 +77,8 @@ test('local mode writes saved comment threads to .redraft/comments', async ({
   try {
     await rm(AUTH_COMMENT_PATH, { force: true });
     await page.goto('/');
+    // Subdirectories are collapsed by default — expand `docs` before opening the nested file.
+    await page.getByRole('button', { name: 'docs', exact: true }).click();
     await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
 
     await page.locator('.ProseMirror').evaluate((root) => {
@@ -127,7 +144,10 @@ test('local mode updates the documents tree and under-review section when files 
   );
 
   try {
-    await expect(page.getByText('playwright-local.md')).toBeVisible();
+    // fs watcher -> WebSocket -> tree query invalidation can exceed the 5s default.
+    await expect(page.getByText('playwright-local.md')).toBeVisible({
+      timeout: 15_000,
+    });
 
     await writeFile(commentPath, '{"version":1,"comments":[]}', 'utf8');
 
