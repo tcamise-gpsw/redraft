@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from './useAuth';
-import { GitHubClient } from '../lib/github';
+import { GitHubClient, NotFoundError } from '../lib/github';
+import { commentPath, sanitizeBranch } from '../lib/comments/paths';
 import { getApiBaseUrl, isLocalMode } from '../lib/mode';
+import { useToast } from './useToast';
 import type { DocumentNode, ReviewEntry } from '../types/documents';
 import type { TreeItem } from '../types/github';
 
@@ -67,10 +69,6 @@ function buildTree(items: TreeItem[]): DocumentNode[] {
   return sortNodes(root);
 }
 
-function commentPath(path: string): string {
-  return `.redraft/comments/${path.replace(/\.md$/u, '.comments.json')}`;
-}
-
 async function fetchLocalTree(baseUrl: string, owner: string, repo: string) {
   const response = await fetch(
     `${baseUrl}/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`,
@@ -87,8 +85,10 @@ async function fetchLocalTree(baseUrl: string, owner: string, repo: string) {
 }
 
 export function useDocuments() {
-  const { pat, repo, branch } = useAuth();
+  const { pat, repo, branch, sidecarBranch } = useAuth();
   const localMode = isLocalMode();
+  const { showToast } = useToast();
+  const missingSidecarToastBranch = useRef<string | null>(null);
 
   const client = useMemo(() => {
     if (!pat || !repo) {
@@ -104,7 +104,7 @@ export function useDocuments() {
   }, [pat, repo]);
 
   const query = useQuery({
-    queryKey: ['documents', 'tree', branch],
+    queryKey: ['documents', 'tree', branch, sidecarBranch],
     queryFn: async () => {
       if (!client || !repo) {
         return {
@@ -125,22 +125,58 @@ export function useDocuments() {
         };
       }
 
-      const items = await client.getTree(branch ?? undefined);
+      if (!branch || !sidecarBranch) {
+        return {
+          documents: [] as DocumentNode[],
+          underReview: [] as ReviewEntry[],
+        };
+      }
 
-      // Separate markdown blobs from comment sidecars.
-      // getTree() returns both in a single API call — no per-file probing.
-      const markdownItems = items.filter((item) => item.path.endsWith('.md'));
+      const documentItemsPromise = client.getTree(branch);
+      const sidecarItemsPromise =
+        branch === sidecarBranch
+          ? documentItemsPromise
+          : client
+              .getTree(sidecarBranch)
+              .then((items) => {
+                missingSidecarToastBranch.current = null;
+                return items;
+              })
+              .catch((error: unknown) => {
+                if (!(error instanceof NotFoundError)) {
+                  throw error;
+                }
+
+                if (missingSidecarToastBranch.current !== sidecarBranch) {
+                  missingSidecarToastBranch.current = sidecarBranch;
+                  showToast({
+                    tone: 'error',
+                    title: `Branch '${sidecarBranch}' not found. Create it with the setup script or update the branch name in Settings.`,
+                  });
+                }
+
+                return [] satisfies TreeItem[];
+              });
+
+      const [documentItems, sidecarItems] = await Promise.all([
+        documentItemsPromise,
+        sidecarItemsPromise,
+      ]);
+      if (branch === sidecarBranch) {
+        missingSidecarToastBranch.current = null;
+      }
+      const markdownItems = documentItems.filter((item) =>
+        item.path.endsWith('.md'),
+      );
+      const sidecarPrefix = `.redraft/comments/${sanitizeBranch(branch)}/`;
       const sidecarPaths = new Set(
-        items
-          .filter((item) => item.path.startsWith('.redraft/comments/'))
+        sidecarItems
+          .filter((item) => item.path.startsWith(sidecarPrefix))
           .map((item) => item.path),
       );
 
-      // A markdown document is under review when its expected sidecar path
-      // appears anywhere in the tree.  unresolvedCount stays 0 because exact
-      // counts require loading the sidecar files (deferred to document open).
       const underReview = markdownItems
-        .filter((item) => sidecarPaths.has(commentPath(item.path)))
+        .filter((item) => sidecarPaths.has(commentPath(item.path, branch)))
         .map(
           (item) =>
             ({ path: item.path, unresolvedCount: 0 }) satisfies ReviewEntry,
@@ -151,7 +187,9 @@ export function useDocuments() {
         underReview,
       };
     },
-    enabled: Boolean(client),
+    enabled:
+      Boolean(client) &&
+      (localMode || (branch !== null && sidecarBranch !== null)),
   });
 
   return {
