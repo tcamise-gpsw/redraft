@@ -3,6 +3,10 @@ import type { User } from '../../types/github';
 const STORAGE_KEY = 'redraft.auth';
 export const AUTH_ERROR_EVENT = 'redraft:auth-error';
 
+function branchStorageKey(owner: string, repo: string): string {
+  return `redraft.branch.${owner}/${repo}`;
+}
+
 export interface StoredAuth {
   pat: string;
   owner: string;
@@ -43,6 +47,29 @@ export function setStoredAuth(auth: StoredAuth): void {
 
 export function clearStoredAuth(): void {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+export function getStoredBranch(owner: string, repo: string): string | null {
+  const raw = localStorage.getItem(branchStorageKey(owner, repo));
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return typeof parsed === 'string' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredBranch(
+  owner: string,
+  repo: string,
+  branch: string,
+): void {
+  localStorage.setItem(branchStorageKey(owner, repo), JSON.stringify(branch));
 }
 
 export function dispatchAuthError(): void {

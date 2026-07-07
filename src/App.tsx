@@ -14,7 +14,7 @@ import {
 import { AuthGate } from './components/auth/AuthGate';
 import { Header } from './components/layout/Header';
 import { useFileWatcher } from './hooks/useFileWatcher';
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider, BRANCH_WARNING_EVENT } from './hooks/useAuth';
 import { ToastProvider, useToast } from './hooks/useToast';
 import { isLocalMode } from './lib/mode';
 import { Home } from './routes/Home';
@@ -59,11 +59,27 @@ function AppShell() {
       });
     };
 
+    const handleBranchWarning = (event: Event) => {
+      const customEvent = event as CustomEvent<{ title: string }>;
+      showToast({
+        tone: 'error',
+        title: customEvent.detail.title,
+      });
+    };
+
     window.addEventListener(RATE_LIMIT_EVENT, handleRateLimit as EventListener);
+    window.addEventListener(
+      BRANCH_WARNING_EVENT,
+      handleBranchWarning as EventListener,
+    );
     return () => {
       window.removeEventListener(
         RATE_LIMIT_EVENT,
         handleRateLimit as EventListener,
+      );
+      window.removeEventListener(
+        BRANCH_WARNING_EVENT,
+        handleBranchWarning as EventListener,
       );
     };
   }, [showToast]);

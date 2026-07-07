@@ -2,7 +2,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearStoredAuth, getStoredAuth, setStoredAuth } from '../storage';
+import {
+  clearStoredAuth,
+  getStoredAuth,
+  getStoredBranch,
+  setStoredAuth,
+  setStoredBranch,
+} from '../storage';
 
 function createLocalStorageMock() {
   const store = new Map<string, string>();
@@ -52,5 +58,32 @@ describe('auth storage', () => {
     clearStoredAuth();
 
     expect(getStoredAuth()).toBeNull();
+  });
+
+  it('round-trips a repo-specific branch selection through the branch storage key', () => {
+    setStoredBranch('acme', 'workspace', 'release/2026.07');
+
+    expect(localStorage.getItem('redraft.branch.acme/workspace')).toBe(
+      JSON.stringify('release/2026.07'),
+    );
+    expect(getStoredBranch('acme', 'workspace')).toBe('release/2026.07');
+  });
+
+  it('returns null when no branch is stored for the requested repo', () => {
+    expect(getStoredBranch('acme', 'workspace')).toBeNull();
+  });
+
+  it('stores branch selections independently per repository', () => {
+    setStoredBranch('acme', 'workspace', 'main');
+    setStoredBranch('acme', 'platform', 'release');
+
+    expect(getStoredBranch('acme', 'workspace')).toBe('main');
+    expect(getStoredBranch('acme', 'platform')).toBe('release');
+    expect(localStorage.getItem('redraft.branch.acme/workspace')).toBe(
+      JSON.stringify('main'),
+    );
+    expect(localStorage.getItem('redraft.branch.acme/platform')).toBe(
+      JSON.stringify('release'),
+    );
   });
 });
