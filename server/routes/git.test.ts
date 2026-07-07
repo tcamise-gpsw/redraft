@@ -260,6 +260,42 @@ describe('Git convenience routes', () => {
     expect(parents.trim().split(' ')).toHaveLength(2);
   });
 
+  it('uses the configured sidecar branch name for plumbing commits', async () => {
+    await mkdir(join(basePath, '.redraft', 'comments', 'main'), {
+      recursive: true,
+    });
+    await writeFile(
+      join(
+        basePath,
+        '.redraft',
+        'comments',
+        'main',
+        'auth-overhaul.comments.json',
+      ),
+      '{"version":1,"comments":[]}',
+      'utf8',
+    );
+    const app = buildGitHubApiRouter(basePath, {
+      sidecarBranch: 'review-data',
+    });
+
+    const response = await app.request('http://local.test/api/git/commit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ message: 'Custom sidecar branch' }),
+    });
+
+    expect(response.status).toBe(200);
+    const { stdout } = await execGit(
+      'git',
+      ['ls-tree', '-r', '--name-only', 'review-data'],
+      { cwd: repoRoot },
+    );
+    expect(stdout).toContain(
+      'docs/.redraft/comments/main/auth-overhaul.comments.json',
+    );
+  });
+
   it('returns 404 when the served directory is not inside a git repository', async () => {
     const looseRoot = await mkdtemp(join(tmpdir(), 'redraft-no-git-'));
     const looseDocs = join(looseRoot, 'docs');

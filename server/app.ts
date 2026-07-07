@@ -17,6 +17,7 @@ export interface ReDraftAppOptions {
   basePath: string;
   uiRoot: string;
   noUi?: boolean;
+  sidecarBranch?: string;
 }
 
 export interface ReDraftServerOptions extends ReDraftAppOptions {
@@ -94,7 +95,9 @@ async function loadStaticResponse(
 }
 
 export function buildReDraftApp(options: ReDraftAppOptions): Hono {
-  const app = buildGitHubApiRouter(options.basePath);
+  const app = buildGitHubApiRouter(options.basePath, {
+    sidecarBranch: options.sidecarBranch ?? 'redraft',
+  });
 
   // Lightweight health probe — used to verify the server is reachable.
   app.get('/api/health', (c) => c.json({ ok: true, mode: 'local' }));
