@@ -8,7 +8,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommentThread } from '../../../types/comments';
 
 const addComment = vi.hoisted(() => vi.fn());
@@ -65,6 +65,24 @@ function mutationProps() {
     isDirty: false,
     isSaving: false,
   };
+}
+
+function makeMatchMedia(matches: boolean) {
+  return (query: string): MediaQueryList =>
+    ({
+      matches,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      onchange: null,
+    }) as MediaQueryList;
+}
+
+function makeRect(top: number): DOMRect {
+  return new DOMRect(0, top, 0, 0);
 }
 
 describe('CommentsSidebar', () => {
@@ -244,5 +262,162 @@ describe('CommentsSidebar', () => {
     });
 
     expect(saveComments).toHaveBeenCalled();
+  });
+});
+
+describe('CommentsSidebar positioned layout', () => {
+  let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
+
+  beforeEach(() => {
+    originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+    vi.stubGlobal('matchMedia', makeMatchMedia(true));
+    vi.stubGlobal(
+      'ResizeObserver',
+      class ResizeObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  });
+
+  afterEach(() => {
+    Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+      configurable: true,
+      value: originalGetBoundingClientRect,
+    });
+    document
+      .querySelectorAll('[data-comment-id]')
+      .forEach((node) => node.remove());
+    vi.unstubAllGlobals();
+  });
+
+  it('renders positioned wrappers for anchored threads on desktop', () => {
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        comments={[
+          makeThread({ id: 'first', quote: 'initialize lazily' }),
+          makeThread({ id: 'second', quote: 'preview starts' }),
+        ]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const stack = screen.getByTestId('comment-anchor-stack');
+    expect(stack).toHaveClass('relative');
+
+    for (const id of ['first', 'second']) {
+      const anchor = screen.getByTestId(`comment-anchor-${id}`);
+      expect(anchor).toHaveClass('absolute');
+      expect(anchor.style.top).toMatch(/^\d+px$/);
+    }
+  });
+
+  it('aligns anchored threads to highlight positions without overlap', async () => {
+    const highlightTops = new Map([
+      ['first', 100],
+      ['second', 120],
+    ]);
+
+    for (const id of highlightTops.keys()) {
+      const highlight = document.createElement('span');
+      highlight.setAttribute('data-comment-id', id);
+      document.body.appendChild(highlight);
+    }
+
+    Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+      configurable: true,
+      value: function getBoundingClientRect(this: HTMLElement): DOMRect {
+        const commentId = this.getAttribute('data-comment-id');
+        if (commentId) {
+          return makeRect(highlightTops.get(commentId) ?? 0);
+        }
+        if (this.getAttribute('data-testid') === 'comment-anchor-stack') {
+          return makeRect(0);
+        }
+        return makeRect(0);
+      },
+    });
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        comments={[
+          makeThread({ id: 'first', quote: 'initialize lazily' }),
+          makeThread({ id: 'second', quote: 'preview starts' }),
+        ]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const firstAnchor = screen.getByTestId('comment-anchor-first');
+    const secondAnchor = screen.getByTestId('comment-anchor-second');
+
+    for (const anchor of [firstAnchor, secondAnchor]) {
+      Object.defineProperty(anchor, 'offsetHeight', {
+        configurable: true,
+        get: () => 80,
+      });
+    }
+
+    await act(async () => {
+      fireEvent(window, new Event('resize'));
+    });
+
+    await waitFor(() => {
+      expect(firstAnchor.style.top).toBe('100px');
+      expect(secondAnchor.style.top).toBe('192px');
+    });
+
+    const firstTop = Number.parseFloat(firstAnchor.style.top);
+    const secondTop = Number.parseFloat(secondAnchor.style.top);
+    expect(secondTop).toBeGreaterThan(firstTop);
+    expect(secondTop - firstTop).toBe(92);
+  });
+
+  it('falls back to flow layout when desktop positioning is unavailable', () => {
+    vi.unstubAllGlobals();
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        comments={[
+          makeThread({ id: 'first', quote: 'initialize lazily' }),
+          makeThread({ id: 'second', quote: 'preview starts' }),
+        ]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId('comment-anchor-first'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('comment-anchor-second'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('comment-anchor-stack')).toHaveClass('space-y-4');
+    expect(
+      screen
+        .getAllByTestId('comment-thread-quote')
+        .map((node) => node.textContent),
+    ).toEqual(['initialize lazily', 'preview starts']);
   });
 });
