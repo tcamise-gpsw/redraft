@@ -37,7 +37,7 @@ export function AppLayout({ sidebar, main, aside }: AppLayoutProps) {
       </div>
 
       <div
-        className="mx-auto max-w-[1600px] lg:grid lg:min-h-[calc(100vh-65px)] lg:grid-cols-[240px_minmax(0,1fr)_320px]"
+        className="mx-auto max-w-[1920px] lg:grid lg:min-h-[calc(100vh-65px)] lg:grid-cols-[200px_minmax(0,1fr)_260px]"
         data-testid="app-layout"
       >
         <aside
