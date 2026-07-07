@@ -11,7 +11,7 @@ export function DocumentTree() {
   const { documents, underReview, isLoading, error } = useDocuments();
   const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [documentsExpanded, setDocumentsExpanded] = useState(true);
+  const [documentsExpanded, setDocumentsExpanded] = useState(false);
   const reviewPaths = useMemo(
     () => new Set(underReview.map((entry) => entry.path)),
     [underReview],
