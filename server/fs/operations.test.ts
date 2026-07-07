@@ -157,11 +157,11 @@ describe('filesystem operations', () => {
   });
 
   it('lists review entries with unresolved thread counts', async () => {
-    await mkdir(join(basePath, '.redraft', 'comments', 'docs'), {
+    await mkdir(join(basePath, '.redraft', 'comments', 'main', 'docs'), {
       recursive: true,
     });
     await writeFileText(
-      join(basePath, '.redraft', 'comments', 'README.comments.json'),
+      join(basePath, '.redraft', 'comments', 'main', 'README.comments.json'),
       JSON.stringify({
         version: 1,
         comments: [
@@ -190,7 +190,14 @@ describe('filesystem operations', () => {
       'utf8',
     );
     await writeFileText(
-      join(basePath, '.redraft', 'comments', 'docs', 'arch.comments.json'),
+      join(
+        basePath,
+        '.redraft',
+        'comments',
+        'main',
+        'docs',
+        'arch.comments.json',
+      ),
       JSON.stringify({
         version: 1,
         comments: [
@@ -224,6 +231,38 @@ describe('filesystem operations', () => {
     expect(entries).toEqual([
       { path: 'docs/arch.md', unresolvedCount: 2 },
       { path: 'README.md', unresolvedCount: 1 },
+    ]);
+  });
+
+  it('scopes review entries to the requested document branch namespace', async () => {
+    await mkdir(join(basePath, '.redraft', 'comments', 'main'), {
+      recursive: true,
+    });
+    await mkdir(join(basePath, '.redraft', 'comments', 'feature--docs'), {
+      recursive: true,
+    });
+    await writeFileText(
+      join(basePath, '.redraft', 'comments', 'main', 'README.comments.json'),
+      JSON.stringify({ version: 1, comments: [{ resolved: false }] }),
+      'utf8',
+    );
+    await writeFileText(
+      join(
+        basePath,
+        '.redraft',
+        'comments',
+        'feature--docs',
+        'README.comments.json',
+      ),
+      JSON.stringify({
+        version: 1,
+        comments: [{ resolved: false }, { resolved: false }],
+      }),
+      'utf8',
+    );
+
+    await expect(listReviewEntries(basePath, 'feature/docs')).resolves.toEqual([
+      { path: 'README.md', unresolvedCount: 2 },
     ]);
   });
 
