@@ -16,6 +16,8 @@ const state = vi.hoisted(() => {
     };
     repos = {
       getContent: vi.fn(),
+      get: vi.fn(),
+      listBranches: vi.fn(),
       createOrUpdateFileContents: vi.fn(),
       listCommits: vi.fn(),
     };
@@ -115,6 +117,47 @@ describe('GitHubClient', () => {
     await expect(client.validateAuth()).rejects.toBeInstanceOf(AuthError);
   });
 
+  it('listBranches returns branch names from repos.listBranches', async () => {
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
+    const octokit = state.instances[0]!;
+
+    octokit.repos.listBranches.mockResolvedValue({
+      data: [{ name: 'main' }, { name: 'dev' }],
+      headers: responseHeaders,
+    });
+
+    await expect(client.listBranches()).resolves.toEqual(['main', 'dev']);
+    expect(octokit.repos.listBranches).toHaveBeenCalledWith({
+      owner: 'acme',
+      repo: 'workspace',
+      per_page: 100,
+    });
+  });
+
+  it('getDefaultBranch returns data.default_branch from repos.get', async () => {
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
+    const octokit = state.instances[0]!;
+
+    octokit.repos.get.mockResolvedValue({
+      data: { default_branch: 'main' },
+      headers: responseHeaders,
+    });
+
+    await expect(client.getDefaultBranch()).resolves.toBe('main');
+    expect(octokit.repos.get).toHaveBeenCalledWith({
+      owner: 'acme',
+      repo: 'workspace',
+    });
+  });
+
   it('getTree includes markdown blobs and comment sidecars, excludes other files', async () => {
     const client = new GitHubClient({
       pat: 'ghp_test',
@@ -150,7 +193,7 @@ describe('GitHubClient', () => {
     ]);
   });
 
-  it('getFileContent decodes base64 and returns sha', async () => {
+  it('getFileContent passes ref to repos.getContent and decodes base64', async () => {
     const client = new GitHubClient({
       pat: 'ghp_test',
       owner: 'acme',
@@ -167,9 +210,17 @@ describe('GitHubClient', () => {
       headers: responseHeaders,
     });
 
-    await expect(client.getFileContent('docs/doc.md')).resolves.toEqual({
+    await expect(
+      client.getFileContent('docs/doc.md', { ref: 'dev' }),
+    ).resolves.toEqual({
       content: '# Draft\n',
       sha: 'doc-sha',
+    });
+    expect(octokit.repos.getContent).toHaveBeenCalledWith({
+      owner: 'acme',
+      repo: 'workspace',
+      path: 'docs/doc.md',
+      ref: 'dev',
     });
   });
 
@@ -209,7 +260,7 @@ describe('GitHubClient', () => {
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
-  it('createFile writes without sha and returns the new sha', async () => {
+  it('createFile passes branch to repos.createOrUpdateFileContents and returns the new sha', async () => {
     const client = new GitHubClient({
       pat: 'ghp_test',
       owner: 'acme',
@@ -227,14 +278,16 @@ describe('GitHubClient', () => {
     });
 
     await expect(
-      client.createFile('docs/new.md', '# Draft\n', 'Add document'),
+      client.createFile('docs/new.md', '# Draft\n', 'Add document', 'dev'),
     ).resolves.toEqual({ sha: 'new-sha' });
-    expect(octokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
-      expect.objectContaining({
-        path: 'docs/new.md',
-        message: 'Add document',
-      }),
-    );
+    expect(octokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith({
+      owner: 'acme',
+      repo: 'workspace',
+      path: 'docs/new.md',
+      message: 'Add document',
+      content: Buffer.from('# Draft\n', 'utf8').toString('base64'),
+      branch: 'dev',
+    });
   });
 
   it('updateFile sends sha and throws ConflictError on mismatch', async () => {
@@ -255,7 +308,44 @@ describe('GitHubClient', () => {
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
-  it('getLatestCommit returns the newest commit info for a path', async () => {
+  it('updateFile passes branch to repos.createOrUpdateFileContents and returns the new sha', async () => {
+    const client = new GitHubClient({
+      pat: 'ghp_test',
+      owner: 'acme',
+      repo: 'workspace',
+    });
+    const octokit = state.instances[0]!;
+
+    octokit.repos.createOrUpdateFileContents.mockResolvedValue({
+      data: {
+        content: {
+          sha: 'updated-sha',
+        },
+      },
+      headers: responseHeaders,
+    });
+
+    await expect(
+      client.updateFile(
+        'docs/doc.md',
+        '# Updated\n',
+        'doc-sha',
+        'Update',
+        'dev',
+      ),
+    ).resolves.toEqual({ sha: 'updated-sha' });
+    expect(octokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith({
+      owner: 'acme',
+      repo: 'workspace',
+      path: 'docs/doc.md',
+      message: 'Update',
+      sha: 'doc-sha',
+      content: Buffer.from('# Updated\n', 'utf8').toString('base64'),
+      branch: 'dev',
+    });
+  });
+
+  it('getLatestCommit passes sha to repos.listCommits and returns the newest commit info for a path', async () => {
     const client = new GitHubClient({
       pat: 'ghp_test',
       owner: 'acme',
@@ -279,13 +369,22 @@ describe('GitHubClient', () => {
       headers: responseHeaders,
     });
 
-    await expect(client.getLatestCommit('docs/doc.md')).resolves.toEqual({
-      author: {
-        login: 'jdoe',
-        avatarUrl: 'https://example.com/avatar.png',
+    await expect(client.getLatestCommit('docs/doc.md', 'dev')).resolves.toEqual(
+      {
+        author: {
+          login: 'jdoe',
+          avatarUrl: 'https://example.com/avatar.png',
+        },
+        date: '2026-06-21T05:00:00Z',
+        message: 'Update document',
       },
-      date: '2026-06-21T05:00:00Z',
-      message: 'Update document',
+    );
+    expect(octokit.repos.listCommits).toHaveBeenCalledWith({
+      owner: 'acme',
+      repo: 'workspace',
+      path: 'docs/doc.md',
+      per_page: 1,
+      sha: 'dev',
     });
   });
 
