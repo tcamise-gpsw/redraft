@@ -170,17 +170,18 @@ Creates an empty orphan branch, then switches back to the previous branch.
 | Write conflict (SHA mismatch on sidecar file)  | Existing behavior preserved: "File was modified since you loaded it."                                                                                                                                                                                                                                                                                                                                  |
 | `sidecarBranch === branch`                     | Single tree fetch optimization. Path scheme still includes the sanitized branch subdirectory — functionally correct, just redundant nesting.                                                                                                                                                                                                                                                           |
 
-### Migration
-
-This is a **breaking change** for existing sidecar file paths. Existing comments at `.redraft/comments/<path>.comments.json` will not be found at the new location `.redraft/comments/<branch>/<path>.comments.json` on the new sidecar branch.
-
-**Migration path:** Since ReDraft is pre-release and sidecar data is low-stakes (review comments, not source code), no automated migration is needed. Document in the changelog that existing comments need to be manually moved if anyone has them. Alternatively, provide a one-time migration script that:
-
-1. Reads all files under `.redraft/comments/` on the current branch
-2. Copies them to `.redraft/comments/<current-branch>/` on the sidecar branch
-3. Removes them from the document branch
-
 ### Testing
+
+#### Test Fixtures Submodule (`test-fixtures/` → `tcamise-gpsw/redraft-test-repo`)
+
+The test-fixtures submodule must be updated as part of this work:
+
+- **Update existing sidecar paths** — Move `.redraft/comments/api-design-v2.comments.json` to `.redraft/comments/main/api-design-v2.comments.json` (new branch-namespaced path scheme).
+- **Create a `redraft` branch** — Add an orphan `redraft` branch to the test repo containing the branch-namespaced sidecar files. This exercises the remote-mode dual-tree-fetch path.
+- **Add a second document branch fixture** — Optionally add sidecar files under a `feature--example` subdirectory to test multi-branch sidecar detection.
+- **Update the submodule ref** — Bump the submodule pointer in the main repo after pushing changes to `redraft-test-repo`.
+
+#### Test Matrix
 
 | Area                         | Test Type      | What to Verify                                                                                 |
 | ---------------------------- | -------------- | ---------------------------------------------------------------------------------------------- |
