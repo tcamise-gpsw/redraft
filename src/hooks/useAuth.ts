@@ -39,7 +39,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (pat: string, owner: string, repo: string) => Promise<void>;
   logout: () => void;
-  updateRepo: (owner: string, repo: string) => void;
+  updateRepo: (owner: string, repo: string, sidecarBranch?: string) => void;
   setBranch: (name: string) => void;
   setSidecarBranch: (name: string) => void;
 }
@@ -205,9 +205,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const updateRepo = useCallback(
-    (owner: string, repo: string) => {
+    (owner: string, repo: string, sidecarBranch?: string) => {
       if (localMode || !state.pat || !state.user) {
         return;
+      }
+
+      if (sidecarBranch) {
+        setStoredSidecarBranch(owner, repo, sidecarBranch);
       }
 
       const stored = {

@@ -24,7 +24,7 @@ async function resolveTreeBranch(
     );
     return stdout.trim() || ref;
   } catch {
-    return ref;
+    return 'main';
   }
 }
 

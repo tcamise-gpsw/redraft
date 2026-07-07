@@ -137,4 +137,18 @@ describe('GitHub tree-style routes', () => {
       { path: 'auth-overhaul.md', unresolvedCount: 1 },
     ]);
   });
+
+  it('uses main as the HEAD review namespace when git branch detection fails', async () => {
+    const app = buildGitHubApiRouter(basePath);
+
+    const response = await app.request(
+      'http://local.test/api/github/repos/local/redraft/git/trees/HEAD?recursive=1',
+    );
+    const body = (await response.json()) as TreeResponse;
+
+    expect(response.status).toBe(200);
+    expect(body.underReview).toEqual([
+      { path: 'nested/api-design-v2.md', unresolvedCount: 1 },
+    ]);
+  });
 });

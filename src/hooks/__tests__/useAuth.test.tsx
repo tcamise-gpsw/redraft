@@ -31,7 +31,7 @@ interface TestAuthContextValue {
   isAuthenticated: boolean;
   login: (pat: string, owner: string, repo: string) => Promise<void>;
   logout: () => void;
-  updateRepo: (owner: string, repo: string) => void;
+  updateRepo: (owner: string, repo: string, sidecarBranch?: string) => void;
   branch: string | null;
   defaultBranch: string | null;
   sidecarBranch: string | null;
@@ -199,6 +199,29 @@ describe('useAuth branch state', () => {
 
     expect(authState(result.current).sidecarBranch).toBe('review-data');
     expect(localStorage.getItem('redraft.sidecarBranch.acme/workspace')).toBe(
+      JSON.stringify('review-data'),
+    );
+  });
+
+  it('updateRepo persists the submitted sidecar branch for the target repository', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login('ghp_test', 'acme', 'workspace');
+    });
+
+    act(() => {
+      authState(result.current).updateRepo('octo', 'project', 'review-data');
+    });
+
+    await waitFor(() => {
+      expect(authState(result.current).repo).toEqual({
+        owner: 'octo',
+        repo: 'project',
+      });
+      expect(authState(result.current).sidecarBranch).toBe('review-data');
+    });
+    expect(localStorage.getItem('redraft.sidecarBranch.octo/project')).toBe(
       JSON.stringify('review-data'),
     );
   });
