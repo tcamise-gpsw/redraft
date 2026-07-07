@@ -160,6 +160,7 @@ describe('DocumentTree', () => {
         'api/new-document.md',
         '# New Document\n\n<!-- Write your document here -->',
         'Create document: new-document.md',
+        undefined,
       );
     });
   });
