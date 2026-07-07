@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const updateFile = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
 const showToast = vi.hoisted(() => vi.fn());
+const setBranch = vi.hoisted(() => vi.fn());
 
 vi.mock('../../lib/github/client', () => ({
   ConflictError: class ConflictError extends Error {},
@@ -20,6 +21,9 @@ vi.mock('../useAuth', () => ({
   useAuth: () => ({
     pat: 'ghp_test',
     repo: { owner: 'acme', repo: 'workspace' },
+    branch: 'dev',
+    defaultBranch: 'main',
+    setBranch,
   }),
 }));
 
@@ -74,12 +78,13 @@ describe('useDocumentEdit', () => {
       '# Updated\n',
       'doc-sha',
       'Update: arch.md',
+      'dev',
     );
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['document', 'docs/arch.md', 'content'],
+      queryKey: ['document', 'docs/arch.md', 'content', 'dev'],
     });
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['document', 'docs/arch.md', 'commit'],
+      queryKey: ['document', 'docs/arch.md', 'commit', 'dev'],
     });
     expect(navigate).toHaveBeenCalledWith('/d/docs/arch.md');
     expect(showToast).toHaveBeenCalledWith({

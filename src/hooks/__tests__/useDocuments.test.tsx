@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getTree = vi.hoisted(() => vi.fn());
 const getFileContent = vi.hoisted(() => vi.fn());
+const setBranch = vi.hoisted(() => vi.fn());
 
 vi.mock('../../lib/github/client', () => ({
   GitHubClient: class GitHubClient {
@@ -21,6 +22,9 @@ vi.mock('../useAuth', () => ({
   useAuth: () => ({
     pat: 'ghp_test',
     repo: { owner: 'acme', repo: 'workspace' },
+    branch: 'dev',
+    defaultBranch: 'main',
+    setBranch,
   }),
 }));
 
@@ -61,6 +65,10 @@ describe('useDocuments (remote mode)', () => {
     const { result } = renderHook(() => useDocuments(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(getTree).toHaveBeenCalledWith('dev');
+    expect(
+      queryClient.getQueryState(['documents', 'tree', 'dev']),
+    ).toBeDefined();
 
     // Only auth-overhaul has a sidecar → only it is under review
     expect(result.current.underReview).toEqual([

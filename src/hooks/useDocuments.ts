@@ -87,7 +87,7 @@ async function fetchLocalTree(baseUrl: string, owner: string, repo: string) {
 }
 
 export function useDocuments() {
-  const { pat, repo } = useAuth();
+  const { pat, repo, branch } = useAuth();
   const localMode = isLocalMode();
 
   const client = useMemo(() => {
@@ -104,7 +104,7 @@ export function useDocuments() {
   }, [pat, repo]);
 
   const query = useQuery({
-    queryKey: ['documents', 'tree'],
+    queryKey: ['documents', 'tree', branch],
     queryFn: async () => {
       if (!client || !repo) {
         return {
@@ -125,7 +125,7 @@ export function useDocuments() {
         };
       }
 
-      const items = await client.getTree();
+      const items = await client.getTree(branch ?? undefined);
 
       // Separate markdown blobs from comment sidecars.
       // getTree() returns both in a single API call — no per-file probing.

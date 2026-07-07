@@ -7,7 +7,7 @@ import { getApiBaseUrl } from '../lib/mode';
 import type { CommitInfo } from '../lib/github/types';
 
 export function useDocument(path: string) {
-  const { pat, repo } = useAuth();
+  const { pat, repo, branch } = useAuth();
 
   const client = useMemo(() => {
     if (!pat || !repo) {
@@ -23,25 +23,25 @@ export function useDocument(path: string) {
   }, [pat, repo]);
 
   const contentQuery = useQuery({
-    queryKey: ['document', path, 'content'],
+    queryKey: ['document', path, 'content', branch],
     queryFn: async () => {
       if (!client) {
         throw new Error('Authentication is required');
       }
 
-      return client.getFileContent(path);
+      return client.getFileContent(path, { ref: branch ?? undefined });
     },
     enabled: Boolean(client),
   });
 
   const commitQuery = useQuery({
-    queryKey: ['document', path, 'commit'],
+    queryKey: ['document', path, 'commit', branch],
     queryFn: async () => {
       if (!client) {
         throw new Error('Authentication is required');
       }
 
-      return client.getLatestCommit(path);
+      return client.getLatestCommit(path, branch ?? undefined);
     },
     enabled: Boolean(client),
   });

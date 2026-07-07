@@ -8,7 +8,7 @@ import { useAuth } from './useAuth';
 import { useToast } from './useToast';
 
 export function useDocumentEdit(path: string) {
-  const { pat, repo } = useAuth();
+  const { pat, repo, branch } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -37,12 +37,13 @@ export function useDocumentEdit(path: string) {
         content,
         sha,
         `Update: ${path.split('/').at(-1) ?? path}`,
+        branch ?? undefined,
       );
       await queryClient.invalidateQueries({
-        queryKey: ['document', path, 'content'],
+        queryKey: ['document', path, 'content', branch],
       });
       await queryClient.invalidateQueries({
-        queryKey: ['document', path, 'commit'],
+        queryKey: ['document', path, 'commit', branch],
       });
       navigate(`/d/${path}`);
       showToast({ tone: 'info', title: 'Document saved' });

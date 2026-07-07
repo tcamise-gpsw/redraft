@@ -20,7 +20,7 @@ function fileName(path: string): string {
 }
 
 export function useComments(path: string) {
-  const { pat, repo } = useAuth();
+  const { pat, repo, branch } = useAuth();
 
   // Local draft state — mutations never touch the network directly.
   // saveComments() flushes the full state in a single write.
@@ -46,11 +46,14 @@ export function useComments(path: string) {
   // One load per path. staleTime: Infinity prevents automatic re-fetches;
   // the local store is the source of truth until a hard reload.
   const commentsQuery = useQuery({
-    queryKey: ['document', path, 'comments'],
+    queryKey: ['document', path, 'comments', branch],
     queryFn: async () => {
       if (!client) throw new Error('Authentication is required');
       return (
-        (await client.getFileContent(commentsPath, { optional: true })) ?? null
+        (await client.getFileContent(commentsPath, {
+          optional: true,
+          ref: branch ?? undefined,
+        })) ?? null
       );
     },
     enabled: Boolean(client),
@@ -138,6 +141,7 @@ export function useComments(path: string) {
           content,
           localSha,
           `Update comments on ${fileName(path)}`,
+          branch ?? undefined,
         );
         setLocalSha(result.sha);
       } else {
@@ -145,6 +149,7 @@ export function useComments(path: string) {
           commentsPath,
           content,
           `Add comments on ${fileName(path)}`,
+          branch ?? undefined,
         );
         setLocalSha(result.sha);
       }
