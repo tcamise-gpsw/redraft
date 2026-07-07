@@ -20,14 +20,14 @@ export function DocumentTree() {
   return (
     <section className="flex h-full flex-col gap-4">
       <BranchSelector />
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
           Documents
         </h2>
         <button
           type="button"
           onClick={() => setDialogOpen(true)}
-          className="whitespace-nowrap rounded-md bg-cyan-500 px-2 py-1 text-xs font-medium text-slate-950 transition hover:bg-cyan-400"
+          className="w-full rounded-md bg-cyan-500 px-2 py-1 text-xs font-medium text-slate-950 transition hover:bg-cyan-400"
         >
           New Document
         </button>

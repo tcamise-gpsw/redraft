@@ -110,7 +110,7 @@ export function BranchSelector() {
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-30 mt-2 min-w-full w-max max-w-[360px] rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-lg">
+        <div className="absolute left-0 top-full z-30 mt-2 min-w-full w-max max-w-[540px] rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-lg">
           <input
             type="text"
             value={filter}
