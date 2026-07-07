@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -22,7 +22,7 @@ vi.mock('../../lib/mode', () => ({
   getApiBaseUrl,
 }));
 
-import { AuthProvider, useAuth } from '../useAuth';
+import { AuthProvider, BRANCH_WARNING_EVENT, useAuth } from '../useAuth';
 
 interface TestAuthContextValue {
   user: { login: string; avatarUrl: string } | null;
@@ -132,5 +132,92 @@ describe('useAuth branch state', () => {
     expect(authState(result.current).branch).toBeNull();
     expect(authState(result.current).defaultBranch).toBeNull();
     expect(localStorage.getItem('redraft.branch.local/redraft')).toBeNull();
+  });
+  it('restores persisted branch from localStorage on mount with stored auth', async () => {
+    localStorage.setItem(
+      'redraft.auth',
+      JSON.stringify({
+        pat: 'ghp_test',
+        owner: 'acme',
+        repo: 'workspace',
+        user: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
+      }),
+    );
+    localStorage.setItem(
+      'redraft.branch.acme/workspace',
+      JSON.stringify('feature/my-branch'),
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() =>
+      expect(authState(result.current).branch).toBe('feature/my-branch'),
+    );
+    expect(authState(result.current).defaultBranch).toBe('main');
+  });
+
+  it('dispatches BRANCH_WARNING_EVENT and falls back to stored branch when getDefaultBranch fails', async () => {
+    getDefaultBranch.mockReset().mockRejectedValue(new Error('network error'));
+    localStorage.setItem(
+      'redraft.branch.acme/workspace',
+      JSON.stringify('feature/fallback'),
+    );
+
+    const warned: Event[] = [];
+    const handler = (e: Event) => warned.push(e);
+    window.addEventListener(BRANCH_WARNING_EVENT, handler);
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login('ghp_test', 'acme', 'workspace');
+    });
+
+    window.removeEventListener(BRANCH_WARNING_EVENT, handler);
+
+    expect(warned.length).toBeGreaterThanOrEqual(1);
+    expect(authState(result.current).defaultBranch).toBeNull();
+    expect(authState(result.current).branch).toBe('feature/fallback');
+  });
+
+  it('resets both branch and defaultBranch to null after logout', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login('ghp_test', 'acme', 'workspace');
+    });
+
+    expect(authState(result.current).branch).toBe('main');
+
+    act(() => {
+      authState(result.current).logout();
+    });
+
+    expect(authState(result.current).branch).toBeNull();
+    expect(authState(result.current).defaultBranch).toBeNull();
+  });
+
+  it('updateRepo resets branch state then resolves to new repo default', async () => {
+    // Use default mock ('main') so all login + side-effect calls resolve to 'main'.
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login('ghp_test', 'acme', 'workspace');
+    });
+
+    // Wait for all effects to settle on 'main' before changing the mock.
+    await waitFor(() => expect(authState(result.current).branch).toBe('main'));
+
+    // Now any new getDefaultBranch call (from updateRepo's loadBranchState) returns 'develop'.
+    getDefaultBranch.mockResolvedValue('develop');
+
+    act(() => {
+      authState(result.current).updateRepo('acme', 'platform');
+    });
+
+    await waitFor(() =>
+      expect(authState(result.current).branch).toBe('develop'),
+    );
+    expect(authState(result.current).defaultBranch).toBe('develop');
   });
 });

@@ -29,7 +29,7 @@ export function BranchSelector() {
   }, [pat, repo]);
 
   const branchesQuery = useQuery({
-    queryKey: ['branches'],
+    queryKey: ['branches', repo?.owner, repo?.repo],
     queryFn: () => client!.listBranches(),
     enabled: Boolean(client) && !localMode,
     staleTime: 5 * 60 * 1000,

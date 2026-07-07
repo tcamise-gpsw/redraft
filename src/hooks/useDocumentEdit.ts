@@ -31,13 +31,21 @@ export function useDocumentEdit(path: string) {
       throw new Error('Authentication is required');
     }
 
+    if (branch === null) {
+      showToast({
+        tone: 'error',
+        title: 'Branch is still loading. Please wait and try again.',
+      });
+      return;
+    }
+
     try {
       await client.updateFile(
         path,
         content,
         sha,
         `Update: ${path.split('/').at(-1) ?? path}`,
-        branch ?? undefined,
+        branch,
       );
       await queryClient.invalidateQueries({
         queryKey: ['document', path, 'content', branch],
