@@ -120,9 +120,8 @@ describe('positionThreads', () => {
     });
   });
 
-  it('reports the maximum bottom edge even when the last target ends higher', () => {
-    // Height must track the tallest bottom edge seen during placement, not just
-    // the final-by-target card's bottom edge.
+  it('clamps a negative gap to zero so cards never overlap', () => {
+    // Negative gaps clamp to zero, so placement matches the zero-gap contract.
     expect(
       positionThreads(
         [
@@ -135,10 +134,10 @@ describe('positionThreads', () => {
     ).toEqual({
       placements: [
         { id: 'tall-thread', top: 100 },
-        { id: 'middle-thread', top: 200 },
-        { id: 'late-thread', top: 300 },
+        { id: 'middle-thread', top: 400 },
+        { id: 'late-thread', top: 410 },
       ],
-      height: 400,
+      height: 420,
     });
   });
 

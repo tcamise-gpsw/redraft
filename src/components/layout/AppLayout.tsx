@@ -45,7 +45,7 @@ function ResizeHandle({
     <div
       role="separator"
       aria-orientation="vertical"
-      className="group relative z-10 flex w-3 shrink-0 cursor-col-resize select-none items-center justify-center"
+      className="group relative z-10 hidden w-3 shrink-0 cursor-col-resize select-none items-center justify-center lg:flex"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
