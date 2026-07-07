@@ -296,10 +296,10 @@ Integration with `DocumentTree`:
 
 **Checks:**
 
-- [ ] Full test suite passes: `npx vitest run`
-- [ ] Type check passes: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
-- [ ] Lint passes: `npx eslint src/ server/`
-- [ ] Format check passes: `npx prettier --check src/ server/`
-- [ ] All acceptance criteria from Tasks 1–4 verified end-to-end
-- [ ] No regressions: existing tests for auth, documents, comments, and document tree still pass
-- [ ] Local mode unaffected: `BranchSelector` does not render, hooks pass `undefined` for branch params
+- [x] Full test suite passes: `npx vitest run`
+- [x] Type check passes: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
+- [x] Lint passes: `npx eslint src/ server/`
+- [x] Format check passes: `npx prettier --check src/ server/`
+- [x] All acceptance criteria from Tasks 1–4 verified end-to-end
+- [x] No regressions: existing tests for auth, documents, comments, and document tree still pass
+- [x] Local mode unaffected: `BranchSelector` does not render, hooks pass `undefined` for branch params

@@ -5,12 +5,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const validateAuth = vi.hoisted(() => vi.fn());
+const getDefaultBranch = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../lib/github/client', () => ({
   AuthError: class AuthError extends Error {},
   NetworkError: class NetworkError extends Error {},
   GitHubClient: class GitHubClient {
     validateAuth = validateAuth;
+    getDefaultBranch = getDefaultBranch;
   },
 }));
 
@@ -33,6 +35,7 @@ describe('AuthGate', () => {
     vi.stubGlobal('localStorage', createLocalStorageMock());
     localStorage.clear();
     validateAuth.mockReset();
+    getDefaultBranch.mockReset().mockResolvedValue('main');
   });
 
   it('renders the auth form when there is no stored auth', () => {
@@ -52,7 +55,7 @@ describe('AuthGate', () => {
     expect(screen.queryByText('private content')).not.toBeInTheDocument();
   });
 
-  it('renders children when stored auth exists', () => {
+  it('renders children when stored auth exists', async () => {
     localStorage.setItem(
       'redraft.auth',
       JSON.stringify({
@@ -72,6 +75,7 @@ describe('AuthGate', () => {
     );
 
     expect(screen.getByText('private content')).toBeInTheDocument();
+    await waitFor(() => expect(getDefaultBranch).toHaveBeenCalled());
   });
 
   it('shows an error for invalid PAT responses', async () => {
