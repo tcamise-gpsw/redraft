@@ -10,6 +10,7 @@ const getFileContent = vi.hoisted(() => vi.fn());
 const createFile = vi.hoisted(() => vi.fn());
 const updateFile = vi.hoisted(() => vi.fn());
 const setBranch = vi.hoisted(() => vi.fn());
+const setSidecarBranch = vi.hoisted(() => vi.fn());
 
 vi.mock('../../lib/github/client', () => ({
   ConflictError: class ConflictError extends Error {},
@@ -26,7 +27,9 @@ vi.mock('../useAuth', () => ({
     repo: { owner: 'acme', repo: 'workspace' },
     branch: 'dev',
     defaultBranch: 'main',
+    sidecarBranch: 'redraft',
     setBranch,
+    setSidecarBranch,
   }),
 }));
 
@@ -61,6 +64,7 @@ describe('useComments – local state', () => {
     createFile.mockReset();
     updateFile.mockReset();
     setBranch.mockReset();
+    setSidecarBranch.mockReset();
   });
 
   it('starts empty and not dirty when no comments file exists', async () => {
@@ -75,11 +79,17 @@ describe('useComments – local state', () => {
     expect(result.current.threads).toEqual([]);
     expect(result.current.isDirty).toBe(false);
     expect(getFileContent).toHaveBeenCalledWith(
-      '.redraft/comments/docs/doc.comments.json',
-      { optional: true, ref: 'dev' },
+      '.redraft/comments/dev/docs/doc.comments.json',
+      { optional: true, ref: 'redraft' },
     );
     expect(
-      queryClient.getQueryState(['document', 'docs/doc.md', 'comments', 'dev']),
+      queryClient.getQueryState([
+        'document',
+        'docs/doc.md',
+        'comments',
+        'dev',
+        'redraft',
+      ]),
     ).toBeDefined();
   });
 
@@ -301,6 +311,7 @@ describe('useComments – saveComments', () => {
     createFile.mockReset();
     updateFile.mockReset();
     setBranch.mockReset();
+    setSidecarBranch.mockReset();
   });
 
   it('calls createFile when no comments file exists yet', async () => {
@@ -328,10 +339,10 @@ describe('useComments – saveComments', () => {
     });
 
     expect(createFile).toHaveBeenCalledWith(
-      '.redraft/comments/docs/doc.comments.json',
+      '.redraft/comments/dev/docs/doc.comments.json',
       expect.stringContaining('"body":"Question"'),
       'Add comments on doc.md',
-      'dev',
+      'redraft',
     );
     expect(result.current.isDirty).toBe(false);
     expect(result.current.isSaving).toBe(false);
@@ -359,11 +370,11 @@ describe('useComments – saveComments', () => {
     });
 
     expect(updateFile).toHaveBeenCalledWith(
-      '.redraft/comments/docs/doc.comments.json',
+      '.redraft/comments/dev/docs/doc.comments.json',
       expect.stringContaining('"resolved":true'),
       'load-sha',
       'Update comments on doc.md',
-      'dev',
+      'redraft',
     );
     expect(result.current.isDirty).toBe(false);
   });
@@ -402,10 +413,10 @@ describe('useComments – saveComments', () => {
 
     expect(updateFile).toHaveBeenCalledTimes(1);
     const [path, content, sha, message, branch] = updateFile.mock.calls[0];
-    expect(path).toBe('.redraft/comments/docs/doc.comments.json');
+    expect(path).toBe('.redraft/comments/dev/docs/doc.comments.json');
     expect(sha).toBe('load-sha');
     expect(message).toBe('Update comments on doc.md');
-    expect(branch).toBe('dev');
+    expect(branch).toBe('redraft');
     expect(JSON.parse(content)).toEqual({
       version: 1,
       comments: [otherThread],
@@ -455,11 +466,11 @@ describe('useComments – saveComments', () => {
     });
 
     expect(updateFile).toHaveBeenCalledWith(
-      '.redraft/comments/docs/doc.comments.json',
+      '.redraft/comments/dev/docs/doc.comments.json',
       expect.stringContaining('"body":"second"'),
       'created-sha',
       'Update comments on doc.md',
-      'dev',
+      'redraft',
     );
   });
 
