@@ -50,7 +50,7 @@ describe('AppLayout', () => {
       />,
     );
 
-    expect(screen.getByTestId('app-layout')).toHaveClass('lg:grid');
+    expect(screen.getByTestId('app-layout')).toHaveClass('lg:flex');
     expect(screen.getByTestId('app-layout-sidebar')).toHaveTextContent('tree');
     expect(screen.getByTestId('app-layout-main')).toHaveTextContent('document');
     expect(screen.getByTestId('app-layout-aside')).toHaveTextContent(
