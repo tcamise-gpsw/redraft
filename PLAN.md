@@ -211,28 +211,28 @@ When the sidecar tree fetch returns a 404 (branch doesn't exist):
 
 **Checklist:**
 
-- [ ] Local `commentPath` removed, shared import used
-- [ ] `sidecarBranch` from `useAuth()` used
-- [ ] `Promise.all` for dual tree fetch when branches differ
-- [ ] Sidecar paths filtered to `.redraft/comments/<sanitized-branch>/` prefix (not the broad `.redraft/comments/` prefix)
-- [ ] Single tree fetch when `sidecarBranch === branch`
-- [ ] Under-review detection uses `commentPath(item.path, branch)` for matching
-- [ ] Query key includes both `branch` and `sidecarBranch`
-- [ ] 404 on sidecar tree fetch shows toast, doesn't fail the query
-- [ ] Document tree still loads when sidecar tree is unavailable
+- [x] Local `commentPath` removed, shared import used
+- [x] `sidecarBranch` from `useAuth()` used
+- [x] `Promise.all` for dual tree fetch when branches differ
+- [x] Sidecar paths filtered to `.redraft/comments/<sanitized-branch>/` prefix (not the broad `.redraft/comments/` prefix)
+- [x] Single tree fetch when `sidecarBranch === branch`
+- [x] Under-review detection uses `commentPath(item.path, branch)` for matching
+- [x] Query key includes both `branch` and `sidecarBranch`
+- [x] 404 on sidecar tree fetch shows toast, doesn't fail the query
+- [x] Document tree still loads when sidecar tree is unavailable
 
 **Tests:**
 
-- [ ] `npx vitest run src/hooks/__tests__/useDocuments.test.tsx`
-- [ ] Update mock `useAuth` to include `sidecarBranch`
-- [ ] Test dual tree fetch: mock `getTree` to return different results for doc branch vs sidecar branch; verify under-review detection uses sidecar tree data
-- [ ] Test single tree fetch: when `sidecarBranch === branch`, verify one `getTree` call
-- [ ] Test sidecar branch 404: mock `getTree` to throw for sidecar branch, verify documents still load and toast is dispatched
-- [ ] Test branch-namespaced sidecar detection: sidecar at `.redraft/comments/dev/docs/auth.comments.json` correctly matches `docs/auth.md` when document branch is `dev`
+- [x] `npx vitest run src/hooks/__tests__/useDocuments.test.tsx`
+- [x] Update mock `useAuth` to include `sidecarBranch`
+- [x] Test dual tree fetch: mock `getTree` to return different results for doc branch vs sidecar branch; verify under-review detection uses sidecar tree data
+- [x] Test single tree fetch: when `sidecarBranch === branch`, verify one `getTree` call
+- [x] Test sidecar branch 404: mock `getTree` to throw for sidecar branch, verify documents still load and toast is dispatched
+- [x] Test branch-namespaced sidecar detection: sidecar at `.redraft/comments/dev/docs/auth.comments.json` correctly matches `docs/auth.md` when document branch is `dev`
 
 **Commit:**
 
-- [ ] Read `'/Users/tcamise/.claude/skills/commit/SKILL.md'`, commit with message like `feat: dual tree fetch for sidecar branch detection`
+- [x] Read `skill://commit`, commit with message like `feat: dual tree fetch for sidecar branch detection`
 
 ### Task 5: Settings UI — Comments Branch Input
 

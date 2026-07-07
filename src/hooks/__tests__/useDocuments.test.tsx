@@ -10,8 +10,27 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const getTree = vi.hoisted(() => vi.fn());
 const getFileContent = vi.hoisted(() => vi.fn());
 const setBranch = vi.hoisted(() => vi.fn());
+const showToast = vi.hoisted(() => vi.fn());
+
+const TestNotFoundError = vi.hoisted(
+  () =>
+    class TestNotFoundError extends Error {
+      readonly type = 'not_found';
+
+      constructor() {
+        super('Resource not found');
+        this.name = 'NotFoundError';
+      }
+    },
+);
+const setSidecarBranch = vi.hoisted(() => vi.fn());
+const authState = vi.hoisted(() => ({
+  branch: 'dev' as string | null,
+  sidecarBranch: 'redraft' as string | null,
+}));
 
 vi.mock('../../lib/github/client', () => ({
+  NotFoundError: TestNotFoundError,
   GitHubClient: class GitHubClient {
     getTree = getTree;
     getFileContent = getFileContent;
@@ -22,15 +41,21 @@ vi.mock('../useAuth', () => ({
   useAuth: () => ({
     pat: 'ghp_test',
     repo: { owner: 'acme', repo: 'workspace' },
-    branch: 'dev',
+    branch: authState.branch,
     defaultBranch: 'main',
+    sidecarBranch: authState.sidecarBranch,
     setBranch,
+    setSidecarBranch,
   }),
 }));
 
 vi.mock('../../lib/mode', () => ({
   isLocalMode: () => false,
   getApiBaseUrl: () => 'https://api.github.com',
+}));
+
+vi.mock('../useToast', () => ({
+  useToast: () => ({ showToast }),
 }));
 
 import { useDocuments } from '../useDocuments';
@@ -48,26 +73,37 @@ describe('useDocuments (remote mode)', () => {
     });
     getTree.mockReset();
     getFileContent.mockReset();
+    authState.branch = 'dev';
+    authState.sidecarBranch = 'redraft';
+    setSidecarBranch.mockReset();
+    showToast.mockReset();
   });
 
-  it('classifies under-review documents from tree data without calling getFileContent', async () => {
-    // Tree contains two markdown blobs and one matching sidecar
-    getTree.mockResolvedValue([
-      { path: 'docs/auth-overhaul.md', type: 'blob' },
-      { path: 'docs/architecture.md', type: 'blob' },
-      { path: 'README.md', type: 'blob' },
-      {
-        path: '.redraft/comments/docs/auth-overhaul.comments.json',
-        type: 'blob',
-      },
-    ]);
+  it('classifies under-review documents from a sidecar branch tree without calling getFileContent', async () => {
+    getTree.mockImplementation(async (branch: string) => {
+      if (branch === 'dev') {
+        return [
+          { path: 'docs/auth-overhaul.md', type: 'blob' },
+          { path: 'docs/architecture.md', type: 'blob' },
+          { path: 'README.md', type: 'blob' },
+        ];
+      }
+
+      return [
+        {
+          path: '.redraft/comments/dev/docs/auth-overhaul.comments.json',
+          type: 'blob',
+        },
+      ];
+    });
 
     const { result } = renderHook(() => useDocuments(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(getTree).toHaveBeenCalledWith('dev');
+    expect(getTree).toHaveBeenCalledWith('redraft');
     expect(
-      queryClient.getQueryState(['documents', 'tree', 'dev']),
+      queryClient.getQueryState(['documents', 'tree', 'dev', 'redraft']),
     ).toBeDefined();
 
     // Only auth-overhaul has a sidecar → only it is under review
@@ -99,13 +135,21 @@ describe('useDocuments (remote mode)', () => {
     expect(getFileContent).not.toHaveBeenCalled();
   });
 
-  it('marks every markdown blob whose sidecar appears in the tree as under review', async () => {
-    getTree.mockResolvedValue([
-      { path: 'rfc-001.md', type: 'blob' },
-      { path: 'rfc-002.md', type: 'blob' },
-      { path: '.redraft/comments/rfc-001.comments.json', type: 'blob' },
-      { path: '.redraft/comments/rfc-002.comments.json', type: 'blob' },
-    ]);
+  it('marks every markdown blob whose branch-namespaced sidecar appears in the sidecar tree as under review', async () => {
+    getTree.mockImplementation(async (branch: string) => {
+      if (branch === 'dev') {
+        return [
+          { path: 'rfc-001.md', type: 'blob' },
+          { path: 'rfc-002.md', type: 'blob' },
+        ];
+      }
+
+      return [
+        { path: '.redraft/comments/dev/rfc-001.comments.json', type: 'blob' },
+        { path: '.redraft/comments/dev/rfc-002.comments.json', type: 'blob' },
+        { path: '.redraft/comments/main/rfc-999.comments.json', type: 'blob' },
+      ];
+    });
 
     const { result } = renderHook(() => useDocuments(), { wrapper });
 
@@ -117,6 +161,52 @@ describe('useDocuments (remote mode)', () => {
       'rfc-002.md',
     ]);
     expect(getFileContent).not.toHaveBeenCalled();
+  });
+
+  it('uses a single tree fetch when the sidecar branch matches the document branch', async () => {
+    authState.sidecarBranch = 'dev';
+    getTree.mockResolvedValue([
+      { path: 'docs/auth-overhaul.md', type: 'blob' },
+      {
+        path: '.redraft/comments/dev/docs/auth-overhaul.comments.json',
+        type: 'blob',
+      },
+    ]);
+
+    const { result } = renderHook(() => useDocuments(), { wrapper });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(getTree).toHaveBeenCalledTimes(1);
+    expect(getTree).toHaveBeenCalledWith('dev');
+    expect(result.current.underReview).toEqual([
+      { path: 'docs/auth-overhaul.md', unresolvedCount: 0 },
+    ]);
+  });
+
+  it('keeps documents loaded and shows a toast when the sidecar branch is missing', async () => {
+    getTree.mockImplementation(async (branch: string) => {
+      if (branch === 'dev') {
+        return [{ path: 'docs/auth-overhaul.md', type: 'blob' }];
+      }
+
+      throw new TestNotFoundError();
+    });
+
+    const { result } = renderHook(() => useDocuments(), { wrapper });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(flattenTree(result.current.documents)).toEqual([
+      'docs/auth-overhaul.md',
+    ]);
+    expect(result.current.underReview).toEqual([]);
+    expect(result.current.error).toBeNull();
+    expect(showToast).toHaveBeenCalledWith({
+      tone: 'error',
+      title:
+        "Branch 'redraft' not found. Create it with the setup script or update the branch name in Settings.",
+    });
   });
 });
 
