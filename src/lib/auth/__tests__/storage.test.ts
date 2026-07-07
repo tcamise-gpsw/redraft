@@ -6,8 +6,10 @@ import {
   clearStoredAuth,
   getStoredAuth,
   getStoredBranch,
+  getStoredSidecarBranch,
   setStoredAuth,
   setStoredBranch,
+  setStoredSidecarBranch,
 } from '../storage';
 
 function createLocalStorageMock() {
@@ -85,5 +87,26 @@ describe('auth storage', () => {
     expect(localStorage.getItem('redraft.branch.acme/platform')).toBe(
       JSON.stringify('release'),
     );
+  });
+
+  it('round-trips a repo-specific sidecar branch through the sidecar storage key', () => {
+    setStoredSidecarBranch('acme', 'workspace', 'redraft');
+
+    expect(localStorage.getItem('redraft.sidecarBranch.acme/workspace')).toBe(
+      JSON.stringify('redraft'),
+    );
+    expect(getStoredSidecarBranch('acme', 'workspace')).toBe('redraft');
+  });
+
+  it('returns null when no sidecar branch is stored for the requested repo', () => {
+    expect(getStoredSidecarBranch('acme', 'workspace')).toBeNull();
+  });
+
+  it('stores sidecar branch selections independently per repository', () => {
+    setStoredSidecarBranch('acme', 'workspace', 'redraft');
+    setStoredSidecarBranch('acme', 'platform', 'review-data');
+
+    expect(getStoredSidecarBranch('acme', 'workspace')).toBe('redraft');
+    expect(getStoredSidecarBranch('acme', 'platform')).toBe('review-data');
   });
 });
