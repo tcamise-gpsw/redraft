@@ -18,6 +18,10 @@ import {
 } from '../types.js';
 
 const COMMENTS_ROOT = '.redraft/comments';
+
+function sanitizeBranch(branch: string): string {
+  return branch.replaceAll('/', '--');
+}
 const BUILT_IN_EXCLUDES = ['.git/', '.redraft/', 'node_modules/'];
 
 function resolvePath(basePath: string, relativePath: string): string {
@@ -129,7 +133,10 @@ async function walkMarkdownFilesInternal(
 
 async function walkCommentFiles(
   basePath: string,
-  currentPath = COMMENTS_ROOT,
+  branch?: string,
+  currentPath = branch
+    ? `${COMMENTS_ROOT}/${sanitizeBranch(branch)}`
+    : COMMENTS_ROOT,
 ): Promise<string[]> {
   const directoryPath = resolvePath(basePath, currentPath);
 
@@ -150,7 +157,9 @@ async function walkCommentFiles(
     const nextRelativePath = `${currentPath}/${entry.name}`;
 
     if (entry.isDirectory()) {
-      files.push(...(await walkCommentFiles(basePath, nextRelativePath)));
+      files.push(
+        ...(await walkCommentFiles(basePath, branch, nextRelativePath)),
+      );
       continue;
     }
 
@@ -165,9 +174,9 @@ async function walkCommentFiles(
 }
 
 function documentPathFromCommentPath(commentPath: string): string {
-  return commentPath
-    .slice(`${COMMENTS_ROOT}/`.length)
-    .replace(/\.comments\.json$/u, '.md');
+  const pathWithinComments = commentPath.slice(`${COMMENTS_ROOT}/`.length);
+  const [, ...documentParts] = pathWithinComments.split('/');
+  return documentParts.join('/').replace(/\.comments\.json$/u, '.md');
 }
 
 export function computeBlobSha(content: Buffer): string {
@@ -265,8 +274,9 @@ export async function walkMarkdownFiles(
 
 export async function listReviewEntries(
   basePath: string,
+  branch?: string,
 ): Promise<ReviewEntry[]> {
-  const commentFiles = await walkCommentFiles(basePath);
+  const commentFiles = await walkCommentFiles(basePath, branch);
   const entries = await Promise.all(
     commentFiles.map(async (commentPath) => {
       const { content } = await readFile(basePath, commentPath);

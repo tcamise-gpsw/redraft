@@ -1,10 +1,13 @@
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { buildGitHubApiRouter } from './index.js';
+const execGit = promisify(execFile);
 
 interface TreeResponse {
   documents: Array<{ path: string; type: 'blob' }>;
@@ -17,9 +20,15 @@ describe('GitHub tree-style routes', () => {
   beforeEach(async () => {
     basePath = await mkdtemp(join(tmpdir(), 'redraft-tree-'));
     await mkdir(join(basePath, 'nested'), { recursive: true });
-    await mkdir(join(basePath, '.redraft', 'comments', 'nested'), {
+    await mkdir(join(basePath, '.redraft', 'comments', 'main', 'nested'), {
       recursive: true,
     });
+    await mkdir(
+      join(basePath, '.redraft', 'comments', 'feature--docs', 'nested'),
+      {
+        recursive: true,
+      },
+    );
     await writeFile(join(basePath, 'auth-overhaul.md'), '# Auth\n', 'utf8');
     await writeFile(join(basePath, 'notes.txt'), 'ignore', 'utf8');
     await writeFile(
@@ -32,6 +41,7 @@ describe('GitHub tree-style routes', () => {
         basePath,
         '.redraft',
         'comments',
+        'main',
         'nested',
         'api-design-v2.comments.json',
       ),
@@ -52,12 +62,35 @@ describe('GitHub tree-style routes', () => {
       }),
       'utf8',
     );
+    await writeFile(
+      join(
+        basePath,
+        '.redraft',
+        'comments',
+        'feature--docs',
+        'auth-overhaul.comments.json',
+      ),
+      JSON.stringify({
+        version: 1,
+        comments: [
+          {
+            id: 'thread-feature',
+            quote: 'Auth',
+            quoteContext: { prefix: '', suffix: '' },
+            author: { login: 'local-user', avatarUrl: '' },
+            body: 'branch-specific comment',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            resolved: false,
+            replies: [],
+          },
+        ],
+      }),
+      'utf8',
+    );
   });
 
   afterEach(async () => {
-    await import('node:fs/promises').then(({ rm }) =>
-      rm(basePath, { recursive: true, force: true }),
-    );
+    await rm(basePath, { recursive: true, force: true });
   });
 
   it('returns documents and under-review entries without a proposals prefix', async () => {
@@ -77,5 +110,31 @@ describe('GitHub tree-style routes', () => {
       { path: 'nested/api-design-v2.md', unresolvedCount: 1 },
     ]);
     expect(response.headers.get('x-ratelimit-remaining')).toBe('999999');
+  });
+
+  it('scopes HEAD review entries to the active git branch', async () => {
+    await execGit('git', ['init'], { cwd: basePath });
+    await execGit('git', ['config', 'user.name', 'ReDraft Test'], {
+      cwd: basePath,
+    });
+    await execGit('git', ['config', 'user.email', 'redraft@example.com'], {
+      cwd: basePath,
+    });
+    await execGit('git', ['add', '.'], { cwd: basePath });
+    await execGit('git', ['commit', '-m', 'Initial fixtures'], {
+      cwd: basePath,
+    });
+    await execGit('git', ['checkout', '-b', 'feature/docs'], { cwd: basePath });
+    const app = buildGitHubApiRouter(basePath);
+
+    const response = await app.request(
+      'http://local.test/api/github/repos/local/redraft/git/trees/HEAD?recursive=1',
+    );
+    const body = (await response.json()) as TreeResponse;
+
+    expect(response.status).toBe(200);
+    expect(body.underReview).toEqual([
+      { path: 'auth-overhaul.md', unresolvedCount: 1 },
+    ]);
   });
 });

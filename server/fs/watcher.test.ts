@@ -176,9 +176,12 @@ describe('startWatcher', () => {
       basePath,
       '.redraft',
       'comments',
+      'main',
       'proposal.comments.json',
     );
-    await mkdir(join(basePath, '.redraft', 'comments'), { recursive: true });
+    await mkdir(join(basePath, '.redraft', 'comments', 'main'), {
+      recursive: true,
+    });
     await writeFile(filePath, '# Proposal\n', 'utf8');
     await writeFile(commentPath, '{"version":1,"comments":[]}', 'utf8');
     const firstEvent = Promise.withResolvers<{
@@ -221,7 +224,7 @@ describe('startWatcher', () => {
     await vi.advanceTimersByTimeAsync(100);
     await expect(secondEvent.promise).resolves.toMatchObject({
       type: 'file:changed',
-      path: '.redraft/comments/proposal.comments.json',
+      path: '.redraft/comments/main/proposal.comments.json',
       sha: expect.stringMatching(/^[a-f0-9]{40}$/),
     });
 
@@ -229,7 +232,7 @@ describe('startWatcher', () => {
     await vi.advanceTimersByTimeAsync(100);
     await expect(thirdEvent.promise).resolves.toEqual({
       type: 'file:deleted',
-      path: '.redraft/comments/proposal.comments.json',
+      path: '.redraft/comments/main/proposal.comments.json',
     });
 
     stop();

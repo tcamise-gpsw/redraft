@@ -411,25 +411,25 @@ The local server filesystem operations need to understand the new branch-namespa
 
 **Checklist:**
 
-- [ ] `documentPathFromCommentPath('.redraft/comments/main/docs/auth.comments.json')` → `'docs/auth.md'`
-- [ ] `documentPathFromCommentPath('.redraft/comments/feature--auth/docs/auth.comments.json')` → `'docs/auth.md'`
-- [ ] `walkCommentFiles(basePath, 'main')` only returns files under `.redraft/comments/main/`
-- [ ] `walkCommentFiles(basePath)` returns files under all branch subdirectories
-- [ ] `listReviewEntries` correctly scopes to a specific branch
-- [ ] Watcher detects changes in branch-namespaced subdirectories
-- [ ] `sanitizeBranch` logic available server-side (shared or duplicated)
+- [x] `documentPathFromCommentPath('.redraft/comments/main/docs/auth.comments.json')` → `'docs/auth.md'`
+- [x] `documentPathFromCommentPath('.redraft/comments/feature--auth/docs/auth.comments.json')` → `'docs/auth.md'`
+- [x] `walkCommentFiles(basePath, 'main')` only returns files under `.redraft/comments/main/`
+- [x] `walkCommentFiles(basePath)` returns files under all branch subdirectories
+- [x] `listReviewEntries` correctly scopes to a specific branch
+- [x] Watcher detects changes in branch-namespaced subdirectories
+- [x] `sanitizeBranch` logic available server-side (shared or duplicated)
 
 **Tests:**
 
-- [ ] `npx vitest run server/fs/operations.test.ts server/fs/watcher.test.ts`
-- [ ] `documentPathFromCommentPath` strips branch prefix correctly
-- [ ] `walkCommentFiles` with branch parameter scopes to correct subdirectory
-- [ ] `listReviewEntries` returns correct document paths with branch-namespaced sidecars
-- [ ] Existing watcher tests pass with branch-namespaced paths
+- [x] `npx vitest run server/fs/operations.test.ts server/fs/watcher.test.ts`
+- [x] `documentPathFromCommentPath` strips branch prefix correctly
+- [x] `walkCommentFiles` with branch parameter scopes to correct subdirectory
+- [x] `listReviewEntries` returns correct document paths with branch-namespaced sidecars
+- [x] Existing watcher tests pass with branch-namespaced paths
 
 **Commit:**
 
-- [ ] Read `skill://commit`, commit with message like `feat: update local server fs operations for branch-namespaced sidecar paths`
+- [x] Read `skill://commit`, commit with message like `feat: update local server fs operations for branch-namespaced sidecar paths`
 
 ### Task 9: Sidecar Branch Missing — Error UX
 
