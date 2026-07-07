@@ -255,23 +255,23 @@ Destructure `sidecarBranch` and `setSidecarBranch` from `useAuth()`.
 
 **Checklist:**
 
-- [ ] "Comments branch" input appears only in remote mode
-- [ ] Input pre-populated with current `sidecarBranch` value
-- [ ] Save calls `setSidecarBranch` with the input value
-- [ ] Confirmation message shown after save
-- [ ] Input follows the existing Settings page styling (same form structure, label pattern)
-- [ ] Not rendered in local mode section of Settings
+- [x] "Comments branch" input appears only in remote mode
+- [x] Input pre-populated with current `sidecarBranch` value
+- [x] Save calls `setSidecarBranch` with the input value
+- [x] Confirmation message shown after save
+- [x] Input follows the existing Settings page styling (same form structure, label pattern)
+- [x] Not rendered in local mode section of Settings
 
 **Tests:**
 
-- [ ] `npx vitest run src/routes src/components/layout`
-- [ ] Settings in remote mode renders "Comments branch" input
-- [ ] Settings in local mode does not render "Comments branch" input
-- [ ] Saving the form calls `setSidecarBranch` with the entered value
+- [x] `npx vitest run src/routes src/components/layout`
+- [x] Settings in remote mode renders "Comments branch" input
+- [x] Settings in local mode does not render "Comments branch" input
+- [x] Saving the form calls `setSidecarBranch` with the entered value
 
 **Commit:**
 
-- [ ] Read `'/Users/tcamise/.claude/skills/commit/SKILL.md'`, commit with message like `feat: add comments branch setting to Settings page`
+- [x] Read `skill://commit`, commit with message like `feat: add comments branch setting to Settings page`
 
 ### Task 6: Local Server — Git Commit Route Split
 

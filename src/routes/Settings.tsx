@@ -5,9 +5,13 @@ import { useAuth } from '../hooks/useAuth';
 import { isLocalMode } from '../lib/mode';
 
 export function Settings() {
-  const { user, repo, logout, updateRepo } = useAuth();
+  const { user, repo, logout, updateRepo, sidecarBranch, setSidecarBranch } =
+    useAuth();
   const [repository, setRepository] = useState(
     repo ? `${repo.owner}/${repo.repo}` : '',
+  );
+  const [commentsBranch, setCommentsBranch] = useState(
+    sidecarBranch ?? 'redraft',
   );
   const [message, setMessage] = useState<string | null>(null);
   const localMode = isLocalMode();
@@ -22,6 +26,7 @@ export function Settings() {
     }
 
     updateRepo(owner, repoName);
+    setSidecarBranch(commentsBranch.trim() || 'redraft');
     setMessage('Repository updated.');
   };
 
@@ -91,6 +96,24 @@ export function Settings() {
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50 outline-none ring-0 placeholder:text-slate-500"
             placeholder="owner/repo"
           />
+        </label>
+
+        <label
+          className="block space-y-2 text-sm font-medium"
+          htmlFor="settings-comments-branch"
+        >
+          <span>Comments branch</span>
+          <input
+            id="settings-comments-branch"
+            type="text"
+            value={commentsBranch}
+            onChange={(event) => setCommentsBranch(event.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50 outline-none ring-0 placeholder:text-slate-500"
+            placeholder="redraft"
+          />
+          <span className="block text-xs font-normal text-slate-400">
+            Branch where review comments are stored. Default: redraft
+          </span>
         </label>
 
         {message ? <p className="text-sm text-slate-300">{message}</p> : null}
