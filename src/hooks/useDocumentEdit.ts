@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { ConflictError, GitHubClient } from '../lib/github';
-import { getApiBaseUrl } from '../lib/mode';
+import { getApiBaseUrl, isLocalMode } from '../lib/mode';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
 
@@ -31,7 +31,7 @@ export function useDocumentEdit(path: string) {
       throw new Error('Authentication is required');
     }
 
-    if (branch === null) {
+    if (!isLocalMode() && branch === null) {
       showToast({
         tone: 'error',
         title: 'Branch is still loading. Please wait and try again.',
@@ -45,7 +45,7 @@ export function useDocumentEdit(path: string) {
         content,
         sha,
         `Update: ${path.split('/').at(-1) ?? path}`,
-        branch,
+        branch ?? undefined,
       );
       await queryClient.invalidateQueries({
         queryKey: ['document', path, 'content', branch],
