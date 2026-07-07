@@ -12,6 +12,7 @@ interface ServeOptions {
   open?: boolean;
   noUi?: boolean;
   host?: string;
+  sidecarBranch?: string;
 }
 
 async function ensureDirectoryExists(path: string): Promise<void> {
@@ -55,6 +56,7 @@ async function runServe(
     noUi: options.noUi,
     host: options.host,
     port: options.port,
+    sidecarBranch: options.sidecarBranch ?? 'redraft',
   });
 
   const stopWatcher = startWatcher(basePath, (event) => {
@@ -88,10 +90,11 @@ function registerServeOptions(command: Command): Command {
     )
     .option('--open', 'Open the ReDraft UI in the default browser', false)
     .option('--no-ui', 'Skip serving the static frontend', false)
+    .option('--host <string>', 'Bind address (default: 127.0.0.1)', '127.0.0.1')
     .option(
-      '--host <string>',
-      'Bind address (default: 127.0.0.1)',
-      '127.0.0.1',
+      '--sidecar-branch <string>',
+      'Git branch for sidecar comment files (default: redraft)',
+      'redraft',
     );
 }
 

@@ -368,20 +368,20 @@ Thread the value through:
 
 **Checklist:**
 
-- [ ] `--sidecar-branch` option added to both the default command and the `serve` subcommand (via `registerServeOptions`)
-- [ ] Default value is `'redraft'`
-- [ ] Value threaded through `ServeOptions` → `ReDraftServerOptions` → `ReDraftAppOptions` → `buildGitHubApiRouter` → git route helpers
-- [ ] No other routes need the sidecar branch — only git route uses it
+- [x] `--sidecar-branch` option added to both the default command and the `serve` subcommand (via `registerServeOptions`)
+- [x] Default value is `'redraft'`
+- [x] Value threaded through `ServeOptions` → `ReDraftServerOptions` → `ReDraftAppOptions` → `buildGitHubApiRouter` → git route helpers
+- [x] No other routes need the sidecar branch — only git route uses it
 
 **Tests:**
 
-- [ ] `npx vitest run server/`
-- [ ] Existing server tests still pass (sidecar branch defaults to `'redraft'` when not specified)
-- [ ] The git route integration tests from Task 6 verify the sidecar branch is used correctly
+- [x] `npx vitest run server/`
+- [x] Existing server tests still pass (sidecar branch defaults to `'redraft'` when not specified)
+- [x] The git route integration tests from Task 6 verify the sidecar branch is used correctly
 
 **Commit:**
 
-- [ ] Read `'/Users/tcamise/.claude/skills/commit/SKILL.md'`, commit with message like `feat: add --sidecar-branch CLI flag`
+- [x] Read `skill://commit`, commit with message like `feat: add --sidecar-branch CLI flag`
 
 ### Task 8: Local Server — Filesystem Operations for Branch-Namespaced Paths
 

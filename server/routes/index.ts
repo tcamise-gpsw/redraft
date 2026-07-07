@@ -21,7 +21,14 @@ function toApiPath(localPath: string): string {
   return localPath;
 }
 
-export function buildGitHubApiRouter(basePath: string): Hono {
+interface GitHubApiRouterOptions {
+  sidecarBranch?: string;
+}
+
+export function buildGitHubApiRouter(
+  basePath: string,
+  options: GitHubApiRouterOptions = {},
+): Hono {
   const app = new Hono();
   const json: RouteHelpers['json'] = <T>(body: T, status = 200) => {
     const response = Response.json(body, { status });
@@ -42,7 +49,13 @@ export function buildGitHubApiRouter(basePath: string): Hono {
     );
   });
 
-  const helpers = { basePath, json, toApiPath, toLocalPath };
+  const helpers = {
+    basePath,
+    json,
+    toApiPath,
+    toLocalPath,
+    sidecarBranch: options.sidecarBranch ?? 'redraft',
+  };
   registerUserRoute(app, helpers);
   registerTreeRoute(app, helpers);
   registerContentsRoute(app, helpers);
