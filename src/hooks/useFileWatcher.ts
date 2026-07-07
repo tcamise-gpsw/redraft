@@ -17,8 +17,10 @@ function documentPathFromCommentPath(path: string): string {
   const relativePath = path.startsWith('.redraft/comments/')
     ? path.slice('.redraft/comments/'.length)
     : path;
+  const parts = relativePath.split('/');
+  const documentParts = parts.length > 1 ? parts.slice(1) : parts;
 
-  return relativePath.replace(/\.comments\.json$/u, '.md');
+  return documentParts.join('/').replace(/\.comments\.json$/u, '.md');
 }
 
 export function useFileWatcher(): void {

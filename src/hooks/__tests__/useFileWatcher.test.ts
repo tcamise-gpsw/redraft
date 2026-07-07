@@ -99,7 +99,7 @@ describe('useFileWatcher', () => {
     });
     socket.emitMessage({
       type: 'file:changed',
-      path: '.redraft/comments/docs/auth-overhaul.comments.json',
+      path: '.redraft/comments/main/docs/auth-overhaul.comments.json',
       sha: 'def',
     });
     socket.emitMessage({ type: 'file:created', path: 'docs/new.md' });

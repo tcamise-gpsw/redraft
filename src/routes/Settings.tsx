@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Avatar } from '../components/ui/Avatar';
 import { useAuth } from '../hooks/useAuth';
@@ -16,6 +16,10 @@ export function Settings() {
   const [message, setMessage] = useState<string | null>(null);
   const localMode = isLocalMode();
 
+  useEffect(() => {
+    setCommentsBranch(sidecarBranch ?? 'redraft');
+  }, [sidecarBranch]);
+
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const [owner, repoName, extra] = repository.trim().split('/');
@@ -25,8 +29,11 @@ export function Settings() {
       return;
     }
 
-    updateRepo(owner, repoName);
-    setSidecarBranch(commentsBranch.trim() || 'redraft');
+    const nextCommentsBranch = commentsBranch.trim() || 'redraft';
+    updateRepo(owner, repoName, nextCommentsBranch);
+    if (repo?.owner === owner && repo.repo === repoName) {
+      setSidecarBranch(nextCommentsBranch);
+    }
     setMessage('Repository updated.');
   };
 

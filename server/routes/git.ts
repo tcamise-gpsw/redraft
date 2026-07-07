@@ -168,6 +168,16 @@ async function commitSidecars(
       cwd: repoRoot,
       env,
     });
+    if (parent) {
+      const { stdout: parentTree } = await execGit(
+        'git',
+        ['rev-parse', `${parent}^{tree}`],
+        { cwd: repoRoot },
+      );
+      if (tree.trim() === parentTree.trim()) {
+        return null;
+      }
+    }
     const commitArgs = ['commit-tree', tree.trim(), '-m', message];
     if (parent) {
       commitArgs.push('-p', parent);
@@ -254,6 +264,9 @@ export function registerGitRoute(app: Hono, helpers: GitRouteHelpers): void {
           'commit',
           '-m',
           message,
+          '--',
+          relativeScope,
+          excludeSidecars,
         ],
         { cwd: repoRoot },
       );

@@ -202,6 +202,43 @@ describe('Git convenience routes', () => {
     );
   });
 
+  it('does not include pre-staged sidecars in the document branch commit', async () => {
+    await writeFile(join(basePath, 'auth-overhaul.md'), '# Updated\n', 'utf8');
+    const sidecarPath = join(
+      basePath,
+      '.redraft',
+      'comments',
+      'main',
+      'auth-overhaul.comments.json',
+    );
+    await mkdir(join(basePath, '.redraft', 'comments', 'main'), {
+      recursive: true,
+    });
+    await writeFile(sidecarPath, '{"version":1,"comments":[]}', 'utf8');
+    await execGit('git', ['add', 'docs/.redraft'], { cwd: repoRoot });
+    const app = buildGitHubApiRouter(basePath);
+
+    const response = await app.request('http://local.test/api/git/commit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ message: 'Update documents via ReDraft' }),
+    });
+    const body = (await response.json()) as GitCommitResponse;
+
+    expect(response.status).toBe(200);
+    expect(body.sha).toMatch(/^[a-f0-9]{40}$/);
+    expect(body.sidecar?.sha).toMatch(/^[a-f0-9]{40}$/);
+
+    const { stdout: documentFiles } = await execGit(
+      'git',
+      ['ls-tree', '-r', '--name-only', 'HEAD'],
+      { cwd: repoRoot },
+    );
+    expect(documentFiles).not.toContain(
+      'docs/.redraft/comments/main/auth-overhaul.comments.json',
+    );
+  });
+
   it('returns gracefully when there are no document or sidecar changes', async () => {
     const app = buildGitHubApiRouter(basePath);
 
@@ -260,6 +297,50 @@ describe('Git convenience routes', () => {
     expect(parents.trim().split(' ')).toHaveLength(2);
   });
 
+  it('does not create a sidecar commit when working files already match the sidecar branch', async () => {
+    const sidecarPath = join(
+      basePath,
+      '.redraft',
+      'comments',
+      'main',
+      'auth-overhaul.comments.json',
+    );
+    await mkdir(join(basePath, '.redraft', 'comments', 'main'), {
+      recursive: true,
+    });
+    await writeFile(sidecarPath, '{"version":1,"comments":[]}', 'utf8');
+    const app = buildGitHubApiRouter(basePath);
+
+    const firstResponse = await app.request(
+      'http://local.test/api/git/commit',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message: 'First sidecar commit' }),
+      },
+    );
+    const firstBody = (await firstResponse.json()) as GitCommitResponse;
+    expect(firstBody.sidecar?.sha).toMatch(/^[a-f0-9]{40}$/);
+
+    const secondResponse = await app.request(
+      'http://local.test/api/git/commit',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message: 'No sidecar changes' }),
+      },
+    );
+    const secondBody = (await secondResponse.json()) as GitCommitResponse;
+
+    expect(secondResponse.status).toBe(200);
+    expect(secondBody.sha).toBeNull();
+    expect(secondBody.sidecar).toBeUndefined();
+
+    const { stdout: tip } = await execGit('git', ['rev-parse', 'redraft'], {
+      cwd: repoRoot,
+    });
+    expect(tip.trim()).toBe(firstBody.sidecar?.sha);
+  });
   it('uses the configured sidecar branch name for plumbing commits', async () => {
     await mkdir(join(basePath, '.redraft', 'comments', 'main'), {
       recursive: true,

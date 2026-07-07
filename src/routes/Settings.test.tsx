@@ -8,6 +8,9 @@ const logout = vi.hoisted(() => vi.fn());
 const updateRepo = vi.hoisted(() => vi.fn());
 const setSidecarBranch = vi.hoisted(() => vi.fn());
 const localMode = vi.hoisted(() => vi.fn());
+const authState = vi.hoisted(() => ({
+  sidecarBranch: 'redraft' as string | null,
+}));
 
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({
@@ -15,7 +18,7 @@ vi.mock('../hooks/useAuth', () => ({
     repo: { owner: 'acme', repo: 'workspace' },
     logout,
     updateRepo,
-    sidecarBranch: 'redraft',
+    sidecarBranch: authState.sidecarBranch,
     setSidecarBranch,
   }),
 }));
@@ -32,6 +35,7 @@ describe('Settings', () => {
     updateRepo.mockReset();
     setSidecarBranch.mockReset();
     localMode.mockReset().mockReturnValue(false);
+    authState.sidecarBranch = 'redraft';
   });
 
   it('renders and saves the remote comments branch setting', () => {
@@ -47,6 +51,34 @@ describe('Settings', () => {
     expect(screen.getByText('Repository updated.')).toBeInTheDocument();
   });
 
+  it('updates the comments branch input when auth state hydrates asynchronously', () => {
+    authState.sidecarBranch = null;
+
+    const { rerender } = render(<Settings />);
+
+    expect(screen.getByLabelText(/comments branch/i)).toHaveValue('redraft');
+
+    authState.sidecarBranch = 'review-data';
+    rerender(<Settings />);
+
+    expect(screen.getByLabelText(/comments branch/i)).toHaveValue(
+      'review-data',
+    );
+  });
+
+  it('passes the submitted comments branch when changing repository', () => {
+    render(<Settings />);
+
+    fireEvent.change(screen.getByLabelText(/^Repository$/i), {
+      target: { value: 'octo/project' },
+    });
+    fireEvent.change(screen.getByLabelText(/comments branch/i), {
+      target: { value: 'review-data' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save repository/i }));
+
+    expect(updateRepo).toHaveBeenCalledWith('octo', 'project', 'review-data');
+  });
   it('does not render the comments branch setting in local mode', () => {
     localMode.mockReturnValue(true);
 
