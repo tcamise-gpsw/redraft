@@ -31,6 +31,24 @@ test('editing flows save markdown and conflict handling shows a toast', async ({
       return;
     }
 
+    if (url.endsWith('/repos/acme/workspace')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({ default_branch: 'main' }),
+      });
+      return;
+    }
+
+    if (url.includes('/branches')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify([{ name: 'main' }, { name: 'redraft' }]),
+      });
+      return;
+    }
+
     if (url.includes('/git/trees/')) {
       await route.fulfill({
         status: 200,
@@ -44,7 +62,7 @@ test('editing flows save markdown and conflict handling shows a toast', async ({
 
     if (
       decodedUrl.includes(
-        '/contents/.redraft/comments/camera-session.comments.json',
+        '/contents/.redraft/comments/main/camera-session.comments.json',
       )
     ) {
       await route.fulfill({

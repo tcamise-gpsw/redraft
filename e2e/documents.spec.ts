@@ -46,6 +46,24 @@ test('document viewing renders Milkdown content and the split tree', async ({
       return;
     }
 
+    if (url.endsWith('/repos/acme/workspace')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({ default_branch: 'main' }),
+      });
+      return;
+    }
+
+    if (url.includes('/branches')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify([{ name: 'main' }, { name: 'redraft' }]),
+      });
+      return;
+    }
+
     if (url.includes('/git/trees/')) {
       await route.fulfill({
         status: 200,
@@ -55,7 +73,7 @@ test('document viewing renders Milkdown content and the split tree', async ({
             { path: 'camera-session.md', type: 'blob' },
             { path: 'docs/auth-overhaul.md', type: 'blob' },
             {
-              path: '.redraft/comments/camera-session.comments.json',
+              path: '.redraft/comments/main/camera-session.comments.json',
               type: 'blob',
             },
           ],
@@ -66,7 +84,7 @@ test('document viewing renders Milkdown content and the split tree', async ({
 
     if (
       decodedUrl.includes(
-        '/contents/.redraft/comments/camera-session.comments.json',
+        '/contents/.redraft/comments/main/camera-session.comments.json',
       )
     ) {
       await route.fulfill({
@@ -85,7 +103,7 @@ test('document viewing renders Milkdown content and the split tree', async ({
 
     if (
       decodedUrl.includes(
-        '/contents/.redraft/comments/docs/auth-overhaul.comments.json',
+        '/contents/.redraft/comments/main/docs/auth-overhaul.comments.json',
       )
     ) {
       await route.fulfill({
@@ -139,7 +157,9 @@ test('document viewing renders Milkdown content and the split tree', async ({
   await page.getByLabel('Repository').fill('acme/workspace');
   await page.getByRole('button', { name: 'Connect' }).click();
 
-  await expect(page.getByText('Under Review')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Under Review' }),
+  ).toBeVisible();
   await expect(
     page.getByRole('link', { name: /camera-session.md/ }).first(),
   ).toBeVisible();
@@ -198,6 +218,24 @@ test('multiple mermaid diagram types render without id collision', async ({
       return;
     }
 
+    if (url.endsWith('/repos/acme/workspace')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({ default_branch: 'main' }),
+      });
+      return;
+    }
+
+    if (url.includes('/branches')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify([{ name: 'main' }, { name: 'redraft' }]),
+      });
+      return;
+    }
+
     if (url.includes('/git/trees/')) {
       await route.fulfill({
         status: 200,
@@ -211,7 +249,7 @@ test('multiple mermaid diagram types render without id collision', async ({
 
     if (
       decodedUrl.includes(
-        '/contents/.redraft/comments/docs/auth-overhaul.comments.json',
+        '/contents/.redraft/comments/main/docs/auth-overhaul.comments.json',
       )
     ) {
       await route.fulfill({

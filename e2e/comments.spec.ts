@@ -46,6 +46,24 @@ test('comment flow selects text, opens the form, and writes a centralized sideca
       return;
     }
 
+    if (url.endsWith('/repos/acme/workspace')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({ default_branch: 'main' }),
+      });
+      return;
+    }
+
+    if (url.includes('/branches')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify([{ name: 'main' }, { name: 'redraft' }]),
+      });
+      return;
+    }
+
     if (url.includes('/git/trees/')) {
       await route.fulfill({
         status: 200,
@@ -54,7 +72,7 @@ test('comment flow selects text, opens the form, and writes a centralized sideca
           tree: [
             { path: 'camera-session.md', type: 'blob' },
             {
-              path: '.redraft/comments/camera-session.comments.json',
+              path: '.redraft/comments/main/camera-session.comments.json',
               type: 'blob',
             },
           ],
@@ -65,7 +83,7 @@ test('comment flow selects text, opens the form, and writes a centralized sideca
 
     if (
       decodedUrl.includes(
-        '/contents/.redraft/comments/camera-session.comments.json',
+        '/contents/.redraft/comments/main/camera-session.comments.json',
       ) &&
       method === 'GET'
     ) {
@@ -83,7 +101,7 @@ test('comment flow selects text, opens the form, and writes a centralized sideca
 
     if (
       decodedUrl.includes(
-        '/contents/.redraft/comments/camera-session.comments.json',
+        '/contents/.redraft/comments/main/camera-session.comments.json',
       ) &&
       method === 'PUT'
     ) {
