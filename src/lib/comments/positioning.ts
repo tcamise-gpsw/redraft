@@ -41,7 +41,9 @@ export function positionThreads(
   inputs: ThreadPlacementInput[],
   options: PositionOptions = {},
 ): PositionResult {
-  const gap = options.gap ?? 12;
+  // `gap` is a MINIMUM spacing, so negative values are clamped to zero
+  // (cards never intentionally overlap).
+  const gap = Math.max(0, options.gap ?? 12);
   const minTop = options.minTop ?? 0;
 
   if (inputs.length === 0) {

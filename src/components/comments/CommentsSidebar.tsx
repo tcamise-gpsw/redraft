@@ -135,10 +135,18 @@ export function CommentsSidebar({
     }
     const originTop = container.getBoundingClientRect().top;
     const inputs = orderedIds.map((id) => {
-      const selector = `[data-comment-id="${
-        typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(id) : id
-      }"]`;
-      const highlight = document.querySelector<HTMLElement>(selector);
+      let highlight: HTMLElement | null = null;
+      try {
+        const escaped =
+          typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(id) : id;
+        highlight = document.querySelector<HTMLElement>(
+          `[data-comment-id="${escaped}"]`,
+        );
+      } catch {
+        // A malformed selector (missing CSS.escape + exotic id) must never
+        // crash the measurement pass — treat it as "no highlight found".
+        highlight = null;
+      }
       const card = cardRefs.current.get(id);
       const height = card?.offsetHeight ?? 0;
       const target = highlight
