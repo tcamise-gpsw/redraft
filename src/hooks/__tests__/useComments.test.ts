@@ -152,6 +152,121 @@ describe('useComments – local state', () => {
     expect(updateFile).not.toHaveBeenCalled();
   });
 
+  it('deleteThread removes a thread locally and marks dirty without any API call', async () => {
+    const otherThread = {
+      ...EXISTING_THREAD,
+      id: 'thread-2',
+      quote: 'keep this one',
+      body: 'Keep me',
+      createdAt: '2026-06-21T06:00:00Z',
+    };
+
+    getFileContent.mockResolvedValueOnce({
+      sha: 'sha-123',
+      content: JSON.stringify({
+        version: 1,
+        comments: [EXISTING_THREAD, otherThread],
+      }),
+    });
+
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.deleteThread('thread-1');
+    });
+
+    expect(result.current.threads).toEqual([otherThread]);
+    expect(result.current.isDirty).toBe(true);
+    expect(createFile).not.toHaveBeenCalled();
+    expect(updateFile).not.toHaveBeenCalled();
+  });
+
+  it('deleteReply removes a single reply locally and marks dirty without any API call', async () => {
+    const firstReply = {
+      id: 'reply-1',
+      author: { login: 'asmith', avatarUrl: 'https://example.com/a1.png' },
+      body: 'First reply',
+      createdAt: '2026-06-21T05:10:00Z',
+    };
+    const secondReply = {
+      id: 'reply-2',
+      author: { login: 'bsmith', avatarUrl: 'https://example.com/a2.png' },
+      body: 'Second reply',
+      createdAt: '2026-06-21T05:20:00Z',
+    };
+    const threadWithReplies = {
+      ...EXISTING_THREAD,
+      replies: [firstReply, secondReply],
+    };
+
+    getFileContent.mockResolvedValueOnce({
+      sha: 'sha-123',
+      content: JSON.stringify({
+        version: 1,
+        comments: [threadWithReplies],
+      }),
+    });
+
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.deleteReply('thread-1', 'reply-1');
+    });
+
+    expect(result.current.threads).toEqual([
+      {
+        ...threadWithReplies,
+        replies: [secondReply],
+      },
+    ]);
+    expect(result.current.isDirty).toBe(true);
+    expect(createFile).not.toHaveBeenCalled();
+    expect(updateFile).not.toHaveBeenCalled();
+  });
+
+  it('deleteReply on an unknown thread or reply leaves threads unchanged and marks dirty', async () => {
+    const onlyReply = {
+      id: 'reply-1',
+      author: { login: 'asmith', avatarUrl: 'https://example.com/a1.png' },
+      body: 'Only reply',
+      createdAt: '2026-06-21T05:10:00Z',
+    };
+    const seededThreads = [
+      {
+        ...EXISTING_THREAD,
+        replies: [onlyReply],
+      },
+    ];
+
+    getFileContent.mockResolvedValueOnce({
+      sha: 'sha-123',
+      content: JSON.stringify({ version: 1, comments: seededThreads }),
+    });
+
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.deleteReply('missing-thread', 'reply-404');
+    });
+
+    expect(result.current.threads).toEqual(seededThreads);
+    expect(result.current.isDirty).toBe(true);
+    expect(createFile).not.toHaveBeenCalled();
+    expect(updateFile).not.toHaveBeenCalled();
+  });
+
   it('resolveThread toggles resolved flag locally without any API call', async () => {
     getFileContent.mockResolvedValueOnce({
       sha: 'sha-123',
@@ -250,6 +365,51 @@ describe('useComments – saveComments', () => {
       'Update comments on doc.md',
       'dev',
     );
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  it('persists deleted threads when saving with an existing SHA', async () => {
+    const otherThread = {
+      ...EXISTING_THREAD,
+      id: 'thread-2',
+      quote: 'keep this one',
+      body: 'Keep me',
+      createdAt: '2026-06-21T06:00:00Z',
+    };
+
+    getFileContent.mockResolvedValueOnce({
+      sha: 'load-sha',
+      content: JSON.stringify({
+        version: 1,
+        comments: [EXISTING_THREAD, otherThread],
+      }),
+    });
+    updateFile.mockResolvedValueOnce({ sha: 'updated-sha' });
+
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.deleteThread('thread-1');
+    });
+
+    await act(async () => {
+      await result.current.saveComments();
+    });
+
+    expect(updateFile).toHaveBeenCalledTimes(1);
+    const [path, content, sha, message, branch] = updateFile.mock.calls[0];
+    expect(path).toBe('.redraft/comments/docs/doc.comments.json');
+    expect(sha).toBe('load-sha');
+    expect(message).toBe('Update comments on doc.md');
+    expect(branch).toBe('dev');
+    expect(JSON.parse(content)).toEqual({
+      version: 1,
+      comments: [otherThread],
+    });
     expect(result.current.isDirty).toBe(false);
   });
 

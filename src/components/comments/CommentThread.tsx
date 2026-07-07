@@ -11,14 +11,22 @@ export function CommentThread({
   onClick,
   onReply,
   onResolve,
+  onDelete,
+  onDeleteReply,
 }: {
   thread: CommentThreadType;
   active: boolean;
   onClick: () => void;
   onReply: (body: string) => Promise<void> | void;
   onResolve: () => Promise<void> | void;
+  onDelete: () => void;
+  onDeleteReply: (replyId: string) => void;
 }) {
   const [showReply, setShowReply] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingReplyId, setConfirmingReplyId] = useState<string | null>(
+    null,
+  );
 
   return (
     <article
@@ -47,12 +55,51 @@ export function CommentThread({
       {thread.replies.length > 0 ? (
         <div className="space-y-3 border-l border-slate-800 pl-4">
           {thread.replies.map((reply) => (
-            <CommentBody
+            <div
               key={reply.id}
-              author={reply.author}
-              body={reply.body}
-              createdAt={reply.createdAt}
-            />
+              data-testid={`comment-reply-${reply.id}`}
+              className="space-y-2"
+            >
+              <CommentBody
+                author={reply.author}
+                body={reply.body}
+                createdAt={reply.createdAt}
+              />
+              <div className="flex flex-wrap gap-2">
+                {confirmingReplyId === reply.id ? (
+                  <>
+                    <Button
+                      onClick={() => {
+                        onDeleteReply(reply.id);
+                        setConfirmingReplyId(null);
+                      }}
+                      type="button"
+                      variant="secondary"
+                      className="border-rose-500/50 bg-rose-500/10 px-2 py-1 text-xs text-rose-200 hover:border-rose-400/60 hover:bg-rose-500/20"
+                    >
+                      Confirm
+                    </Button>
+                    <Button
+                      onClick={() => setConfirmingReplyId(null)}
+                      type="button"
+                      variant="secondary"
+                      className="px-2 py-1 text-xs"
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => setConfirmingReplyId(reply.id)}
+                    type="button"
+                    variant="secondary"
+                    className="px-2 py-1 text-xs text-rose-300 hover:border-rose-400/60 hover:text-rose-200"
+                  >
+                    Delete reply
+                  </Button>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       ) : null}
@@ -72,6 +119,34 @@ export function CommentThread({
         >
           Reply
         </Button>
+        {confirmingDelete ? (
+          <>
+            <Button
+              onClick={onDelete}
+              type="button"
+              variant="secondary"
+              className="border-rose-500/50 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20"
+            >
+              Confirm delete
+            </Button>
+            <Button
+              onClick={() => setConfirmingDelete(false)}
+              type="button"
+              variant="secondary"
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button
+            onClick={() => setConfirmingDelete(true)}
+            type="button"
+            variant="secondary"
+            className="text-rose-300 hover:text-rose-200 hover:border-rose-400/60"
+          >
+            Delete thread
+          </Button>
+        )}
       </div>
 
       {showReply ? <ReplyForm onSubmit={onReply} /> : null}
