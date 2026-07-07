@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useDocuments } from '../../hooks/useDocuments';
 import { Spinner } from '../ui/Spinner';
 import { CreateDocumentDialog } from './CreateDocumentDialog';
+import { BranchSelector } from './BranchSelector';
 import { TreeNode } from './TreeNode';
 
 export function DocumentTree() {
@@ -18,6 +19,7 @@ export function DocumentTree() {
 
   return (
     <section className="flex h-full flex-col gap-4">
+      <BranchSelector />
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
           Documents

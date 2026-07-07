@@ -264,31 +264,31 @@ Integration with `DocumentTree`:
 
 **Checklist:**
 
-- [ ] `BranchSelector.tsx` created with closed/open states
-- [ ] Searchable filter input works (case-insensitive substring)
-- [ ] Current branch highlighted, default branch badged
-- [ ] Click-outside and Escape close the dropdown
-- [ ] Selecting a branch calls `setBranch()` + `navigate('/')`
-- [ ] Returns `null` in local mode
-- [ ] Returns `null` when not authenticated
-- [ ] Spinner shown during branch fetch
-- [ ] Error state with retry shown on fetch failure
-- [ ] `DocumentTree.tsx` renders `BranchSelector` above the tree
+- [x] `BranchSelector.tsx` created with closed/open states
+- [x] Searchable filter input works (case-insensitive substring)
+- [x] Current branch highlighted, default branch badged
+- [x] Click-outside and Escape close the dropdown
+- [x] Selecting a branch calls `setBranch()` + `navigate('/')`
+- [x] Returns `null` in local mode
+- [x] Returns `null` when not authenticated
+- [x] Spinner shown during branch fetch
+- [x] Error state with retry shown on fetch failure
+- [x] `DocumentTree.tsx` renders `BranchSelector` above the tree
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/components/tree/__tests__/BranchSelector.test.tsx`
-- [ ] Test: renders current branch name in closed state
-- [ ] Test: opens dropdown on click, shows branch list
-- [ ] Test: filter input narrows the list
-- [ ] Test: clicking a branch calls `setBranch` and `navigate`
-- [ ] Test: does not render in local mode (mock `isLocalMode` to return `true`)
-- [ ] Test: shows spinner while loading branches
-- [ ] Test: shows error state when branch fetch fails
+- [x] Run: `npx vitest run src/components/tree/__tests__/BranchSelector.test.tsx`
+- [x] Test: renders current branch name in closed state
+- [x] Test: opens dropdown on click, shows branch list
+- [x] Test: filter input narrows the list
+- [x] Test: clicking a branch calls `setBranch` and `navigate`
+- [x] Test: does not render in local mode (mock `isLocalMode` to return `true`)
+- [x] Test: shows spinner while loading branches
+- [x] Test: shows error state when branch fetch fails
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage relevant files, commit
+- [x] Read `skill://commit`, stage relevant files, commit
 
 ---
 
