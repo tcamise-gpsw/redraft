@@ -38,6 +38,8 @@ export function CommentsSidebar({
   addComment,
   addReply,
   resolveThread,
+  deleteThread,
+  deleteReply,
   saveComments,
   isDirty,
   isSaving,
@@ -56,6 +58,8 @@ export function CommentsSidebar({
     reply: Omit<CommentReply, 'id' | 'createdAt'>,
   ) => void;
   resolveThread: (threadId: string) => void;
+  deleteThread: (threadId: string) => void;
+  deleteReply: (threadId: string, replyId: string) => void;
   saveComments: () => Promise<void>;
   isDirty: boolean;
   isSaving: boolean;
@@ -275,6 +279,8 @@ export function CommentsSidebar({
               onResolve={() => {
                 resolveThread(thread.id);
               }}
+              onDelete={() => deleteThread(thread.id)}
+              onDeleteReply={(replyId) => deleteReply(thread.id, replyId)}
             />
           );
 
@@ -315,6 +321,8 @@ export function CommentsSidebar({
         onResolve={(threadId) => {
           resolveThread(threadId);
         }}
+        onDelete={deleteThread}
+        onDeleteReply={deleteReply}
       />
       {!pendingSelection && ordered.length === 0 && orphaned.length === 0 ? (
         <p className="text-sm text-slate-400">

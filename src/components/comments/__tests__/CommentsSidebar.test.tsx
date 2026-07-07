@@ -7,6 +7,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommentThread } from '../../../types/comments';
@@ -61,6 +62,8 @@ function mutationProps() {
     addComment,
     addReply,
     resolveThread,
+    deleteThread: vi.fn(),
+    deleteReply: vi.fn(),
     saveComments,
     isDirty: false,
     isSaving: false,
@@ -262,6 +265,206 @@ describe('CommentsSidebar', () => {
     });
 
     expect(saveComments).toHaveBeenCalled();
+  });
+});
+
+describe('CommentsSidebar delete', () => {
+  it('requires confirmation before deleting an anchored thread', () => {
+    const thread = makeThread({
+      id: 'thread-delete',
+      quote: 'initialize lazily',
+    });
+    const deleteThread = vi.fn();
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        deleteThread={deleteThread}
+        comments={[thread]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const threadCard = screen.getByTestId(`comment-thread-${thread.id}`);
+
+    fireEvent.click(
+      within(threadCard).getByRole('button', { name: /delete thread/i }),
+    );
+
+    expect(deleteThread).not.toHaveBeenCalled();
+    expect(
+      within(threadCard).getByRole('button', { name: /confirm delete/i }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(threadCard).getByRole('button', { name: /confirm delete/i }),
+    );
+
+    expect(deleteThread).toHaveBeenCalledTimes(1);
+    expect(deleteThread).toHaveBeenCalledWith(thread.id);
+  });
+
+  it('cancels deleting an anchored thread', () => {
+    const thread = makeThread({
+      id: 'thread-cancel',
+      quote: 'initialize lazily',
+    });
+    const deleteThread = vi.fn();
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        deleteThread={deleteThread}
+        comments={[thread]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const threadCard = screen.getByTestId(`comment-thread-${thread.id}`);
+
+    fireEvent.click(
+      within(threadCard).getByRole('button', { name: /delete thread/i }),
+    );
+    fireEvent.click(
+      within(threadCard).getByRole('button', { name: /cancel/i }),
+    );
+
+    expect(deleteThread).not.toHaveBeenCalled();
+    expect(
+      within(threadCard).getByRole('button', { name: /delete thread/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('requires confirmation before deleting a reply', () => {
+    const replyId = 'reply-delete';
+    const thread = makeThread({
+      id: 'thread-reply-delete',
+      quote: 'initialize lazily',
+      replies: [
+        {
+          id: replyId,
+          author: {
+            login: 'reviewer',
+            avatarUrl: 'https://example.com/reviewer.png',
+          },
+          body: 'Reply body',
+          createdAt: '2026-06-22T05:00:00Z',
+        },
+      ],
+    });
+    const deleteReply = vi.fn();
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        deleteReply={deleteReply}
+        comments={[thread]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const reply = screen.getByTestId(`comment-reply-${replyId}`);
+
+    fireEvent.click(
+      within(reply).getByRole('button', { name: /delete reply/i }),
+    );
+
+    expect(deleteReply).not.toHaveBeenCalled();
+    expect(
+      within(reply).getByRole('button', { name: /confirm/i }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(reply).getByRole('button', { name: /confirm/i }));
+
+    expect(deleteReply).toHaveBeenCalledTimes(1);
+    expect(deleteReply).toHaveBeenCalledWith(thread.id, replyId);
+  });
+
+  it('cancels deleting a reply', () => {
+    const replyId = 'reply-cancel';
+    const thread = makeThread({
+      id: 'thread-reply-cancel',
+      quote: 'initialize lazily',
+      replies: [
+        {
+          id: replyId,
+          author: {
+            login: 'reviewer',
+            avatarUrl: 'https://example.com/reviewer.png',
+          },
+          body: 'Reply body',
+          createdAt: '2026-06-22T05:00:00Z',
+        },
+      ],
+    });
+    const deleteReply = vi.fn();
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        deleteReply={deleteReply}
+        comments={[thread]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const reply = screen.getByTestId(`comment-reply-${replyId}`);
+
+    fireEvent.click(
+      within(reply).getByRole('button', { name: /delete reply/i }),
+    );
+    fireEvent.click(within(reply).getByRole('button', { name: /cancel/i }));
+
+    expect(deleteReply).not.toHaveBeenCalled();
+    expect(
+      within(reply).getByRole('button', { name: /delete reply/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('deletes orphaned threads through the orphaned comments section', () => {
+    const thread = makeThread({ id: 'orphan-delete', quote: 'missing quote' });
+    const deleteThread = vi.fn();
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        deleteThread={deleteThread}
+        comments={[thread]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={null}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const threadCard = screen.getByTestId(`comment-thread-${thread.id}`);
+
+    fireEvent.click(
+      within(threadCard).getByRole('button', { name: /delete thread/i }),
+    );
+    fireEvent.click(
+      within(threadCard).getByRole('button', { name: /confirm delete/i }),
+    );
+
+    expect(deleteThread).toHaveBeenCalledTimes(1);
+    expect(deleteThread).toHaveBeenCalledWith(thread.id);
   });
 });
 

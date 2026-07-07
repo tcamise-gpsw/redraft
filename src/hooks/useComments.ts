@@ -115,6 +115,25 @@ export function useComments(path: string) {
     setIsDirty(true);
   }
 
+  function deleteThread(threadId: string): void {
+    setLocalThreads((prev) => (prev ?? []).filter((t) => t.id !== threadId));
+    setIsDirty(true);
+  }
+
+  function deleteReply(threadId: string, replyId: string): void {
+    setLocalThreads((prev) =>
+      (prev ?? []).map((t) =>
+        t.id === threadId
+          ? {
+              ...t,
+              replies: t.replies.filter((r) => r.id !== replyId),
+            }
+          : t,
+      ),
+    );
+    setIsDirty(true);
+  }
+
   function resolveThread(threadId: string): void {
     setLocalThreads((prev) =>
       (prev ?? []).map((t) =>
@@ -177,6 +196,8 @@ export function useComments(path: string) {
     isSaving,
     addComment,
     addReply,
+    deleteThread,
+    deleteReply,
     resolveThread,
     saveComments,
   };

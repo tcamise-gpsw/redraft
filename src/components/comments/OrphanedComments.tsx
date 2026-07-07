@@ -7,12 +7,16 @@ export function OrphanedComments({
   onCommentClick,
   onReply,
   onResolve,
+  onDelete,
+  onDeleteReply,
 }: {
   comments: CommentThread[];
   activeCommentId: string | null;
   onCommentClick: (id: string) => void;
   onReply: (threadId: string, body: string) => Promise<void> | void;
   onResolve: (threadId: string) => Promise<void> | void;
+  onDelete: (threadId: string) => void;
+  onDeleteReply: (threadId: string, replyId: string) => void;
 }) {
   if (comments.length === 0) {
     return null;
@@ -31,6 +35,8 @@ export function OrphanedComments({
           onClick={() => onCommentClick(thread.id)}
           onReply={(body) => onReply(thread.id, body)}
           onResolve={() => onResolve(thread.id)}
+          onDelete={() => onDelete(thread.id)}
+          onDeleteReply={(replyId) => onDeleteReply(thread.id, replyId)}
         />
       ))}
     </section>

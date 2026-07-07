@@ -23,6 +23,8 @@ export function ProposalView() {
     addComment,
     addReply,
     resolveThread,
+    deleteThread,
+    deleteReply,
     saveComments,
   } = useComments(path);
 
@@ -71,6 +73,8 @@ export function ProposalView() {
           addComment={addComment}
           addReply={addReply}
           resolveThread={resolveThread}
+          deleteThread={deleteThread}
+          deleteReply={deleteReply}
           saveComments={saveComments}
           isDirty={isDirty}
           isSaving={isSaving}
