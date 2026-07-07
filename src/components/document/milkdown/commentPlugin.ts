@@ -150,8 +150,7 @@ export function makeCommentPlugin(
       },
       apply(tr, decorations, _oldState, newState) {
         const nextComments = tr.getMeta(commentPluginKey) as
-          | CommentHighlight[]
-          | undefined;
+          CommentHighlight[] | undefined;
 
         if (nextComments) {
           return buildDecorations(newState.doc, nextComments);

@@ -225,13 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       canceled = true;
     };
-  }, [
-    loadBranchState,
-    localMode,
-    state.pat,
-    state.repo?.owner,
-    state.repo?.repo,
-  ]);
+  }, [loadBranchState, localMode, state.pat, state.repo]);
 
   useEffect(() => {
     if (localMode) {
