@@ -56,6 +56,17 @@ function defaultCommitMessage(): string {
 }
 
 export function registerGitRoute(app: Hono, helpers: GitRouteHelpers): void {
+  app.get('/api/git/branch', async () => {
+    const { repoRoot } = await getRepoContext(helpers.basePath);
+    const { stdout } = await execGit(
+      'git',
+      ['rev-parse', '--abbrev-ref', 'HEAD'],
+      { cwd: repoRoot },
+    );
+
+    return helpers.json({ branch: stdout.trim() });
+  });
+
   app.get('/api/git/status', async () => {
     const { repoRoot, relativeScope } = await getRepoContext(helpers.basePath);
     const { stdout } = await execGit(

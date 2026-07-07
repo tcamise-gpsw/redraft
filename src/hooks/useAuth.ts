@@ -15,8 +15,10 @@ import {
   clearStoredAuth,
   getStoredAuth,
   getStoredBranch,
+  getStoredSidecarBranch,
   setStoredAuth,
   setStoredBranch,
+  setStoredSidecarBranch,
   type StoredAuth,
 } from '../lib/auth';
 import { getApiBaseUrl, isLocalMode } from '../lib/mode';
@@ -33,11 +35,13 @@ interface AuthContextValue {
   repo: RepoConfig | null;
   branch: string | null;
   defaultBranch: string | null;
+  sidecarBranch: string | null;
   isAuthenticated: boolean;
   login: (pat: string, owner: string, repo: string) => Promise<void>;
   logout: () => void;
   updateRepo: (owner: string, repo: string) => void;
   setBranch: (name: string) => void;
+  setSidecarBranch: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -45,12 +49,13 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 interface BranchState {
   branch: string | null;
   defaultBranch: string | null;
+  sidecarBranch: string | null;
 }
 
 export const BRANCH_WARNING_EVENT = 'redraft:branch-warning';
 
 function emptyBranchState(): BranchState {
-  return { branch: null, defaultBranch: null };
+  return { branch: null, defaultBranch: null, sidecarBranch: null };
 }
 
 function dispatchBranchWarning(): void {
@@ -63,6 +68,25 @@ function dispatchBranchWarning(): void {
       detail: { title: 'Could not determine default branch' },
     }),
   );
+}
+
+async function loadLocalBranch(): Promise<string> {
+  if (typeof window === 'undefined') {
+    return 'main';
+  }
+
+  try {
+    const response = await fetch(`${window.location.origin}/api/git/branch`);
+    if (!response.ok) {
+      return 'main';
+    }
+    const body = (await response.json()) as { branch?: unknown };
+    return typeof body.branch === 'string' && body.branch.length > 0
+      ? body.branch
+      : 'main';
+  } catch {
+    return 'main';
+  }
 }
 
 function toState(auth: StoredAuth | null) {
@@ -104,7 +128,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadBranchState = useCallback(
     async (pat: string, owner: string, repo: string): Promise<BranchState> => {
       if (localMode) {
-        return emptyBranchState();
+        return {
+          branch: await loadLocalBranch(),
+          defaultBranch: null,
+          sidecarBranch: null,
+        };
       }
 
       try {
@@ -118,12 +146,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return {
           defaultBranch,
           branch: getStoredBranch(owner, repo) ?? defaultBranch,
+          sidecarBranch: getStoredSidecarBranch(owner, repo) ?? 'redraft',
         };
       } catch {
         dispatchBranchWarning();
         return {
           defaultBranch: null,
           branch: getStoredBranch(owner, repo),
+          sidecarBranch: getStoredSidecarBranch(owner, repo) ?? 'redraft',
         };
       }
     },
@@ -145,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (pat: string, owner: string, repo: string) => {
       if (localMode) {
-        setBranchState(emptyBranchState());
+        setBranchState(await loadBranchState(pat, owner, repo));
         setState(toState(LOCAL_AUTH));
         return;
       }
@@ -206,8 +236,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [localMode, state.repo],
   );
 
+  const setSidecarBranch = useCallback(
+    (name: string) => {
+      if (localMode || !state.repo) {
+        return;
+      }
+
+      setStoredSidecarBranch(state.repo.owner, state.repo.repo, name);
+      setBranchState((current) => ({ ...current, sidecarBranch: name }));
+    },
+    [localMode, state.repo],
+  );
+
   useEffect(() => {
-    if (localMode || !state.pat || !state.repo) {
+    if (localMode) {
+      let canceled = false;
+      void loadLocalBranch().then((branch) => {
+        if (!canceled) {
+          setBranchState({ branch, defaultBranch: null, sidecarBranch: null });
+        }
+      });
+
+      return () => {
+        canceled = true;
+      };
+    }
+
+    if (!state.pat || !state.repo) {
       setBranchState(emptyBranchState());
       return;
     }
@@ -250,19 +305,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       repo: state.repo,
       branch: branchState.branch,
       defaultBranch: branchState.defaultBranch,
+      sidecarBranch: branchState.sidecarBranch,
       isAuthenticated: Boolean(state.user && state.pat && state.repo),
       login,
       logout,
       updateRepo,
       setBranch,
+      setSidecarBranch,
     }),
     [
       branchState.branch,
       branchState.defaultBranch,
+      branchState.sidecarBranch,
       login,
       logout,
       setBranch,
       state.pat,
+      setSidecarBranch,
       state.repo,
       state.user,
       updateRepo,

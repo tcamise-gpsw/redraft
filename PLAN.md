@@ -107,32 +107,32 @@ Add `sidecarBranch` and `setSidecarBranch` to the `useMemo` value and its depend
 
 **Checklist:**
 
-- [ ] `sidecarBranch` defaults to `'redraft'` on login when no stored override exists (remote mode)
-- [ ] `sidecarBranch` restores from localStorage if previously set (remote mode)
-- [ ] `setSidecarBranch` persists to localStorage and updates state (remote mode)
-- [ ] `updateRepo` resets and reloads sidecar branch state (default `'redraft'`)
-- [ ] `logout` clears sidecar branch state
-- [ ] `sidecarBranch` included in `useMemo` value and dependency array
-- [ ] `GET /api/git/branch` endpoint returns current branch name
-- [ ] Local mode: `branch` is fetched from server (no longer hardcoded null)
-- [ ] Local mode: falls back to `'main'` if git branch detection fails
-- [ ] Local mode: `sidecarBranch` is `null`, `setSidecarBranch` is a no-op
+- [x] `sidecarBranch` defaults to `'redraft'` on login when no stored override exists (remote mode)
+- [x] `sidecarBranch` restores from localStorage if previously set (remote mode)
+- [x] `setSidecarBranch` persists to localStorage and updates state (remote mode)
+- [x] `updateRepo` resets and reloads sidecar branch state (default `'redraft'`)
+- [x] `logout` clears sidecar branch state
+- [x] `sidecarBranch` included in `useMemo` value and dependency array
+- [x] `GET /api/git/branch` endpoint returns current branch name
+- [x] Local mode: `branch` is fetched from server (no longer hardcoded null)
+- [x] Local mode: falls back to `'main'` if git branch detection fails
+- [x] Local mode: `sidecarBranch` is `null`, `setSidecarBranch` is a no-op
 
 **Tests:**
 
-- [ ] `npx vitest run src/hooks/__tests__/useAuth.test.tsx`
-- [ ] `npx vitest run server/routes/git.test.ts`
-- [ ] Login uses default `'redraft'` when no persisted sidecar branch exists
-- [ ] Login restores persisted sidecar branch override
-- [ ] `setSidecarBranch` updates state and persists to localStorage
-- [ ] Local mode fetches branch from server and populates `branch`
-- [ ] Local mode `sidecarBranch` is null, `setSidecarBranch` is no-op
-- [ ] Mount with stored auth restores sidecar branch from localStorage
-- [ ] `GET /api/git/branch` returns current branch; 404 outside git repo
+- [x] `npx vitest run src/hooks/__tests__/useAuth.test.tsx`
+- [x] `npx vitest run server/routes/git.test.ts`
+- [x] Login uses default `'redraft'` when no persisted sidecar branch exists
+- [x] Login restores persisted sidecar branch override
+- [x] `setSidecarBranch` updates state and persists to localStorage
+- [x] Local mode fetches branch from server and populates `branch`
+- [x] Local mode `sidecarBranch` is null, `setSidecarBranch` is no-op
+- [x] Mount with stored auth restores sidecar branch from localStorage
+- [x] `GET /api/git/branch` returns current branch; 404 outside git repo
 
 **Commit:**
 
-- [ ] Read `skill://commit`, commit with message like `feat: add sidecarBranch to auth context with local branch detection`
+- [x] Read `skill://commit`, commit with message like `feat: add sidecarBranch to auth context with local branch detection`
 
 ### Task 3: Update useComments Hook
 
