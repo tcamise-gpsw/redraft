@@ -7,6 +7,10 @@ function branchStorageKey(owner: string, repo: string): string {
   return `redraft.branch.${owner}/${repo}`;
 }
 
+function sidecarBranchStorageKey(owner: string, repo: string): string {
+  return `redraft.sidecarBranch.${owner}/${repo}`;
+}
+
 export interface StoredAuth {
   pat: string;
   owner: string;
@@ -70,6 +74,35 @@ export function setStoredBranch(
   branch: string,
 ): void {
   localStorage.setItem(branchStorageKey(owner, repo), JSON.stringify(branch));
+}
+
+export function getStoredSidecarBranch(
+  owner: string,
+  repo: string,
+): string | null {
+  const raw = localStorage.getItem(sidecarBranchStorageKey(owner, repo));
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return typeof parsed === 'string' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredSidecarBranch(
+  owner: string,
+  repo: string,
+  branch: string,
+): void {
+  localStorage.setItem(
+    sidecarBranchStorageKey(owner, repo),
+    JSON.stringify(branch),
+  );
 }
 
 export function dispatchAuthError(): void {

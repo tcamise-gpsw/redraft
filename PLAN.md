@@ -46,23 +46,23 @@ Follow the exact pattern of the existing `getStoredBranch` / `setStoredBranch` f
 
 **Checklist:**
 
-- [ ] `sanitizeBranch` handles branches with no slashes (identity), single slash, multiple slashes
-- [ ] `commentPath` correctly composes the full path with sanitized branch prefix
-- [ ] Storage functions use key `redraft.sidecarBranch.<owner>/<repo>` (not colliding with `redraft.branch.*`)
-- [ ] `getStoredSidecarBranch` returns null for missing/malformed data (same guard as `getStoredBranch`)
-- [ ] Both new exports are re-exported from their respective index files
+- [x] `sanitizeBranch` handles branches with no slashes (identity), single slash, multiple slashes
+- [x] `commentPath` correctly composes the full path with sanitized branch prefix
+- [x] Storage functions use key `redraft.sidecarBranch.<owner>/<repo>` (not colliding with `redraft.branch.*`)
+- [x] `getStoredSidecarBranch` returns null for missing/malformed data (same guard as `getStoredBranch`)
+- [x] Both new exports are re-exported from their respective index files
 
 **Tests:**
 
-- [ ] `npx vitest run src/lib/comments/__tests__/paths.test.ts`
-- [ ] `npx vitest run src/lib/auth/__tests__/storage.test.ts`
-- [ ] Unit tests for `sanitizeBranch` with identity, single-slash, multi-slash branch names
-- [ ] Unit tests for `commentPath` with various doc paths and branch names
-- [ ] Storage round-trip, missing key returns null, malformed JSON returns null
+- [x] `npx vitest run src/lib/comments/__tests__/paths.test.ts`
+- [x] `npx vitest run src/lib/auth/__tests__/storage.test.ts`
+- [x] Unit tests for `sanitizeBranch` with identity, single-slash, multi-slash branch names
+- [x] Unit tests for `commentPath` with various doc paths and branch names
+- [x] Storage round-trip, missing key returns null, malformed JSON returns null
 
 **Commit:**
 
-- [ ] Read `'/Users/tcamise/.claude/skills/commit/SKILL.md'`, commit with message like `feat: add comment path utilities and sidecar branch storage`
+- [x] Read `skill://commit`, commit with message like `feat: add comment path utilities and sidecar branch storage`
 
 ### Task 2: Auth Context — Sidecar Branch State and Local Branch Detection
 
