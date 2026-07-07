@@ -6,7 +6,7 @@ import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { GitHubClient } from '../../lib/github';
-import { getApiBaseUrl } from '../../lib/mode';
+import { getApiBaseUrl, isLocalMode } from '../../lib/mode';
 
 export function CreateDocumentDialog({
   open,
@@ -37,7 +37,7 @@ export function CreateDocumentDialog({
       return;
     }
 
-    if (branch === null) {
+    if (!isLocalMode() && branch === null) {
       setError('Branch is still loading. Please wait and try again.');
       return;
     }
