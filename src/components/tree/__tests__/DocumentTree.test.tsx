@@ -10,6 +10,7 @@ const getTree = vi.hoisted(() => vi.fn());
 const getFileContent = vi.hoisted(() => vi.fn());
 const createFile = vi.hoisted(() => vi.fn());
 const getDefaultBranch = vi.hoisted(() => vi.fn());
+const showToast = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../lib/github/client', () => ({
   GitHubClient: class GitHubClient {
@@ -18,6 +19,10 @@ vi.mock('../../../lib/github/client', () => ({
     createFile = createFile;
     getDefaultBranch = getDefaultBranch;
   },
+}));
+
+vi.mock('../../../hooks/useToast', () => ({
+  useToast: () => ({ showToast }),
 }));
 
 import { AuthProvider } from '../../../hooks/useAuth';
@@ -43,6 +48,11 @@ function setStoredAuth() {
       repo: 'workspace',
       user: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
     }),
+  );
+  localStorage.setItem('redraft.branch.acme/workspace', JSON.stringify('main'));
+  localStorage.setItem(
+    'redraft.sidecarBranch.acme/workspace',
+    JSON.stringify('main'),
   );
 }
 
@@ -71,7 +81,8 @@ describe('DocumentTree', () => {
     getTree.mockReset();
     getFileContent.mockReset().mockResolvedValue(null);
     createFile.mockReset();
-    getDefaultBranch.mockReset().mockRejectedValue(new Error('not mocked'));
+    getDefaultBranch.mockReset().mockResolvedValue('main');
+    showToast.mockReset();
   });
 
   it('shows under-review documents and renders the documents tree expanded by default with dirs collapsed', async () => {
@@ -80,17 +91,17 @@ describe('DocumentTree', () => {
       { path: 'media/overview.md', type: 'blob' },
       { path: 'api/graphql.md', type: 'blob' },
       {
-        path: '.redraft/comments/media/overview.comments.json',
+        path: '.redraft/comments/main/media/overview.comments.json',
         type: 'blob',
       },
     ]);
 
     renderTree();
 
-    expect(await screen.findByText('Under Review')).toBeInTheDocument();
     expect(
       await screen.findByRole('link', { name: /media\/overview\.md/ }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Under Review')).toBeInTheDocument();
 
     // Top-level tree is expanded — root files and directory buttons visible.
     expect(
