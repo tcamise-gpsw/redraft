@@ -106,25 +106,25 @@ Edge case: `getDefaultBranch()` can fail (e.g. repo not found, network error). I
 
 **Checklist:**
 
-- [ ] `getStoredBranch` and `setStoredBranch` added to `storage.ts` and re-exported from `index.ts`
-- [ ] `AuthContextValue` extended with `branch`, `defaultBranch`, `setBranch`
-- [ ] `login` callback discovers default branch and checks localStorage
-- [ ] Page reload (`useEffect`) discovers default branch and restores persisted branch
-- [ ] `setBranch` updates state and persists
-- [ ] `logout` resets branch state
-- [ ] `updateRepo` re-discovers default branch and checks `getStoredBranch` for new repo
-- [ ] Local mode: `branch`/`defaultBranch` are `null`, `setBranch` is no-op
-- [ ] `getDefaultBranch()` failure shows toast warning and leaves `defaultBranch` as `null`
+- [x] `getStoredBranch` and `setStoredBranch` added to `storage.ts` and re-exported from `index.ts`
+- [x] `AuthContextValue` extended with `branch`, `defaultBranch`, `setBranch`
+- [x] `login` callback discovers default branch and checks localStorage
+- [x] Page reload (`useEffect`) discovers default branch and restores persisted branch
+- [x] `setBranch` updates state and persists
+- [x] `logout` resets branch state
+- [x] `updateRepo` re-discovers default branch and checks `getStoredBranch` for new repo
+- [x] Local mode: `branch`/`defaultBranch` are `null`, `setBranch` is no-op
+- [x] `getDefaultBranch()` failure shows toast warning and leaves `defaultBranch` as `null`
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/lib/auth/__tests__/storage.test.ts`
-- [ ] Test `getStoredBranch`/`setStoredBranch` round-trip with localStorage mock
-- [ ] Test `getStoredBranch` returns `null` for unknown repo
+- [x] Run: `npx vitest run src/lib/auth/__tests__/storage.test.ts`
+- [x] Test `getStoredBranch`/`setStoredBranch` round-trip with localStorage mock
+- [x] Test `getStoredBranch` returns `null` for unknown repo
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage relevant files, commit
+- [x] Read `skill://commit`, stage relevant files, commit
 
 ---
 
