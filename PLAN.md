@@ -317,31 +317,31 @@ The existing `POST /api/git/commit` route splits its work:
 
 **Checklist:**
 
-- [ ] `git add` for documents excludes `.redraft/` via scope-relative pathspec (e.g., `':!docs/.redraft/'` when serving `docs/`)
-- [ ] Empty document commits don't error (skip gracefully)
-- [ ] Sidecar changes detected via `git status --porcelain -- <relativeScope>/.redraft/`
-- [ ] Git plumbing uses a temp index file — never touches the real index
-- [ ] Temp index cleaned up in a `finally` block
-- [ ] Orphan commit created when sidecar branch doesn't exist yet
-- [ ] Parent commit used when sidecar branch already exists
-- [ ] Author/committer set via env vars for `commit-tree`
-- [ ] Response includes sidecar commit info when applicable
-- [ ] `GitRouteHelpers` extended with `sidecarBranch` property
+- [x] `git add` for documents excludes `.redraft/` via scope-relative pathspec (e.g., `':!docs/.redraft/'` when serving `docs/`)
+- [x] Empty document commits don't error (skip gracefully)
+- [x] Sidecar changes detected via `git status --porcelain -- <relativeScope>/.redraft/`
+- [x] Git plumbing uses a temp index file — never touches the real index
+- [x] Temp index cleaned up in a `finally` block
+- [x] Orphan commit created when sidecar branch doesn't exist yet
+- [x] Parent commit used when sidecar branch already exists
+- [x] Author/committer set via env vars for `commit-tree`
+- [x] Response includes sidecar commit info when applicable
+- [x] `GitRouteHelpers` extended with `sidecarBranch` property
 
 **Tests:**
 
-- [ ] `npx vitest run server/routes/git.test.ts`
-- [ ] Document-only commit: change a `.md` file, commit, verify `.redraft/` is not staged
-- [ ] Sidecar-only commit: change a `.redraft/` file, commit, verify sidecar branch has the file and working tree is untouched
-- [ ] Mixed commit: change both `.md` and `.redraft/` files, verify documents go to current branch and sidecars go to sidecar branch
-- [ ] First sidecar commit (orphan): verify sidecar branch is created as orphan
-- [ ] Subsequent sidecar commit: verify parent chain on sidecar branch
-- [ ] No changes: commit with nothing dirty returns gracefully
-- [ ] Subdirectory-served repo: verify pathspecs use relative scope (test with a non-root basePath)
+- [x] `npx vitest run server/routes/git.test.ts`
+- [x] Document-only commit: change a `.md` file, commit, verify `.redraft/` is not staged
+- [x] Sidecar-only commit: change a `.redraft/` file, commit, verify sidecar branch has the file and working tree is untouched
+- [x] Mixed commit: change both `.md` and `.redraft/` files, verify documents go to current branch and sidecars go to sidecar branch
+- [x] First sidecar commit (orphan): verify sidecar branch is created as orphan
+- [x] Subsequent sidecar commit: verify parent chain on sidecar branch
+- [x] No changes: commit with nothing dirty returns gracefully
+- [x] Subdirectory-served repo: verify pathspecs use relative scope (test with a non-root basePath)
 
 **Commit:**
 
-- [ ] Read `'/Users/tcamise/.claude/skills/commit/SKILL.md'`, commit with message like `feat: split git commit route for sidecar branch plumbing`
+- [x] Read `skill://commit`, commit with message like `feat: split git commit route for sidecar branch plumbing`
 
 ### Task 7: CLI Flag and Server Wiring
 
