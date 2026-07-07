@@ -3,12 +3,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getFileContent = vi.hoisted(() => vi.fn());
 const createFile = vi.hoisted(() => vi.fn());
 const updateFile = vi.hoisted(() => vi.fn());
+const setBranch = vi.hoisted(() => vi.fn());
 
 vi.mock('../../lib/github/client', () => ({
   ConflictError: class ConflictError extends Error {},
@@ -19,40 +20,22 @@ vi.mock('../../lib/github/client', () => ({
   },
 }));
 
-import { AuthProvider } from '../useAuth';
+vi.mock('../useAuth', () => ({
+  useAuth: () => ({
+    pat: 'ghp_test',
+    repo: { owner: 'acme', repo: 'workspace' },
+    branch: 'dev',
+    defaultBranch: 'main',
+    setBranch,
+  }),
+}));
+
 import { useComments } from '../useComments';
-
-function createLocalStorageMock() {
-  const store = new Map<string, string>();
-
-  return {
-    getItem: (key: string) => store.get(key) ?? null,
-    setItem: (key: string, value: string) => store.set(key, value),
-    removeItem: (key: string) => store.delete(key),
-    clear: () => store.clear(),
-  };
-}
-
-function setStoredAuth() {
-  localStorage.setItem(
-    'redraft.auth',
-    JSON.stringify({
-      pat: 'ghp_test',
-      owner: 'acme',
-      repo: 'workspace',
-      user: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
-    }),
-  );
-}
 
 let queryClient: QueryClient;
 
 function wrapper({ children }: { children: ReactNode }) {
-  return createElement(
-    QueryClientProvider,
-    { client: queryClient },
-    createElement(AuthProvider, null, children),
-  );
+  return createElement(QueryClientProvider, { client: queryClient }, children);
 }
 
 const EXISTING_THREAD = {
@@ -74,12 +57,10 @@ describe('useComments – local state', () => {
         mutations: { retry: false },
       },
     });
-    vi.stubGlobal('localStorage', createLocalStorageMock());
-    localStorage.clear();
-    setStoredAuth();
     getFileContent.mockReset();
     createFile.mockReset();
     updateFile.mockReset();
+    setBranch.mockReset();
   });
 
   it('starts empty and not dirty when no comments file exists', async () => {
@@ -93,6 +74,13 @@ describe('useComments – local state', () => {
 
     expect(result.current.threads).toEqual([]);
     expect(result.current.isDirty).toBe(false);
+    expect(getFileContent).toHaveBeenCalledWith(
+      '.redraft/comments/docs/doc.comments.json',
+      { optional: true, ref: 'dev' },
+    );
+    expect(
+      queryClient.getQueryState(['document', 'docs/doc.md', 'comments', 'dev']),
+    ).toBeDefined();
   });
 
   it('seeds threads from an existing comments file on load', async () => {
@@ -194,12 +182,10 @@ describe('useComments – saveComments', () => {
         mutations: { retry: false },
       },
     });
-    vi.stubGlobal('localStorage', createLocalStorageMock());
-    localStorage.clear();
-    setStoredAuth();
     getFileContent.mockReset();
     createFile.mockReset();
     updateFile.mockReset();
+    setBranch.mockReset();
   });
 
   it('calls createFile when no comments file exists yet', async () => {
@@ -230,6 +216,7 @@ describe('useComments – saveComments', () => {
       '.redraft/comments/docs/doc.comments.json',
       expect.stringContaining('"body":"Question"'),
       'Add comments on doc.md',
+      'dev',
     );
     expect(result.current.isDirty).toBe(false);
     expect(result.current.isSaving).toBe(false);
@@ -261,6 +248,7 @@ describe('useComments – saveComments', () => {
       expect.stringContaining('"resolved":true'),
       'load-sha',
       'Update comments on doc.md',
+      'dev',
     );
     expect(result.current.isDirty).toBe(false);
   });
@@ -311,6 +299,7 @@ describe('useComments – saveComments', () => {
       expect.stringContaining('"body":"second"'),
       'created-sha',
       'Update comments on doc.md',
+      'dev',
     );
   });
 

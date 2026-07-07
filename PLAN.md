@@ -187,24 +187,24 @@ Query key changes (actual current keys → new):
 
 **Checklist:**
 
-- [ ] All 5 hooks/components destructure `branch` from `useAuth()`
-- [ ] All query keys include `branch` as the last element
-- [ ] All `getFileContent` calls pass `ref` option
-- [ ] All `getLatestCommit` calls pass `ref` param
-- [ ] All `createFile`/`updateFile` calls pass `branch` param
-- [ ] Query invalidation keys updated in `useDocumentEdit` and `CreateDocumentDialog`
-- [ ] Local mode behavior unchanged (branch is null, API calls receive undefined)
-- [ ] All existing test mocks for `useAuth` updated to include `branch: null`, `defaultBranch: null`, `setBranch: vi.fn()` (check `src/components/tree/__tests__/`, `src/components/layout/__tests__/`, `src/components/document/__tests__/`, `src/components/comments/__tests__/`)
+- [x] All 5 hooks/components destructure `branch` from `useAuth()`
+- [x] All query keys include `branch` as the last element
+- [x] All `getFileContent` calls pass `ref` option
+- [x] All `getLatestCommit` calls pass `ref` param
+- [x] All `createFile`/`updateFile` calls pass `branch` param
+- [x] Query invalidation keys updated in `useDocumentEdit` and `CreateDocumentDialog`
+- [x] Local mode behavior unchanged (branch is null, API calls receive undefined)
+- [x] All existing test mocks for `useAuth` updated to include `branch: null`, `defaultBranch: null`, `setBranch: vi.fn()` (check `src/components/tree/__tests__/`, `src/components/layout/__tests__/`, `src/components/document/__tests__/`, `src/components/comments/__tests__/`)
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/hooks/__tests__/`
-- [ ] Existing hook tests pass (update mocks to include `branch: null` in useAuth return)
-- [ ] Verify query keys include branch by checking the `useQuery` call args in tests
+- [x] Run: `npx vitest run src/hooks/__tests__/`
+- [x] Existing hook tests pass (update mocks to include `branch: null` in useAuth return)
+- [x] Verify query keys include branch by checking the `useQuery` call args in tests
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage relevant files, commit
+- [x] Read `skill://commit`, stage relevant files, commit
 
 ---
 

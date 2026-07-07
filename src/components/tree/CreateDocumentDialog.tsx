@@ -15,7 +15,7 @@ export function CreateDocumentDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const { pat, repo } = useAuth();
+  const { pat, repo, branch } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [path, setPath] = useState('');
@@ -57,8 +57,11 @@ export function CreateDocumentDialog({
         fullPath,
         `# ${documentTitle}\n\n<!-- Write your document here -->`,
         `Create document: ${filename}`,
+        branch ?? undefined,
       );
-      await queryClient.invalidateQueries({ queryKey: ['documents', 'tree'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['documents', 'tree', branch],
+      });
       navigate(`/d/${fullPath}`);
       setPath('');
       setTitle('');
