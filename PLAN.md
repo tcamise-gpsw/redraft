@@ -542,20 +542,20 @@ The script should be executable (`chmod +x`).
 
 **Checklist:**
 
-- [ ] Script is executable
-- [ ] Default branch name is `redraft`
-- [ ] Custom branch name accepted as first argument
-- [ ] Creates orphan branch (no parent commit, no files)
-- [ ] Returns to previous branch after creation
-- [ ] Prints push instructions
+- [x] Script is executable
+- [x] Default branch name is `redraft`
+- [x] Custom branch name accepted as first argument
+- [x] Creates orphan branch (no parent commit, no files)
+- [x] Returns to previous branch after creation
+- [x] Prints push instructions
 
 **Tests:**
 
-- [ ] Manual verification: run the script in a test repo, verify orphan branch exists with empty tree
+- [x] Manual verification: run the script in a test repo, verify orphan branch exists with empty tree
 
 **Commit:**
 
-- [ ] Read `'/Users/tcamise/.claude/skills/commit/SKILL.md'`, commit with message like `feat: add sidecar branch setup script`
+- [x] Read `skill://commit`, commit with message like `feat: add sidecar branch setup script`
 
 ### Task 12: Final Validation
 
