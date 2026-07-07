@@ -157,26 +157,26 @@ The hook currently uses `branch` (the document branch) for both the sidecar file
 
 **Checklist:**
 
-- [ ] Local `commentPath` function removed, replaced with import from `src/lib/comments/paths`
-- [ ] `sidecarBranch` destructured from `useAuth()`
-- [ ] `commentPath()` called with `(path, branch!)` — document branch for namespacing (non-null when enabled)
-- [ ] `getFileContent` uses `ref: sidecarBranch` (not `branch`)
-- [ ] `createFile` / `updateFile` use `sidecarBranch` as branch arg (not `branch`)
-- [ ] Query key includes both `branch` and `sidecarBranch`
-- [ ] `enabled` guard checks both `branch` and `sidecarBranch` are non-null in remote mode
-- [ ] Reset effect dependency array includes `sidecarBranch` if appropriate
+- [x] Local `commentPath` function removed, replaced with import from `src/lib/comments/paths`
+- [x] `sidecarBranch` destructured from `useAuth()`
+- [x] `commentPath()` called with `(path, branch!)` — document branch for namespacing (non-null when enabled)
+- [x] `getFileContent` uses `ref: sidecarBranch` (not `branch`)
+- [x] `createFile` / `updateFile` use `sidecarBranch` as branch arg (not `branch`)
+- [x] Query key includes both `branch` and `sidecarBranch`
+- [x] `enabled` guard checks both `branch` and `sidecarBranch` are non-null in remote mode
+- [x] Reset effect dependency array includes `sidecarBranch` if appropriate
 
 **Tests:**
 
-- [ ] `npx vitest run src/hooks/__tests__/useComments.test.ts`
-- [ ] Update mock `useAuth` return to include `sidecarBranch: 'redraft'`
-- [ ] Verify `getFileContent` is called with `ref: 'redraft'` (the sidecar branch, not the document branch)
-- [ ] Verify `createFile` / `updateFile` are called with `'redraft'` as the branch arg
-- [ ] Verify the sidecar file path includes the sanitized document branch: `.redraft/comments/dev/docs/doc.comments.json`
+- [x] `npx vitest run src/hooks/__tests__/useComments.test.ts`
+- [x] Update mock `useAuth` return to include `sidecarBranch: 'redraft'`
+- [x] Verify `getFileContent` is called with `ref: 'redraft'` (the sidecar branch, not the document branch)
+- [x] Verify `createFile` / `updateFile` are called with `'redraft'` as the branch arg
+- [x] Verify the sidecar file path includes the sanitized document branch: `.redraft/comments/dev/docs/doc.comments.json`
 
 **Commit:**
 
-- [ ] Read `'/Users/tcamise/.claude/skills/commit/SKILL.md'`, commit with message like `feat: route comment reads/writes to sidecar branch`
+- [x] Read `skill://commit`, commit with message like `feat: route comment reads/writes to sidecar branch`
 
 ### Task 4: Update useDocuments Hook — Dual Tree Fetch
 

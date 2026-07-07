@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 
 import { ConflictError, GitHubClient } from '../lib/github';
+import { commentPath } from '../lib/comments/paths';
 import { getApiBaseUrl, isLocalMode } from '../lib/mode';
 import { useAuth } from './useAuth';
 import type {
@@ -11,16 +12,12 @@ import type {
   CommentThread,
 } from '../types/comments';
 
-function commentPath(path: string): string {
-  return `.redraft/comments/${path.replace(/\.md$/u, '.comments.json')}`;
-}
-
 function fileName(path: string): string {
   return path.split('/').at(-1) ?? path;
 }
 
 export function useComments(path: string) {
-  const { pat, repo, branch } = useAuth();
+  const { pat, repo, branch, sidecarBranch } = useAuth();
 
   // Local draft state — mutations never touch the network directly.
   // saveComments() flushes the full state in a single write.
@@ -41,22 +38,25 @@ export function useComments(path: string) {
     });
   }, [pat, repo]);
 
-  const commentsPath = commentPath(path);
+  const commentsPath = branch ? commentPath(path, branch) : '';
 
   // One load per path. staleTime: Infinity prevents automatic re-fetches;
   // the local store is the source of truth until a hard reload.
   const commentsQuery = useQuery({
-    queryKey: ['document', path, 'comments', branch],
+    queryKey: ['document', path, 'comments', branch, sidecarBranch],
     queryFn: async () => {
       if (!client) throw new Error('Authentication is required');
       return (
         (await client.getFileContent(commentsPath, {
           optional: true,
-          ref: branch ?? undefined,
+          ref: sidecarBranch ?? undefined,
         })) ?? null
       );
     },
-    enabled: Boolean(client) && (isLocalMode() || branch !== null),
+    enabled:
+      Boolean(client) &&
+      branch !== null &&
+      (isLocalMode() || sidecarBranch !== null),
     staleTime: Infinity,
   });
 
@@ -65,7 +65,7 @@ export function useComments(path: string) {
     setLocalThreads(null);
     setLocalSha(null);
     setIsDirty(false);
-  }, [path, branch]);
+  }, [path, branch, sidecarBranch]);
 
   // Seed from the initial fetch result (runs once per load).
   useEffect(() => {
@@ -160,7 +160,7 @@ export function useComments(path: string) {
           content,
           localSha,
           `Update comments on ${fileName(path)}`,
-          branch ?? undefined,
+          sidecarBranch ?? undefined,
         );
         setLocalSha(result.sha);
       } else {
@@ -168,7 +168,7 @@ export function useComments(path: string) {
           commentsPath,
           content,
           `Add comments on ${fileName(path)}`,
-          branch ?? undefined,
+          sidecarBranch ?? undefined,
         );
         setLocalSha(result.sha);
       }
