@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const copyLink = vi.hoisted(() => vi.fn());
+const isLocalMode = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({
@@ -11,17 +14,35 @@ vi.mock('../../../hooks/useAuth', () => ({
   }),
 }));
 
+vi.mock('../../../hooks/useShareableLink', () => ({
+  useShareableLink: () => ({
+    copyLink,
+  }),
+}));
+
+vi.mock('../../../lib/mode', () => ({
+  isLocalMode,
+}));
+
 import { Header } from '../Header';
 
-function renderHeader(rateLimit?: Parameters<typeof Header>[0]['rateLimit']) {
+function renderHeader(
+  rateLimit?: Parameters<typeof Header>[0]['rateLimit'],
+  initialEntry = '/',
+) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Header rateLimit={rateLimit} />
     </MemoryRouter>,
   );
 }
 
 describe('Header', () => {
+  beforeEach(() => {
+    copyLink.mockReset().mockResolvedValue(true);
+    isLocalMode.mockReset().mockReturnValue(false);
+  });
+
   it('displays remaining quota count prominently', () => {
     renderHeader({ remaining: 4750, limit: 5000, reset: new Date() });
 
@@ -62,5 +83,62 @@ describe('Header', () => {
     const label = screen.getByText(/remaining/iu);
     expect(label).toBeInTheDocument();
     expect(label.textContent).toMatch(/1234/u);
+  });
+
+  it('renders a Copy Link button in remote mode', () => {
+    renderHeader(undefined, '/d/docs/spec.md');
+
+    expect(
+      screen.getByRole('button', { name: /copy link/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('hides Copy Link button in local mode', () => {
+    isLocalMode.mockReturnValue(true);
+
+    renderHeader(undefined, '/d/docs/spec.md');
+
+    expect(screen.queryByRole('button', { name: /copy link/i })).toBeNull();
+  });
+
+  it('copies the current document path when clicked', async () => {
+    renderHeader(undefined, '/d/docs/spec.md');
+
+    fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
+
+    await waitFor(() => {
+      expect(copyLink).toHaveBeenCalledWith('docs/spec.md');
+    });
+  });
+
+  it('shows a copied state after copying succeeds', async () => {
+    renderHeader(undefined, '/d/docs/spec.md');
+
+    fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
+
+    expect(
+      await screen.findByRole('button', { name: /copied/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('copies a context link without a document path outside document routes', async () => {
+    renderHeader(undefined, '/settings');
+
+    fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
+
+    await waitFor(() => {
+      expect(copyLink).toHaveBeenCalledWith(undefined);
+    });
+  });
+
+  it('shows a failed state after copying fails', async () => {
+    copyLink.mockResolvedValue(false);
+    renderHeader(undefined, '/d/docs/spec.md');
+
+    fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
+
+    expect(
+      await screen.findByRole('button', { name: /failed/i }),
+    ).toBeInTheDocument();
   });
 });

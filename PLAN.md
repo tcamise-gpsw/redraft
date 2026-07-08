@@ -242,7 +242,7 @@ The user sees the repo field prefilled. They enter their PAT and click Connect. 
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage files, commit: `feat(auth): prefill AuthForm repo from URL params and thread overrideBranch to login`
+- [x] Read `skill://commit`, stage files, commit: `feat(auth): prefill AuthForm repo from URL params and thread overrideBranch to login`
 
 ### Task 5: Header Copy Link Button + BranchSelector URL Sync
 
@@ -273,24 +273,24 @@ In `handleSelect`, after calling `setBranch(nextBranch)`:
 
 **Checklist:**
 
-- [ ] Copy Link button visible in remote mode
-- [ ] Copy Link button hidden in local mode
-- [ ] Clicking copies a well-formed shareable URL to clipboard
-- [ ] Button shows "Copied ✓" for ~2 seconds after successful copy
-- [ ] Button shows "Failed" briefly on clipboard error
-- [ ] URL includes doc path when on a document route
-- [ ] URL omits doc path when on home/settings route
-- [ ] BranchSelector updates URL `branch` param on selection
-- [ ] BranchSelector preserves existing `repo` param in URL
+- [x] Copy Link button visible in remote mode
+- [x] Copy Link button hidden in local mode
+- [x] Clicking copies a well-formed shareable URL to clipboard
+- [x] Button shows "Copied ✓" for ~2 seconds after successful copy
+- [x] Button shows "Failed" briefly on clipboard error
+- [x] URL includes doc path when on a document route
+- [x] URL omits doc path when on home/settings route
+- [x] BranchSelector updates URL `branch` param on selection
+- [x] BranchSelector preserves existing `repo` param in URL
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/components/layout/__tests__/Header.test.tsx`
-- [ ] Mock `useShareableLink` to control `copyLink` return value. Mock `isLocalMode`.
-- [ ] Test: Copy Link button renders in remote mode
-- [ ] Test: Copy Link button absent in local mode
-- [ ] Test: clicking Copy Link calls `copyLink` with the correct doc path
-- [ ] Test: button text changes to "Copied ✓" after successful copy
+- [x] Run: `npx vitest run src/components/layout/__tests__/Header.test.tsx`
+- [x] Mock `useShareableLink` to control `copyLink` return value. Mock `isLocalMode`.
+- [x] Test: Copy Link button renders in remote mode
+- [x] Test: Copy Link button absent in local mode
+- [x] Test: clicking Copy Link calls `copyLink` with the correct doc path
+- [x] Test: button text changes to "Copied ✓" after successful copy
 
 **Commit:**
 
