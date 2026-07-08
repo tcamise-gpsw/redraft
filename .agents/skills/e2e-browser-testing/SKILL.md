@@ -195,15 +195,21 @@ Use these as the default checklist for local E2E coverage.
    - save
    - verify the `.redraft/comments/` sidecar is updated
 
-5. **Live file watching**
+5. **Large-document comment performance**
+   - open a ≥20 KB fixture doc with seeded comments
+   - verify the comments sidebar renders without freezing
+   - verify anchored and orphaned comments classify correctly
+   - verify comment saves still write `.redraft/comments/` sidecars
+
+6. **Live file watching**
    - mutate the open document outside the browser
    - verify the UI updates within a short window
 
-6. **Live tree update**
+7. **Live tree update**
    - create a new `.md` file on disk
    - verify it appears in the tree
 
-7. **Optional git convenience**
+8. **Optional git convenience**
    - only if the local git endpoints are in scope
    - verify status/commit UI against actual repo state
 
