@@ -67,35 +67,26 @@ lsof -ti :4200 | xargs kill -9 2>/dev/null   # `npm run serve`
 When local remote-e2e disagrees with CI, suspect a stale server first and treat
 CI as authoritative.
 
-## macOS: `local-mode.spec.ts` external-change test is flaky in the full run
+## Local-mode external file changes use chokidar on every platform
 
 `e2e/local-mode.spec.ts` › "writes markdown edits back to disk and reflects
 external file changes" asserts that a file changed on disk **outside** the UI
-propagates back to the open document (fs watcher → WebSocket → query
+propagates back to the open document (chokidar watcher → WebSocket → query
 invalidation → re-render).
 
-On **macOS** this test passes in isolation (and with `--repeat-each`) but can
-fail in the full sequential run with `getByText('Changed outside the UI')` never
-appearing. Root cause: the server watcher uses Node's **native recursive
-`fs.watch`** on macOS/Windows (`server/fs/watcher.ts`), which drops nested-file
-(`docs/…`) change events under load. This reproduces on `main` too — it is not
-caused by any recent feature work.
-
-**CI is unaffected**: on Linux the watcher uses **chokidar** (reliable, via
-inotify), so the local project is green in CI. Forcing chokidar on all platforms
-makes it deterministically green locally as well (verified), but that is a
-watcher change deliberately kept out of feature branches.
+The local server now uses **chokidar on all platforms** in
+`server/fs/watcher.ts`. This intentionally avoids Node's native recursive
+`fs.watch` path on macOS/Windows, which dropped nested-file (`docs/…`) change
+events under load and made the full local Playwright project flaky.
 
 Guidance:
 
-- Don't chase this as a regression from unrelated feature work — confirm against
-  `main` first (`git stash && git checkout <main-sha> && npx playwright test
---project=local`).
-- To get a trustworthy local signal, run the test in isolation
-  (`npx playwright test --project=local e2e/local-mode.spec.ts:<line>`), or rely
-  on CI's Linux/chokidar run.
-- The real fix (if we choose to make local match CI) is to use chokidar on all
-  platforms in `server/fs/watcher.ts`.
+- Treat failures in this test as real local-mode watcher regressions unless
+  environmental evidence says otherwise.
+- If the test fails only after a build/server race, rerun after the standalone
+  build or stale server has stopped.
+- For a narrow signal while debugging, run
+  `npx playwright test --project=local e2e/local-mode.spec.ts --grep "writes markdown edits"`.
 
 ## Don't race builds
 
