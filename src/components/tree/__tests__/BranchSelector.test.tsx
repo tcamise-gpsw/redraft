@@ -7,6 +7,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const listBranches = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
+const searchParams = vi.hoisted(
+  () => new URLSearchParams('repo=acme/workspace'),
+);
 const setBranch = vi.hoisted(() => vi.fn());
 const isLocalMode = vi.hoisted(() => vi.fn());
 const authState = vi.hoisted(() => ({
@@ -36,6 +39,7 @@ vi.mock('../../../lib/mode', () => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => navigate,
+  useSearchParams: () => [searchParams],
 }));
 
 import { BranchSelector } from '../BranchSelector';
@@ -119,14 +123,17 @@ describe('BranchSelector', () => {
     expect(currentBranchRow).toHaveClass('bg-indigo-600/20');
   });
 
-  it('switches branches and navigates to the tree root', async () => {
+  it('switches branches and navigates to the tree root with updated shareable params', async () => {
     renderBranchSelector();
 
     fireEvent.click(screen.getByRole('button', { name: /dev/i }));
     fireEvent.click(await screen.findByText('release/2026.07'));
 
     expect(setBranch).toHaveBeenCalledWith('release/2026.07');
-    expect(navigate).toHaveBeenCalledWith('/');
+    expect(navigate).toHaveBeenCalledWith({
+      pathname: '/',
+      search: 'repo=acme%2Fworkspace&branch=release%2F2026.07',
+    });
   });
 
   it('returns null in local mode', () => {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../hooks/useAuth';
 import { GitHubClient } from '../../lib/github/client';
@@ -11,6 +11,7 @@ export function BranchSelector() {
   const { pat, repo, branch, defaultBranch, setBranch } = useAuth();
   const localMode = isLocalMode();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -81,7 +82,9 @@ export function BranchSelector() {
     setBranch(nextBranch);
     setOpen(false);
     setFilter('');
-    navigate('/');
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.set('branch', nextBranch);
+    navigate({ pathname: '/', search: nextSearchParams.toString() });
   }
 
   return (
