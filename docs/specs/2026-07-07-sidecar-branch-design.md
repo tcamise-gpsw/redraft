@@ -153,12 +153,27 @@ A shell script at `scripts/create-sidecar-branch.sh`:
 BRANCH="${1:-redraft}"
 git checkout --orphan "$BRANCH"
 git rm -rf . 2>/dev/null
-git commit --allow-empty -m "Initialize ReDraft sidecar branch"
+# Seed a placeholder so the commit's tree is NON-EMPTY (see note below).
+mkdir -p .redraft
+echo "ReDraft sidecar branch." > .redraft/README.md
+git add .redraft/README.md
+git commit -m "Initialize ReDraft sidecar branch"
 git checkout -
 echo "Created orphan branch '$BRANCH'. Push with: git push origin $BRANCH"
 ```
 
-Creates an empty orphan branch, then switches back to the previous branch.
+Creates an orphan branch seeded with a `.redraft/README.md` placeholder, then
+switches back to the previous branch.
+
+> **Why seed a file (empty-branch 404 gotcha)?** GitHub's Git Trees API
+> (`GET /repos/:owner/:repo/git/trees/:branch`) returns **404 for a branch whose
+> commit points at the empty tree** — even though `GET /branches/:branch` returns
+> **200**. An empty orphan branch (created via `git commit --allow-empty`) therefore
+> makes ReDraft's `getTree(sidecarBranch)` throw `NotFoundError`, which
+> `useDocuments` reports as _"Comments branch 'redraft' does not exist"_ — blocking
+> commenting on a branch that actually exists. Any tracked file keeps the tree
+> non-empty and avoids the false negative. **Existing empty sidecar branches must be
+> seeded once** by committing any file to them.
 
 ### Error Handling
 
