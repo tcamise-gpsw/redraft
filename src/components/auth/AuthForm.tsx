@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { useAuth, isInvalidAuthError } from '../../hooks/useAuth';
 import { NetworkError } from '../../lib/github';
+import { parseShareableParams } from '../../lib/url';
 
 function splitRepository(value: string) {
   const [owner, repo, extra] = value.trim().split('/');
@@ -15,8 +16,13 @@ function splitRepository(value: string) {
 
 export function AuthForm() {
   const { login } = useAuth();
+  const [shareableParams] = useState(() => parseShareableParams());
   const [pat, setPat] = useState('');
-  const [repository, setRepository] = useState('');
+  const [repository, setRepository] = useState(() =>
+    shareableParams.repo
+      ? `${shareableParams.repo.owner}/${shareableParams.repo.repo}`
+      : '',
+  );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,7 +40,12 @@ export function AuthForm() {
     setIsSubmitting(true);
 
     try {
-      await login(pat, parsed.owner, parsed.repo);
+      await login(
+        pat,
+        parsed.owner,
+        parsed.repo,
+        shareableParams.branch ?? undefined,
+      );
     } catch (submitError) {
       if (isInvalidAuthError(submitError)) {
         setError('Invalid token. Please check your PAT and try again.');

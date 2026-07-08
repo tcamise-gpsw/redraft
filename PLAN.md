@@ -202,7 +202,7 @@ A component that renders `null`. On mount (via `useEffect`):
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage files, commit: `feat(shareable-links): add useShareableLink hook, ShareableLinkBridge, and App wiring`
+- [x] Read `skill://commit`, stage files, commit: `feat(shareable-links): add useShareableLink hook, ShareableLinkBridge, and App wiring`
 
 ### Task 4: AuthForm URL Prefill
 
@@ -224,21 +224,21 @@ The user sees the repo field prefilled. They enter their PAT and click Connect. 
 
 **Checklist:**
 
-- [ ] Repo field prefilled from URL params on mount
-- [ ] User can still edit the prefilled repo value
-- [ ] URL branch is passed to `login` as `overrideBranch`
-- [ ] When no URL params exist, behavior is unchanged (empty repo field, no override)
-- [ ] `parseShareableParams` is imported from `src/lib/url.ts` (not `useSearchParams`)
+- [x] Repo field prefilled from URL params on mount
+- [x] User can still edit the prefilled repo value
+- [x] URL branch is passed to `login` as `overrideBranch`
+- [x] When no URL params exist, behavior is unchanged (empty repo field, no override)
+- [x] `parseShareableParams` is imported from `src/lib/url.ts` (not `useSearchParams`)
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/components/auth/__tests__/AuthForm.test.tsx`
-- [ ] Test file uses `// @vitest-environment jsdom`. Follow pattern from `src/components/auth/__tests__/AuthGate.test.tsx`.
-- [ ] Mock `useAuth` to provide a mock `login` function. Mock `window.location.hash`.
-- [ ] Test: repo field prefilled when URL has `?repo=acme/proj`
-- [ ] Test: repo field empty when no URL params
-- [ ] Test: `login` called with `overrideBranch` when URL has `?branch=review-1`
-- [ ] Test: `login` called without `overrideBranch` when no branch in URL
+- [x] Run: `npx vitest run src/components/auth/__tests__/AuthForm.test.tsx`
+- [x] Test file uses `// @vitest-environment jsdom`. Follow pattern from `src/components/auth/__tests__/AuthGate.test.tsx`.
+- [x] Mock `useAuth` to provide a mock `login` function. Mock `window.location.hash`.
+- [x] Test: repo field prefilled when URL has `?repo=acme/proj`
+- [x] Test: repo field empty when no URL params
+- [x] Test: `login` called with `overrideBranch` when URL has `?branch=review-1`
+- [x] Test: `login` called without `overrideBranch` when no branch in URL
 
 **Commit:**
 
