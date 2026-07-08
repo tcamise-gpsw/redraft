@@ -80,6 +80,7 @@ export function CommentsSidebar({
       anchor: resolveAnchor(documentText, {
         quote: thread.quote,
         quoteContext: thread.quoteContext,
+        offset: thread.offset,
       }),
     }));
 
