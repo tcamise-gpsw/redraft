@@ -14,6 +14,7 @@ export interface TextSelection {
     top: number;
     bottom: number;
   };
+  offset: number;
 }
 
 function getEditorView(
@@ -116,11 +117,13 @@ export function useSelectionCapture(
         Math.min(doc.content.size, selection.to + 100),
         ' ',
       );
+      const rawOffset = doc.textBetween(0, selection.from, ' ').length;
       const { quote, prefix, suffix } = snapToWordBoundaries(
         rawPrefix,
         rawQuote,
         rawSuffix,
       );
+      const offset = rawOffset - (rawPrefix.length - prefix.length);
       const coords = view.coordsAtPos(selection.from);
 
       callback({
@@ -129,6 +132,7 @@ export function useSelectionCapture(
           prefix,
           suffix,
         },
+        offset,
         coords: {
           left: coords.left,
           top: coords.top,

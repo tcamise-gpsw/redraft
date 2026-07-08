@@ -30,6 +30,15 @@ const {
         tr: {
           setMeta: (_key: unknown, meta: unknown) => ({ meta }),
         },
+        doc: {
+          content: {
+            size: 0,
+          },
+          textBetween: vi.fn((from: number, to: number) => {
+            const text = this.view.dom.textContent ?? '';
+            return text.slice(from, to);
+          }),
+        },
       },
       dispatch: vi.fn((transaction: unknown) => {
         this.dispatchedTransactions.push(transaction);
@@ -95,6 +104,7 @@ const {
     create = vi.fn(async () => {
       this.editor.status = 'Created';
       this.editor.view.dom.textContent = this.markdown;
+      this.editor.view.state.doc.content.size = this.markdown.length;
       this.editor.view.dom.setAttribute(
         'contenteditable',
         String(!this.readonlyState),
@@ -137,6 +147,7 @@ const {
     emitMarkdown(markdown: string, previousMarkdown = this.markdown) {
       this.markdown = markdown;
       this.editor.view.dom.textContent = markdown;
+      this.editor.view.state.doc.content.size = markdown.length;
       this.markdownListeners.forEach((listener) => {
         listener({}, markdown, previousMarkdown);
       });
@@ -195,6 +206,7 @@ interface HookHarnessProps {
   content: string;
   comments: Array<{ id: string; quote: string }>;
   onMarkdownChange?: (markdown: string) => void;
+  onRenderedText?: (text: string) => void;
   onSelectComment?: (id: string) => void;
   onTextSelect?: (selection: {
     quote: string;
@@ -210,20 +222,23 @@ const HookHarness = forwardRef<HookHarnessHandle, HookHarnessProps>(
       content,
       comments,
       onMarkdownChange,
+      onRenderedText,
       onSelectComment,
       onTextSelect,
       readOnly,
     },
     ref,
   ) {
-    const { crepeRef, getMarkdown } = useCrepeInstance({
+    const options = {
       content,
       comments,
       onMarkdownChange,
+      onRenderedText,
       onSelectComment,
       onTextSelect,
       readOnly,
-    });
+    };
+    const { crepeRef, getMarkdown } = useCrepeInstance(options);
 
     useImperativeHandle(
       ref,
@@ -396,6 +411,94 @@ describe('CrepeEditor and useCrepeInstance', () => {
     });
 
     expect(createdInstances).toHaveLength(1);
+  });
+
+  it('emits rendered text on initial load', async () => {
+    const onRenderedText = vi.fn();
+    const ref = { current: null as HookHarnessHandle | null };
+
+    renderHookHarness(
+      {
+        content: '# Heading',
+        comments: [],
+        onRenderedText,
+        readOnly: true,
+      },
+      ref,
+    );
+
+    await waitFor(() => {
+      expect(createdInstances).toHaveLength(1);
+    });
+
+    await waitFor(() => {
+      expect(onRenderedText).toHaveBeenCalledWith('# Heading');
+    });
+  });
+
+  it('emits rendered text when markdown changes', async () => {
+    const onRenderedText = vi.fn();
+    const ref = { current: null as HookHarnessHandle | null };
+
+    renderHookHarness(
+      {
+        content: '# Heading',
+        comments: [],
+        onRenderedText,
+        readOnly: false,
+      },
+      ref,
+    );
+
+    await waitFor(() => {
+      expect(createdInstances).toHaveLength(1);
+    });
+
+    onRenderedText.mockClear();
+    createdInstances[0]?.emitMarkdown('## Updated');
+
+    expect(onRenderedText).toHaveBeenCalledWith('## Updated');
+  });
+
+  it('uses the latest onRenderedText callback without recreating the editor', async () => {
+    const firstOnRenderedText = vi.fn();
+    const secondOnRenderedText = vi.fn();
+    const ref = { current: null as HookHarnessHandle | null };
+    const { rerender } = renderHookHarness(
+      {
+        content: '# Heading',
+        comments: [],
+        onRenderedText: firstOnRenderedText,
+        readOnly: false,
+      },
+      ref,
+    );
+
+    await waitFor(() => {
+      expect(createdInstances).toHaveLength(1);
+    });
+
+    const firstInstance = createdInstances[0];
+    firstOnRenderedText.mockClear();
+
+    rerender(
+      <MilkdownProvider>
+        <HookHarness
+          ref={ref}
+          content="# Heading"
+          comments={[]}
+          onRenderedText={secondOnRenderedText}
+          readOnly={false}
+        />
+      </MilkdownProvider>,
+    );
+
+    createdInstances[0]?.emitMarkdown('## Updated');
+
+    expect(createdInstances).toHaveLength(1);
+    expect(createdInstances[0]).toBe(firstInstance);
+    expect(firstOnRenderedText).not.toHaveBeenCalledWith('## Updated');
+    expect(secondOnRenderedText).toHaveBeenCalledWith('## Updated');
   });
 
   it('returns the current markdown synchronously', async () => {

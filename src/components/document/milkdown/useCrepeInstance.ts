@@ -20,6 +20,7 @@ export interface UseCrepeInstanceOptions {
   onTextSelect?: (selection: TextSelection) => void;
   onSelectComment?: (id: string) => void;
   onMarkdownChange?: (markdown: string) => void;
+  onRenderedText?: (text: string) => void;
   readOnly: boolean;
 }
 
@@ -38,10 +39,12 @@ export function useCrepeInstance(
     onTextSelect,
     onSelectComment,
     onMarkdownChange,
+    onRenderedText,
     readOnly,
   } = options;
   const crepeRef = useRef<Crepe | null>(null);
   const onMarkdownChangeRef = useRef(onMarkdownChange);
+  const onRenderedTextRef = useRef(onRenderedText);
   const onSelectCommentRef = useRef(onSelectComment);
 
   useEffect(() => {
@@ -49,8 +52,24 @@ export function useCrepeInstance(
   }, [onMarkdownChange]);
 
   useEffect(() => {
+    onRenderedTextRef.current = onRenderedText;
+  }, [onRenderedText]);
+
+  useEffect(() => {
     onSelectCommentRef.current = onSelectComment;
   }, [onSelectComment]);
+
+  const emitRenderedText = useCallback((editor: Editor) => {
+    const callback = onRenderedTextRef.current;
+    if (!callback) {
+      return;
+    }
+
+    editor.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      callback(view.state.doc.textBetween(0, view.state.doc.content.size, ' '));
+    });
+  }, []);
 
   const editorReturn = useEditor((root) => {
     const crepe = new Crepe({
@@ -70,6 +89,7 @@ export function useCrepeInstance(
     crepe.on((api) => {
       api.markdownUpdated((_ctx, markdown) => {
         onMarkdownChangeRef.current?.(markdown);
+        emitRenderedText(crepe.editor as Editor);
       });
     });
 
@@ -83,6 +103,19 @@ export function useCrepeInstance(
     editorReturn.loading,
     onTextSelect,
   );
+
+  useEffect(() => {
+    if (editorReturn.loading) {
+      return;
+    }
+
+    const editor = crepeRef.current?.editor as Editor | undefined;
+    if (!editor) {
+      return;
+    }
+
+    emitRenderedText(editor);
+  }, [emitRenderedText, editorReturn.loading]);
 
   useEffect(() => {
     if (editorReturn.loading) {

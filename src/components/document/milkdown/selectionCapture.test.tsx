@@ -40,6 +40,7 @@ interface HookHarnessProps {
     quote: string;
     context: { prefix: string; suffix: string };
     coords: { left: number; top: number; bottom: number };
+    offset: number;
   }) => void;
 }
 
@@ -126,6 +127,40 @@ describe('useSelectionCapture', () => {
         top: 64,
         bottom: 92,
       },
+      offset: 6,
+    });
+  });
+  it('subtracts snapped prefix characters from the emitted offset', () => {
+    const onTextSelect = vi.fn();
+    const { dom, editor } = createFakeEditor('Alpha Beta Gamma', {
+      from: 8,
+      to: 11,
+    });
+
+    render(
+      <HookHarness
+        editorGetter={() => editor}
+        loading={false}
+        onTextSelect={onTextSelect}
+      />,
+    );
+
+    act(() => {
+      dom.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    });
+
+    expect(onTextSelect).toHaveBeenCalledWith({
+      quote: 'Beta',
+      context: {
+        prefix: 'Alpha ',
+        suffix: ' Gamma',
+      },
+      coords: {
+        left: 120,
+        top: 64,
+        bottom: 92,
+      },
+      offset: 6,
     });
   });
 
