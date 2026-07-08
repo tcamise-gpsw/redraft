@@ -212,8 +212,8 @@ export function registerGitRoute(app: Hono, helpers: GitRouteHelpers): void {
       ['rev-parse', '--abbrev-ref', 'HEAD'],
       { cwd: repoRoot },
     );
-
-    return helpers.json({ branch: stdout.trim() });
+    const branch = stdout.trim();
+    return helpers.json({ branch: branch === 'HEAD' ? 'main' : branch });
   });
 
   app.get('/api/git/status', async () => {
