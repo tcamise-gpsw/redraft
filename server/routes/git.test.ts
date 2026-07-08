@@ -61,6 +61,17 @@ describe('Git convenience routes', () => {
     expect(body.branch).toBe('feature/local-docs');
   });
 
+  it('normalizes detached HEAD to main for the branch endpoint', async () => {
+    await execGit('git', ['checkout', '--detach', 'HEAD'], { cwd: repoRoot });
+    const app = buildGitHubApiRouter(basePath);
+
+    const response = await app.request('http://local.test/api/git/branch');
+    const body = (await response.json()) as { branch: string };
+
+    expect(response.status).toBe(200);
+    expect(body.branch).toBe('main');
+  });
+
   it('returns 404 for branch endpoint outside a git repository', async () => {
     const looseRoot = await mkdtemp(join(tmpdir(), 'redraft-no-git-'));
     const looseDocs = join(looseRoot, 'docs');

@@ -81,9 +81,11 @@ async function loadLocalBranch(): Promise<string> {
       return 'main';
     }
     const body = (await response.json()) as { branch?: unknown };
-    return typeof body.branch === 'string' && body.branch.length > 0
-      ? body.branch
-      : 'main';
+    const value =
+      typeof body.branch === 'string' && body.branch.length > 0
+        ? body.branch
+        : 'main';
+    return value === 'HEAD' ? 'main' : value;
   } catch {
     return 'main';
   }

@@ -161,6 +161,22 @@ describe('useAuth branch state', () => {
     expect(authState(result.current).sidecarBranch).toBeNull();
   });
 
+  it('falls back to main for local mode namespacing when git reports detached HEAD', async () => {
+    isLocalMode.mockReturnValue(true);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ branch: 'HEAD' }),
+      }),
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(authState(result.current).branch).toBe('main'));
+    expect(authState(result.current).sidecarBranch).toBeNull();
+  });
+
   it('login defaults sidecarBranch to redraft when no persisted override exists', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 

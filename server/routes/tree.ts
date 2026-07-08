@@ -22,7 +22,8 @@ async function resolveTreeBranch(
       ['rev-parse', '--abbrev-ref', 'HEAD'],
       { cwd: basePath },
     );
-    return stdout.trim() || ref;
+    const branch = stdout.trim();
+    return branch === '' || branch === 'HEAD' ? 'main' : branch;
   } catch {
     return 'main';
   }
