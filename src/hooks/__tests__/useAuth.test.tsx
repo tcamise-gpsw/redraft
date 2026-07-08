@@ -29,9 +29,19 @@ interface TestAuthContextValue {
   pat: string | null;
   repo: { owner: string; repo: string } | null;
   isAuthenticated: boolean;
-  login: (pat: string, owner: string, repo: string) => Promise<void>;
+  login: (
+    pat: string,
+    owner: string,
+    repo: string,
+    overrideBranch?: string,
+  ) => Promise<void>;
   logout: () => void;
-  updateRepo: (owner: string, repo: string, sidecarBranch?: string) => void;
+  updateRepo: (
+    owner: string,
+    repo: string,
+    sidecarBranch?: string,
+    overrideBranch?: string,
+  ) => void;
   branch: string | null;
   defaultBranch: string | null;
   sidecarBranch: string | null;
@@ -100,6 +110,63 @@ describe('useAuth branch state', () => {
 
     expect(authState(result.current).defaultBranch).toBe('main');
     expect(authState(result.current).branch).toBe('release/2026.07');
+  });
+
+  it('login uses and persists an override branch instead of stored branch', async () => {
+    localStorage.setItem(
+      'redraft.branch.acme/workspace',
+      JSON.stringify('stored-branch'),
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login(
+        'ghp_test',
+        'acme',
+        'workspace',
+        'review-1',
+      );
+    });
+
+    expect(authState(result.current).defaultBranch).toBe('main');
+    expect(authState(result.current).branch).toBe('review-1');
+    expect(localStorage.getItem('redraft.branch.acme/workspace')).toBe(
+      JSON.stringify('review-1'),
+    );
+  });
+
+  it('updateRepo uses and persists an override branch instead of stored branch', async () => {
+    localStorage.setItem(
+      'redraft.branch.octo/project',
+      JSON.stringify('stored-branch'),
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authState(result.current).login('ghp_test', 'acme', 'workspace');
+    });
+
+    act(() => {
+      authState(result.current).updateRepo(
+        'octo',
+        'project',
+        undefined,
+        'review-2',
+      );
+    });
+
+    await waitFor(() => {
+      expect(authState(result.current).repo).toEqual({
+        owner: 'octo',
+        repo: 'project',
+      });
+      expect(authState(result.current).branch).toBe('review-2');
+    });
+    expect(localStorage.getItem('redraft.branch.octo/project')).toBe(
+      JSON.stringify('review-2'),
+    );
   });
 
   it('setBranch updates the active branch and persists it for the current repository', async () => {
