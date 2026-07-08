@@ -13,6 +13,7 @@ import {
 } from './lib/github/client';
 import { AuthGate } from './components/auth/AuthGate';
 import { Header } from './components/layout/Header';
+import { ShareableLinkBridge } from './components/ShareableLinkBridge';
 import { useFileWatcher } from './hooks/useFileWatcher';
 import { AuthProvider, BRANCH_WARNING_EVENT } from './hooks/useAuth';
 import { ToastProvider, useToast } from './hooks/useToast';
@@ -31,6 +32,7 @@ function AppBody({ rateLimit }: { rateLimit: RateLimitInfo | null }) {
 
   return (
     <HashRouter>
+      <ShareableLinkBridge />
       <Header rateLimit={rateLimit} />
       <Routes>
         <Route path="/" element={<Home />} />
