@@ -1,152 +1,148 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAnchor, resolveAnchor } from '../anchoring';
+import { resolveAnchor } from '../anchoring';
+
+const ORPHANED_RESULT = {
+  status: 'orphaned',
+  startIndex: -1,
+  endIndex: -1,
+  matchedText: '',
+} as const;
 
 describe('comment anchoring', () => {
-  it('finds an exact quote at the correct position', () => {
+  it('returns an exact match from the stored offset before searching elsewhere', () => {
+    const quote = 'initialize lazily';
+    const documentText =
+      'Alpha path: initialize lazily before boot. Beta path: initialize lazily after login.';
+    const firstStart = documentText.indexOf(quote);
+    const secondStart = documentText.indexOf(quote, firstStart + 1);
+
+    expect(
+      resolveAnchor(documentText, {
+        quote,
+        quoteContext: { prefix: '', suffix: '' },
+        offset: secondStart,
+      }),
+    ).toEqual({
+      status: 'exact',
+      startIndex: secondStart,
+      endIndex: secondStart + quote.length,
+      matchedText: quote,
+    });
+  });
+
+  it('falls back to exact search when the stored offset no longer points at the quote', () => {
+    const quote = 'initialize lazily';
     const documentText =
       'The camera should initialize lazily when preview starts.';
+    const startIndex = documentText.indexOf(quote);
 
     expect(
       resolveAnchor(documentText, {
-        quote: 'initialize lazily',
+        quote,
         quoteContext: { prefix: '', suffix: '' },
+        offset: 0,
       }),
     ).toEqual({
       status: 'exact',
-      startIndex: 18,
-      endIndex: 35,
-      matchedText: 'initialize lazily',
+      startIndex,
+      endIndex: startIndex + quote.length,
+      matchedText: quote,
     });
   });
 
-  it('uses surrounding context to disambiguate identical quotes', () => {
+  it('ranks multiple exact matches by surrounding context when the offset is unusable', () => {
+    const quote = 'initialize lazily';
     const documentText =
-      'Alpha starts fast. The camera should initialize lazily. Later, Beta also initialize lazily after login.';
+      'Alpha path: initialize lazily before boot. Beta path: initialize lazily after login.';
+    const startIndex = documentText.lastIndexOf(quote);
 
     expect(
       resolveAnchor(documentText, {
-        quote: 'initialize lazily',
+        quote,
         quoteContext: {
-          prefix: 'Beta also ',
+          prefix: 'Beta path: ',
           suffix: ' after login.',
         },
+        offset: -1,
       }),
     ).toEqual({
       status: 'exact',
-      startIndex: 73,
-      endIndex: 90,
-      matchedText: 'initialize lazily',
+      startIndex,
+      endIndex: startIndex + quote.length,
+      matchedText: quote,
     });
   });
 
-  it('finds a context match when nearby whitespace changed', () => {
-    const documentText =
-      'For performance reasons, initialize lazily when the preview opens.';
+  it('relocates by normalized context when the quote moved and only whitespace changed', () => {
+    const quote = 'review comments carefully';
+    const relocatedQuote = 'review   comments\ncarefully';
+    const prefix = 'moved prefix ';
+    const suffix = ' moved suffix';
+    const documentText = `${'intro '.repeat(1500)}${prefix}${relocatedQuote}${suffix}`;
+    const startIndex = documentText.indexOf(relocatedQuote);
 
     expect(
       resolveAnchor(documentText, {
-        quote: 'initialize lazily',
-        quoteContext: {
-          prefix: 'For performance reasons,  ',
-          suffix: '   when the preview opens.',
-        },
+        quote,
+        quoteContext: { prefix, suffix },
+        offset: 12,
       }),
     ).toEqual({
       status: 'context',
-      startIndex: 25,
-      endIndex: 42,
-      matchedText: 'initialize lazily',
+      startIndex,
+      endIndex: startIndex + relocatedQuote.length,
+      matchedText: relocatedQuote,
     });
   });
 
-  it('finds a fuzzy match when the quote was lightly edited', () => {
-    const documentText =
-      'The camera should initialize more lazily during preview startup.';
-
-    const result = resolveAnchor(documentText, {
-      quote: 'initialize lazily',
-      quoteContext: {
-        prefix: 'The camera should ',
-        suffix: ' during preview startup.',
-      },
-    });
-
-    expect(result.status).toBe('fuzzy');
-    expect(result.matchedText).toBe('initialize more lazily');
-    expect(result.startIndex).toBe(18);
-    expect(result.endIndex).toBe(40);
-  });
-
-  it('returns orphaned when no candidate meets the threshold', () => {
+  it('returns orphaned when both the quote and its context disappeared', () => {
     expect(
-      resolveAnchor('Completely different text.', {
-        quote: 'initialize lazily',
-        quoteContext: { prefix: '', suffix: '' },
-      }),
-    ).toEqual({
-      status: 'orphaned',
-      startIndex: -1,
-      endIndex: -1,
-      matchedText: '',
-    });
-  });
-
-  it('creates an anchor with trimmed word-boundary context', () => {
-    const documentText =
-      'The camera should initialize lazily when preview starts so the rest of the pipeline can remain idle.';
-    const startIndex = documentText.indexOf('initialize lazily');
-
-    expect(createAnchor(documentText, 'initialize lazily', startIndex)).toEqual(
-      {
-        quote: 'initialize lazily',
-        quoteContext: {
-          prefix: 'The camera should ',
-          suffix:
-            ' when preview starts so the rest of the pipeline can remain idle.',
+      resolveAnchor(
+        'Nothing from the original passage remains in this rewrite.',
+        {
+          quote: 'review comments carefully',
+          quoteContext: {
+            prefix: 'moved prefix ',
+            suffix: ' moved suffix',
+          },
+          offset: 24,
         },
-      },
-    );
+      ),
+    ).toEqual(ORPHANED_RESULT);
   });
 
-  it('handles empty inputs, line breaks, and long quotes', () => {
+  it('returns orphaned for empty documents and empty quotes', () => {
     expect(
       resolveAnchor('', {
         quote: 'initialize lazily',
         quoteContext: { prefix: '', suffix: '' },
+        offset: 0,
       }),
-    ).toEqual({
-      status: 'orphaned',
-      startIndex: -1,
-      endIndex: -1,
-      matchedText: '',
-    });
+    ).toEqual(ORPHANED_RESULT);
 
-    const multiline = 'Alpha\ninitialize lazily\nBeta';
     expect(
-      resolveAnchor(multiline, {
-        quote: 'initialize lazily',
-        quoteContext: { prefix: 'Alpha\n', suffix: '\nBeta' },
+      resolveAnchor('The document still exists.', {
+        quote: '',
+        quoteContext: { prefix: 'The ', suffix: ' exists.' },
+        offset: 4,
       }),
-    ).toEqual({
-      status: 'exact',
-      startIndex: 6,
-      endIndex: 23,
-      matchedText: 'initialize lazily',
-    });
-
-    const longQuote = 'x'.repeat(600);
-    const longDocument = `before ${longQuote} after`;
-    expect(
-      resolveAnchor(longDocument, {
-        quote: longQuote,
-        quoteContext: { prefix: 'before ', suffix: ' after' },
-      }),
-    ).toEqual({
-      status: 'exact',
-      startIndex: 7,
-      endIndex: 607,
-      matchedText: longQuote,
-    });
+    ).toEqual(ORPHANED_RESULT);
   });
+
+  it('stays under 50 ms for a ~50 KB document with no matching quote', () => {
+    const documentText = 'abcdefghij '
+      .repeat(Math.ceil((50 * 1024) / 11))
+      .slice(0, 50 * 1024);
+    const startedAt = performance.now();
+    const result = resolveAnchor(documentText, {
+      quote: 'ΩΩΩΩΩΩΩΩ',
+      quoteContext: { prefix: '', suffix: '' },
+      offset: Math.floor(documentText.length / 2),
+    });
+    const elapsedMs = performance.now() - startedAt;
+
+    expect(result).toEqual(ORPHANED_RESULT);
+    expect(elapsedMs).toBeLessThan(50);
+  }, 1000);
 });
