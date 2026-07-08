@@ -21,6 +21,7 @@ interface PendingSelection {
     prefix: string;
     suffix: string;
   };
+  offset: number;
 }
 
 // Vertical gap enforced between stacked anchored cards.
@@ -267,6 +268,7 @@ export function CommentsSidebar({
             addComment({
               quote: pendingSelection.quote,
               quoteContext: pendingSelection.context,
+              offset: pendingSelection.offset,
               author: {
                 login: user?.login ?? '',
                 avatarUrl: user?.avatarUrl ?? '',

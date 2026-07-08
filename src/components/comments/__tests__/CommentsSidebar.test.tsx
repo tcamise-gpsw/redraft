@@ -45,6 +45,7 @@ function makeThread(
     id: overrides.id,
     quote: overrides.quote,
     quoteContext: overrides.quoteContext ?? { prefix: '', suffix: '' },
+    offset: overrides.offset ?? 0,
     author: overrides.author ?? {
       login: 'jdoe',
       avatarUrl: 'https://example.com/avatar.png',
@@ -125,7 +126,7 @@ describe('CommentsSidebar', () => {
     expect(screen.getByText(/orphaned comments/i)).toBeInTheDocument();
   });
 
-  it('shows a comment form for pending text selections and submits a new comment', async () => {
+  it('shows a comment form for pending text selections and submits a new comment with the rendered-text offset', async () => {
     render(
       <CommentsSidebar
         {...mutationProps()}
@@ -139,6 +140,7 @@ describe('CommentsSidebar', () => {
             prefix: 'The camera should ',
             suffix: ' when preview starts.',
           },
+          offset: 18,
         }}
         onClearSelection={vi.fn()}
       />,
@@ -157,6 +159,7 @@ describe('CommentsSidebar', () => {
         expect.objectContaining({
           quote: 'initialize lazily',
           body: 'Question',
+          offset: 18,
         }),
       );
     });
@@ -237,7 +240,11 @@ describe('CommentsSidebar', () => {
         documentText="Any text."
         activeCommentId={null}
         onCommentClick={vi.fn()}
-        pendingSelection={{ quote: 'Any', context: { prefix: '', suffix: '' } }}
+        pendingSelection={{
+          quote: 'Any',
+          context: { prefix: '', suffix: '' },
+          offset: 0,
+        }}
         onClearSelection={vi.fn()}
       />,
     );
@@ -279,6 +286,7 @@ describe('CommentsSidebar', () => {
         pendingSelection={{
           quote: 'initialize lazily',
           context: { prefix: 'should ', suffix: '.' },
+          offset: 11,
         }}
         onClearSelection={vi.fn()}
         sidecarBranchMissing={true}
