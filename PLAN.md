@@ -58,7 +58,7 @@ export function parseShareableParams(hash?: string): ShareableParams;
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage files, commit: `feat(url): add parseShareableParams utility for shareable link parsing`
+- [x] Read `skill://commit`, stage files, commit: `feat(url): add parseShareableParams utility for shareable link parsing`
 
 ### Task 2: Thread `overrideBranch` Through AuthProvider
 
@@ -109,20 +109,20 @@ In `login`: forward `overrideBranch` to `loadBranchState` call on line 194.
 
 **Checklist:**
 
-- [ ] `loadBranchState` uses `overrideBranch` when provided, ignoring localStorage
-- [ ] `overrideBranch` is persisted to localStorage after being applied
-- [ ] `updateRepo` and `login` forward `overrideBranch` correctly
-- [ ] All existing callers (without override) continue to work unchanged
-- [ ] `AuthContextValue` interface updated with new optional params
+- [x] `loadBranchState` uses `overrideBranch` when provided, ignoring localStorage
+- [x] `overrideBranch` is persisted to localStorage after being applied
+- [x] `updateRepo` and `login` forward `overrideBranch` correctly
+- [x] All existing callers (without override) continue to work unchanged
+- [x] `AuthContextValue` interface updated with new optional params
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/hooks/__tests__/useAuth.test.tsx`
-- [ ] Update `TestAuthContextValue` to include new optional params
-- [ ] Test: `updateRepo` with `overrideBranch` results in that branch being set (not the localStorage/default value)
-- [ ] Test: `login` with `overrideBranch` results in that branch being set after auth
-- [ ] Test: `updateRepo` without `overrideBranch` still reads from localStorage (regression)
-- [ ] Test: `overrideBranch` is persisted to localStorage (verify via `getStoredBranch`)
+- [x] Run: `npx vitest run src/hooks/__tests__/useAuth.test.tsx`
+- [x] Update `TestAuthContextValue` to include new optional params
+- [x] Test: `updateRepo` with `overrideBranch` results in that branch being set (not the localStorage/default value)
+- [x] Test: `login` with `overrideBranch` results in that branch being set after auth
+- [x] Test: `updateRepo` without `overrideBranch` still reads from localStorage (regression)
+- [x] Test: `overrideBranch` is persisted to localStorage (verify via `getStoredBranch`)
 
 **Commit:**
 

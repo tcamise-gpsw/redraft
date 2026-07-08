@@ -37,9 +37,19 @@ interface AuthContextValue {
   defaultBranch: string | null;
   sidecarBranch: string | null;
   isAuthenticated: boolean;
-  login: (pat: string, owner: string, repo: string) => Promise<void>;
+  login: (
+    pat: string,
+    owner: string,
+    repo: string,
+    overrideBranch?: string,
+  ) => Promise<void>;
   logout: () => void;
-  updateRepo: (owner: string, repo: string, sidecarBranch?: string) => void;
+  updateRepo: (
+    owner: string,
+    repo: string,
+    sidecarBranch?: string,
+    overrideBranch?: string,
+  ) => void;
   setBranch: (name: string) => void;
   setSidecarBranch: (name: string) => void;
 }
@@ -128,7 +138,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [branchState, setBranchState] = useState<BranchState>(emptyBranchState);
 
   const loadBranchState = useCallback(
-    async (pat: string, owner: string, repo: string): Promise<BranchState> => {
+    async (
+      pat: string,
+      owner: string,
+      repo: string,
+      overrideBranch?: string,
+    ): Promise<BranchState> => {
       if (localMode) {
         return {
           branch: await loadLocalBranch(),
@@ -145,16 +160,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           baseUrl: getApiBaseUrl(),
         });
         const defaultBranch = await client.getDefaultBranch();
+        if (overrideBranch) {
+          setStoredBranch(owner, repo, overrideBranch);
+        }
         return {
           defaultBranch,
-          branch: getStoredBranch(owner, repo) ?? defaultBranch,
+          branch:
+            overrideBranch ?? getStoredBranch(owner, repo) ?? defaultBranch,
           sidecarBranch: getStoredSidecarBranch(owner, repo) ?? 'redraft',
         };
       } catch {
         dispatchBranchWarning();
         return {
           defaultBranch: null,
-          branch: getStoredBranch(owner, repo),
+          branch: overrideBranch ?? getStoredBranch(owner, repo),
           sidecarBranch: getStoredSidecarBranch(owner, repo) ?? 'redraft',
         };
       }
@@ -175,9 +194,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [localMode]);
 
   const login = useCallback(
-    async (pat: string, owner: string, repo: string) => {
+    async (
+      pat: string,
+      owner: string,
+      repo: string,
+      overrideBranch?: string,
+    ) => {
       if (localMode) {
-        setBranchState(await loadBranchState(pat, owner, repo));
+        setBranchState(await loadBranchState(pat, owner, repo, overrideBranch));
         setState(toState(LOCAL_AUTH));
         return;
       }
@@ -191,7 +215,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         const user = await client.validateAuth();
         const stored = { pat, owner, repo, user } satisfies StoredAuth;
-        const nextBranchState = await loadBranchState(pat, owner, repo);
+        const nextBranchState = await loadBranchState(
+          pat,
+          owner,
+          repo,
+          overrideBranch,
+        );
 
         setStoredAuth(stored);
         setState(toState(stored));
@@ -207,7 +236,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const updateRepo = useCallback(
-    (owner: string, repo: string, sidecarBranch?: string) => {
+    (
+      owner: string,
+      repo: string,
+      sidecarBranch?: string,
+      overrideBranch?: string,
+    ) => {
       if (localMode || !state.pat || !state.user) {
         return;
       }
@@ -225,7 +259,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStoredAuth(stored);
       setState(toState(stored));
       setBranchState(emptyBranchState());
-      void loadBranchState(state.pat, owner, repo).then(setBranchState);
+      void loadBranchState(state.pat, owner, repo, overrideBranch).then(
+        setBranchState,
+      );
     },
     [loadBranchState, localMode, state.pat, state.user],
   );
