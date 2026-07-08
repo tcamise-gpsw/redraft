@@ -12,14 +12,14 @@ export default defineConfig({
   projects: [
     {
       name: 'remote',
-      testIgnore: ['e2e/local-mode.spec.ts'],
+      testIgnore: ['e2e/local-mode.spec.ts', 'e2e/comment-perf.spec.ts'],
       use: {
         baseURL: 'http://127.0.0.1:4173',
       },
     },
     {
       name: 'local',
-      testMatch: ['e2e/local-mode.spec.ts'],
+      testMatch: ['e2e/local-mode.spec.ts', 'e2e/comment-perf.spec.ts'],
       use: {
         baseURL: 'http://127.0.0.1:4201',
       },
