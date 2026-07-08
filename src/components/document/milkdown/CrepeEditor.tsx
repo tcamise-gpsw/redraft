@@ -25,6 +25,7 @@ export interface CrepeEditorProps extends UseCrepeInstanceOptions {
   onTextSelect?: (selection: TextSelection) => void;
   onSelectComment?: (id: string) => void;
   onMarkdownChange?: (markdown: string) => void;
+  onRenderedText?: (text: string) => void;
 }
 
 export interface CrepeEditorHandle {

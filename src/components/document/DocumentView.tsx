@@ -13,6 +13,7 @@ export function DocumentView({
   comments,
   onSelectComment,
   onTextSelect,
+  onRenderedText,
 }: {
   path: string;
   comments: CommentThread[];
@@ -20,7 +21,9 @@ export function DocumentView({
   onTextSelect: (selection: {
     quote: string;
     context: { prefix: string; suffix: string };
+    offset: number;
   }) => void;
+  onRenderedText?: (text: string) => void;
 }) {
   const { save } = useDocumentEdit(path);
   const { content, commit, isLoading, error, sha } = useDocument(path);
@@ -67,6 +70,7 @@ export function DocumentView({
         }}
         onSelectComment={onSelectComment}
         onTextSelect={onTextSelect}
+        onRenderedText={onRenderedText}
       />
     </div>
   );

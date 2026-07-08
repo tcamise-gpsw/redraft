@@ -14,6 +14,7 @@ export interface MilkdownDocumentProps {
   comments: CommentHighlight[];
   onTextSelect: (selection: TextSelection) => void;
   onSelectComment: (id: string) => void;
+  onRenderedText?: (text: string) => void;
 }
 
 export type Mode = 'view' | 'wysiwyg' | 'raw';
@@ -35,6 +36,7 @@ export function MilkdownDocument({
   comments,
   onTextSelect,
   onSelectComment,
+  onRenderedText,
 }: MilkdownDocumentProps) {
   const [mode, setMode] = useState<Mode>('view');
   const [baselineContent, setBaselineContent] = useState(content);
@@ -94,6 +96,7 @@ export function MilkdownDocument({
         setDraftContent(markdown);
       }
     },
+    onRenderedText,
   };
 
   return (
