@@ -202,12 +202,13 @@ interface CommentReply {
 
 ### Anchor Reconciliation
 
-When a document is edited, quoted text may move or change. The app uses a multi-step strategy to relocate comment anchors:
+Current anchor reconciliation is defined in
+`docs/specs/2026-07-08-comment-anchor-redesign.md`.
 
-1. **Exact match** — search for the exact `quote` string in the document. If found, anchor is valid.
-2. **Context match** — if exact match fails, search for `prefix + quote + suffix` pattern with fuzzy matching. Handles minor edits around the anchor.
-3. **Fuzzy match** — if context match fails, use longest-common-substring matching against the quote to find the best candidate location. Accept if similarity is above 70%.
-4. **Orphaned** — if all matching fails, the comment is marked as "orphaned." Orphaned comments appear in a separate section at the bottom of the comments sidebar with a warning indicator. They are never deleted automatically.
+In short, comments are anchored in rendered-text space and resolved via
+**offset → exact → context → orphaned**. ReDraft intentionally does not run a
+whole-document fuzzy search; if both the quote and context are gone, the thread
+moves to the Orphaned section with a warning and is never deleted automatically.
 
 ---
 
