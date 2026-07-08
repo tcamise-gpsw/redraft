@@ -1,583 +1,344 @@
-# Sidecar Branch Implementation Plan
+# Shareable Document Links Implementation Plan
 
-**Goal:** Move `.redraft/comments/` sidecar files to a configurable branch (default: `redraft`), namespaced by document branch, so review metadata doesn't pollute the document branch.
+**Goal:** Encode `repo` and `branch` as query params in hash URLs so ReDraft links are self-contained and shareable.
 
-**Architecture:** A `sidecarBranch` concept is added to the auth context and threaded through comment read/write hooks and document tree detection. A new `commentPath(docPath, docBranch)` utility generates branch-namespaced sidecar paths. The local server's git commit route splits document and sidecar commits — documents via normal `git add`, sidecars via git plumbing to the sidecar branch without checkout. Settings UI exposes the sidecar branch name.
+**Architecture:** A pure URL-parsing utility (`src/lib/url.ts`) provides router-independent param extraction. A React hook (`useShareableLink`) wraps `useSearchParams` for reactive reading and link building inside `HashRouter`. A `ShareableLinkBridge` component applies URL overrides to auth state on mount. The `overrideBranch` param is threaded through `loadBranchState` → `updateRepo` → `login` to eliminate the async race condition.
 
-**Tech Stack:** React (hooks, context), TanStack Query, Hono (local server), Git plumbing commands, Vitest, Commander (CLI).
+**Tech Stack:** React 18, React Router v6 (`useSearchParams`, `useLocation`), Vitest + React Testing Library, Playwright for E2E.
 
-**Spec:** `docs/specs/2026-07-07-sidecar-branch-design.md`
+**Spec:** `docs/specs/2025-07-08-shareable-document-links-design.md`
 
 ---
 
-### Task 1: Comment Path Utility and Storage Layer
+### Task 1: URL Parsing Utility
 
 **Files:**
 
-- Create: `src/lib/comments/paths.ts` — `sanitizeBranch()` and `commentPath()` utilities
-- Create: `src/lib/comments/__tests__/paths.test.ts` — unit tests
-- Modify: `src/lib/comments/index.ts` — re-export path utilities
-- Modify: `src/lib/auth/storage.ts` — add sidecar branch storage functions
-- Modify: `src/lib/auth/__tests__/storage.test.ts` — test new storage functions
-- Modify: `src/lib/auth/index.ts` — re-export new functions
+- Create: `src/lib/url.ts` — pure `parseShareableParams` function, no React dependency
+- Create: `src/lib/__tests__/url.test.ts` — unit tests
 
 **Interface:**
 
-`src/lib/comments/paths.ts`:
+```ts
+export interface ShareableParams {
+  repo: { owner: string; repo: string } | null;
+  branch: string | null;
+}
 
-- `sanitizeBranch(branch: string): string` — replaces `/` with `--`. Pure, no side effects.
-- `commentPath(docPath: string, docBranch: string): string` — returns `.redraft/comments/<sanitized-branch>/<docPath with .md → .comments.json>`. Uses `sanitizeBranch` internally.
+export function parseShareableParams(hash?: string): ShareableParams;
+```
 
-`src/lib/auth/storage.ts` additions:
-
-- `getStoredSidecarBranch(owner: string, repo: string): string | null` — reads `redraft.sidecarBranch.<owner>/<repo>` from localStorage. Returns null if not set.
-- `setStoredSidecarBranch(owner: string, repo: string, branch: string): void` — writes the key.
-
-Follow the exact pattern of the existing `getStoredBranch` / `setStoredBranch` functions (JSON-serialized string, same error handling).
-
-**Behavior:**
-
-- `sanitizeBranch('main')` → `'main'`
-- `sanitizeBranch('feature/auth')` → `'feature--auth'`
-- `sanitizeBranch('a/b/c')` → `'a--b--c'`
-- `commentPath('docs/auth.md', 'main')` → `'.redraft/comments/main/docs/auth.comments.json'`
-- `commentPath('docs/auth.md', 'feature/auth')` → `'.redraft/comments/feature--auth/docs/auth.comments.json'`
-- Storage round-trip: `setStoredSidecarBranch('acme', 'ws', 'redraft')` then `getStoredSidecarBranch('acme', 'ws')` → `'redraft'`
-
-**Checklist:**
-
-- [x] `sanitizeBranch` handles branches with no slashes (identity), single slash, multiple slashes
-- [x] `commentPath` correctly composes the full path with sanitized branch prefix
-- [x] Storage functions use key `redraft.sidecarBranch.<owner>/<repo>` (not colliding with `redraft.branch.*`)
-- [x] `getStoredSidecarBranch` returns null for missing/malformed data (same guard as `getStoredBranch`)
-- [x] Both new exports are re-exported from their respective index files
-
-**Tests:**
-
-- [x] `npx vitest run src/lib/comments/__tests__/paths.test.ts`
-- [x] `npx vitest run src/lib/auth/__tests__/storage.test.ts`
-- [x] Unit tests for `sanitizeBranch` with identity, single-slash, multi-slash branch names
-- [x] Unit tests for `commentPath` with various doc paths and branch names
-- [x] Storage round-trip, missing key returns null, malformed JSON returns null
-
-**Commit:**
-
-- [x] Read `skill://commit`, commit with message like `feat: add comment path utilities and sidecar branch storage`
-
-### Task 2: Auth Context — Sidecar Branch State and Local Branch Detection
-
-**Files:**
-
-- Modify: `src/hooks/useAuth.ts` — add `sidecarBranch`, `setSidecarBranch`, and local-mode branch detection
-- Modify: `src/hooks/__tests__/useAuth.test.tsx` — test sidecar branch state and local-mode branch
-- Modify: `server/routes/git.ts` — add `GET /api/git/branch` endpoint
-- Modify: `server/routes/git.test.ts` — test branch endpoint
-
-**Interface:**
-
-`AuthContextValue` gains:
-
-- `sidecarBranch: string | null` — the active sidecar branch name. Defaults to `'redraft'` in remote mode. `null` in local mode (not needed for filesystem reads/writes; the local server handles git plumbing internally).
-- `setSidecarBranch: (name: string) => void` — updates sidecar branch and persists to localStorage.
-
-New server endpoint:
-
-- `GET /api/git/branch` → `{ branch: "main" }` (current HEAD branch name). Uses `git rev-parse --abbrev-ref HEAD`. Returns 404 if not in a git repo (same pattern as other git routes).
+- Accepts a hash string (defaults to `window.location.hash` if omitted).
+- Extracts the query-string portion after `?` in the hash fragment.
+- Parses `repo` param: must contain exactly one `/` to split into `owner`/`repo`. Malformed or missing → `null`.
+- Parses `branch` param: any non-empty string. Missing → `null`.
+- Uses `URLSearchParams` internally.
 
 **Behavior:**
 
-**Remote mode** — mirrors the existing `branchState` pattern:
-
-- On login: read `getStoredSidecarBranch(owner, repo)`. If found, use it. Otherwise, default to `'redraft'`.
-- `setSidecarBranch(name)`: calls `setStoredSidecarBranch(owner, repo, name)`, updates state.
-- On `updateRepo`: reset and reload sidecar branch state (defaulting to `'redraft'`).
-- On `logout`: reset to `null`.
-
-**Local mode** — `branch` changes from always-null to fetched from the local server:
-
-- On mount, when `localMode` is true and `branch` is null, fetch `GET /api/git/branch` from the local server to get the current git branch.
-- Set `branch` to the returned value. This enables `commentPath(path, branch)` to namespace sidecar paths correctly.
-- `sidecarBranch` stays `null` — the frontend doesn't need it in local mode since the server handles sidecar branch git operations.
-- `setBranch` and `setSidecarBranch` remain no-ops in local mode.
-- If the git branch endpoint fails (not a git repo), fall back to `'main'` as the branch name for path namespacing.
-
-`BranchState` interface gains `sidecarBranch: string | null`. `emptyBranchState()` returns `sidecarBranch: null`.
-
-Add `sidecarBranch` and `setSidecarBranch` to the `useMemo` value and its dependency array.
+- `parseShareableParams('#/d/spec.md?repo=acme/proj&branch=review-1')` → `{ repo: { owner: 'acme', repo: 'proj' }, branch: 'review-1' }`
+- `parseShareableParams('#/d/spec.md')` → `{ repo: null, branch: null }`
+- `parseShareableParams('#/d/spec.md?repo=invalid')` → `{ repo: null, branch: null }` (no `/`)
+- `parseShareableParams('#/d/spec.md?repo=a/b/c')` → `{ repo: null, branch: null }` (too many segments)
+- `parseShareableParams('')` → `{ repo: null, branch: null }`
+- URL-encoded values must be handled (e.g. `repo=acme%2Fproj` → decoded by `URLSearchParams`).
 
 **Checklist:**
 
-- [x] `sidecarBranch` defaults to `'redraft'` on login when no stored override exists (remote mode)
-- [x] `sidecarBranch` restores from localStorage if previously set (remote mode)
-- [x] `setSidecarBranch` persists to localStorage and updates state (remote mode)
-- [x] `updateRepo` resets and reloads sidecar branch state (default `'redraft'`)
-- [x] `logout` clears sidecar branch state
-- [x] `sidecarBranch` included in `useMemo` value and dependency array
-- [x] `GET /api/git/branch` endpoint returns current branch name
-- [x] Local mode: `branch` is fetched from server (no longer hardcoded null)
-- [x] Local mode: falls back to `'main'` if git branch detection fails
-- [x] Local mode: `sidecarBranch` is `null`, `setSidecarBranch` is a no-op
+- [x] Pure function with no side effects or React dependency
+- [x] Validates `repo` format (exactly one `/`)
+- [x] Handles missing, empty, and malformed inputs gracefully
+- [x] Handles URL-encoded values via `URLSearchParams`
 
 **Tests:**
 
-- [x] `npx vitest run src/hooks/__tests__/useAuth.test.tsx`
-- [x] `npx vitest run server/routes/git.test.ts`
-- [x] Login uses default `'redraft'` when no persisted sidecar branch exists
-- [x] Login restores persisted sidecar branch override
-- [x] `setSidecarBranch` updates state and persists to localStorage
-- [x] Local mode fetches branch from server and populates `branch`
-- [x] Local mode `sidecarBranch` is null, `setSidecarBranch` is no-op
-- [x] Mount with stored auth restores sidecar branch from localStorage
-- [x] `GET /api/git/branch` returns current branch; 404 outside git repo
+- [x] Run: `npx vitest run src/lib/__tests__/url.test.ts`
+- [x] Test file uses `// @vitest-environment jsdom` header. Follow pattern from `src/lib/auth/__tests__/storage.test.ts`.
+- [x] Cover: both params present, only repo, only branch, no params, malformed repo (no slash, too many slashes), empty hash, no hash argument (defaults to `window.location.hash`)
 
 **Commit:**
 
-- [x] Read `skill://commit`, commit with message like `feat: add sidecarBranch to auth context with local branch detection`
+- [ ] Read `skill://commit`, stage files, commit: `feat(url): add parseShareableParams utility for shareable link parsing`
 
-### Task 3: Update useComments Hook
+### Task 2: Thread `overrideBranch` Through AuthProvider
 
 **Files:**
 
-- Modify: `src/hooks/useComments.ts` — use `sidecarBranch` for reads/writes, use shared `commentPath`
-- Modify: `src/hooks/__tests__/useComments.test.ts` — update mock auth to include `sidecarBranch`, update assertions
+- Modify: `src/hooks/useAuth.ts` — add `overrideBranch` param to `loadBranchState`, `updateRepo`, and `login`
+- Modify: `src/hooks/__tests__/useAuth.test.tsx` — add override tests
+
+**Interface changes:**
+
+`loadBranchState` (internal, not exported):
+
+```ts
+async function loadBranchState(
+  pat: string,
+  owner: string,
+  repo: string,
+  overrideBranch?: string,
+): Promise<BranchState>;
+```
+
+`updateRepo` (exposed via context):
+
+```ts
+updateRepo: (owner: string, repo: string, sidecarBranch?: string, overrideBranch?: string) => void;
+```
+
+`login` (exposed via context):
+
+```ts
+login: (pat: string, owner: string, repo: string, overrideBranch?: string) =>
+  Promise<void>;
+```
+
+Update `AuthContextValue` interface and `TestAuthContextValue` in tests accordingly.
 
 **Behavior:**
 
-The hook currently uses `branch` (the document branch) for both the sidecar file path and the GitHub ref/branch parameter. After this change:
+In `loadBranchState`, when `overrideBranch` is provided:
 
-1. Import `commentPath` from `src/lib/comments/paths` instead of the local `commentPath` function. Remove the local `commentPath` function.
-2. Destructure `sidecarBranch` from `useAuth()` alongside `branch`.
-3. Call `commentPath(path, branch!)` to compute the sidecar file path (now branch-namespaced). `branch` is always non-null when the query is enabled (see `enabled` guard below).
-4. `getFileContent` ref changes from `branch` to `sidecarBranch` — reads come from the sidecar branch.
-5. `createFile` / `updateFile` branch arg changes from `branch` to `sidecarBranch` — writes go to the sidecar branch.
-6. Query key becomes `['document', path, 'comments', branch, sidecarBranch]` — cache invalidates when either branch changes.
-7. `enabled` guard: `Boolean(client) && branch !== null && (isLocalMode() || sidecarBranch !== null)`. Both modes require `branch` for path computation. Remote mode additionally requires `sidecarBranch`.
+1. After fetching `defaultBranch` from GitHub API, use `overrideBranch` as the branch value (instead of `getStoredBranch(owner, repo) ?? defaultBranch`).
+2. Persist `overrideBranch` to localStorage via `setStoredBranch(owner, repo, overrideBranch)` so subsequent navigation stays on that branch.
+3. When `overrideBranch` is absent, preserve current behavior exactly.
 
-**Error handling:** If `branch` or `sidecarBranch` is null, the query stays disabled and comments don't load. This is correct — the auth context hasn't resolved yet. In local mode, `sidecarBranch` is always null but not needed (the server reads from disk, not a git ref).
+In `updateRepo`: forward `overrideBranch` to `loadBranchState` call on line 228.
+
+In `login`: forward `overrideBranch` to `loadBranchState` call on line 194.
 
 **Checklist:**
 
-- [x] Local `commentPath` function removed, replaced with import from `src/lib/comments/paths`
-- [x] `sidecarBranch` destructured from `useAuth()`
-- [x] `commentPath()` called with `(path, branch!)` — document branch for namespacing (non-null when enabled)
-- [x] `getFileContent` uses `ref: sidecarBranch` (not `branch`)
-- [x] `createFile` / `updateFile` use `sidecarBranch` as branch arg (not `branch`)
-- [x] Query key includes both `branch` and `sidecarBranch`
-- [x] `enabled` guard checks both `branch` and `sidecarBranch` are non-null in remote mode
-- [x] Reset effect dependency array includes `sidecarBranch` if appropriate
+- [ ] `loadBranchState` uses `overrideBranch` when provided, ignoring localStorage
+- [ ] `overrideBranch` is persisted to localStorage after being applied
+- [ ] `updateRepo` and `login` forward `overrideBranch` correctly
+- [ ] All existing callers (without override) continue to work unchanged
+- [ ] `AuthContextValue` interface updated with new optional params
 
 **Tests:**
 
-- [x] `npx vitest run src/hooks/__tests__/useComments.test.ts`
-- [x] Update mock `useAuth` return to include `sidecarBranch: 'redraft'`
-- [x] Verify `getFileContent` is called with `ref: 'redraft'` (the sidecar branch, not the document branch)
-- [x] Verify `createFile` / `updateFile` are called with `'redraft'` as the branch arg
-- [x] Verify the sidecar file path includes the sanitized document branch: `.redraft/comments/dev/docs/doc.comments.json`
+- [ ] Run: `npx vitest run src/hooks/__tests__/useAuth.test.tsx`
+- [ ] Update `TestAuthContextValue` to include new optional params
+- [ ] Test: `updateRepo` with `overrideBranch` results in that branch being set (not the localStorage/default value)
+- [ ] Test: `login` with `overrideBranch` results in that branch being set after auth
+- [ ] Test: `updateRepo` without `overrideBranch` still reads from localStorage (regression)
+- [ ] Test: `overrideBranch` is persisted to localStorage (verify via `getStoredBranch`)
 
 **Commit:**
 
-- [x] Read `skill://commit`, commit with message like `feat: route comment reads/writes to sidecar branch`
+- [ ] Read `skill://commit`, stage files, commit: `feat(auth): thread overrideBranch through loadBranchState, updateRepo, login`
 
-### Task 4: Update useDocuments Hook — Dual Tree Fetch
+### Task 3: `useShareableLink` Hook + `ShareableLinkBridge` Component
 
 **Files:**
 
-- Modify: `src/hooks/useDocuments.ts` — dual tree fetch, import shared `commentPath`, filter by branch subdirectory
-- Modify: `src/hooks/__tests__/useDocuments.test.tsx` — update mocks and assertions
+- Create: `src/hooks/useShareableLink.ts` — reactive hook for URL params + link building
+- Create: `src/components/ShareableLinkBridge.tsx` — applies URL overrides to auth state
+- Modify: `src/App.tsx` — render `ShareableLinkBridge` inside `AppBody`'s `HashRouter`
+- Create: `src/hooks/__tests__/useShareableLink.test.tsx` — unit tests
+
+**Interface — `useShareableLink`:**
+
+```ts
+export interface ShareableLinkState {
+  urlRepo: { owner: string; repo: string } | null;
+  urlBranch: string | null;
+  buildLink: (docPath?: string) => string;
+  copyLink: (docPath?: string) => Promise<boolean>;
+}
+
+export function useShareableLink(): ShareableLinkState;
+```
+
+- Uses `useSearchParams()` from react-router-dom to reactively read `repo` and `branch` params.
+- `urlRepo` and `urlBranch` follow the same parsing/validation as `parseShareableParams` (reuse it or replicate the logic via `useSearchParams` values).
+- `buildLink(docPath?)`: uses current auth state from `useAuth()` to build `${origin}${pathname}#/d/${docPath}?repo=${owner}/${repo}&branch=${branch}`. When `docPath` is omitted, uses `#/?repo=…&branch=…`.
+- `copyLink(docPath?)`: calls `buildLink`, then `navigator.clipboard.writeText`. Returns `true` on success, `false` on failure (catch clipboard errors).
+
+**Interface — `ShareableLinkBridge`:**
+
+A component that renders `null`. On mount (via `useEffect`):
+
+1. Reads `urlRepo` and `urlBranch` from `useShareableLink()`.
+2. Reads current `repo` and `branch` from `useAuth()`.
+3. If `urlRepo` differs from current repo → calls `updateRepo(urlRepo.owner, urlRepo.repo, undefined, urlBranch ?? undefined)`.
+4. Else if `urlBranch` is present and differs from current branch → calls `setBranch(urlBranch)`.
+5. Must only run the override logic once on initial mount to avoid loops. Use a ref to track whether overrides have been applied.
+
+**Wiring in `App.tsx`:**
+
+- Import `ShareableLinkBridge`.
+- Render `<ShareableLinkBridge />` inside `AppBody`, as a sibling of `<Header>` and `<Routes>` within the `<HashRouter>`.
 
 **Behavior:**
 
-The hook currently calls `getTree(branch)` once and scans for both `.md` blobs and `.redraft/comments/` sidecars in the same tree. After this change:
-
-1. Import `commentPath` from `src/lib/comments/paths`. Remove the local `commentPath` function.
-2. Destructure `sidecarBranch` from `useAuth()`.
-3. Compute the expected sidecar prefix: `.redraft/comments/<sanitized-branch>/` using `sanitizeBranch(branch)`.
-4. When `sidecarBranch !== branch` and both are non-null:
-   - Fire `getTree(branch)` and `getTree(sidecarBranch)` in parallel (use `Promise.all`).
-   - From the document tree: extract `.md` blobs (unchanged).
-   - From the sidecar tree: filter to paths starting with the computed prefix.
-5. When `sidecarBranch === branch` (or sidecar branch is null):
-   - Single `getTree(branch)` call.
-   - Filter sidecar paths to the computed prefix (narrower than today's `.redraft/comments/` prefix).
-6. Under-review detection: a markdown document is under review when `commentPath(item.path, branch)` appears in the sidecar path set.
-7. Query key becomes `['documents', 'tree', branch, sidecarBranch]`.
-
-**Error handling for missing sidecar branch:**
-When the sidecar tree fetch returns a 404 (branch doesn't exist):
-
-- Dispatch a toast via the existing toast event mechanism: "Branch 'redraft' not found. Create it with the setup script or update the branch name in Settings."
-- Treat the sidecar tree as empty — no documents are marked as under review.
-- Do NOT fail the entire query — document listing should still work.
+- `buildLink` never includes PAT or any auth credential.
+- `buildLink` with no current repo/branch returns just the origin + pathname + hash path (no query params).
+- `copyLink` gracefully handles clipboard permission denial.
+- `ShareableLinkBridge` does not trigger re-renders or re-apply overrides after initial mount.
 
 **Checklist:**
 
-- [x] Local `commentPath` removed, shared import used
-- [x] `sidecarBranch` from `useAuth()` used
-- [x] `Promise.all` for dual tree fetch when branches differ
-- [x] Sidecar paths filtered to `.redraft/comments/<sanitized-branch>/` prefix (not the broad `.redraft/comments/` prefix)
-- [x] Single tree fetch when `sidecarBranch === branch`
-- [x] Under-review detection uses `commentPath(item.path, branch)` for matching
-- [x] Query key includes both `branch` and `sidecarBranch`
-- [x] 404 on sidecar tree fetch shows toast, doesn't fail the query
-- [x] Document tree still loads when sidecar tree is unavailable
+- [ ] Hook reads URL params reactively via `useSearchParams`
+- [ ] `buildLink` produces correct URL format with encoded params
+- [ ] `buildLink` never includes PAT
+- [ ] `copyLink` returns boolean success/failure
+- [ ] Bridge applies URL overrides exactly once on mount
+- [ ] Bridge calls `updateRepo` with `overrideBranch` when URL repo differs
+- [ ] Bridge calls `setBranch` when only URL branch differs
+- [ ] Bridge renders `null`
+- [ ] `ShareableLinkBridge` added to `AppBody` in `App.tsx`
 
 **Tests:**
 
-- [x] `npx vitest run src/hooks/__tests__/useDocuments.test.tsx`
-- [x] Update mock `useAuth` to include `sidecarBranch`
-- [x] Test dual tree fetch: mock `getTree` to return different results for doc branch vs sidecar branch; verify under-review detection uses sidecar tree data
-- [x] Test single tree fetch: when `sidecarBranch === branch`, verify one `getTree` call
-- [x] Test sidecar branch 404: mock `getTree` to throw for sidecar branch, verify documents still load and toast is dispatched
-- [x] Test branch-namespaced sidecar detection: sidecar at `.redraft/comments/dev/docs/auth.comments.json` correctly matches `docs/auth.md` when document branch is `dev`
+- [ ] Run: `npx vitest run src/hooks/__tests__/useShareableLink.test.tsx`
+- [ ] Test file uses `// @vitest-environment jsdom`. Wrap hook render in `MemoryRouter` with `initialEntries` to simulate URL params.
+- [ ] Mock `useAuth` to control current repo/branch state.
+- [ ] Test: `urlRepo` and `urlBranch` correctly parsed from various URL shapes
+- [ ] Test: `buildLink` with doc path → correct URL with repo and branch params
+- [ ] Test: `buildLink` without doc path → URL without `/d/` path segment
+- [ ] Test: `copyLink` success → returns `true` (mock `navigator.clipboard.writeText`)
+- [ ] Test: `copyLink` failure → returns `false` (mock clipboard to throw)
 
 **Commit:**
 
-- [x] Read `skill://commit`, commit with message like `feat: dual tree fetch for sidecar branch detection`
+- [ ] Read `skill://commit`, stage files, commit: `feat(shareable-links): add useShareableLink hook, ShareableLinkBridge, and App wiring`
 
-### Task 5: Settings UI — Comments Branch Input
+### Task 4: AuthForm URL Prefill
 
 **Files:**
 
-- Modify: `src/routes/Settings.tsx` — add "Comments branch" field
-- Modify: `src/components/layout/__tests__/AppLayout.test.tsx` — update if Settings rendering is tested
+- Modify: `src/components/auth/AuthForm.tsx` — prefill repo field from URL params, thread `overrideBranch` through `login`
+- Create: `src/components/auth/__tests__/AuthForm.test.tsx` — unit tests
 
 **Behavior:**
 
-Add a "Comments branch" text input to the Settings page, **below** the existing "Repository" form, **only in remote mode** (not shown when `localMode` is true).
+`AuthForm` renders **outside** `HashRouter`, so it cannot use `useSearchParams`. Instead:
 
-- Label: "Comments branch"
-- Helper text below the input: "Branch where review comments are stored. Default: redraft"
-- Default/initial value: `sidecarBranch` from `useAuth()`, falling back to `'redraft'` if null
-- On form submit (can be the same form or a separate small form), call `setSidecarBranch(value)` from `useAuth()`
-- Show a confirmation message on save (same pattern as the existing "Repository updated." message)
+1. On mount (or in initial state), call `parseShareableParams(window.location.hash)` from `src/lib/url.ts`.
+2. If `repo` is returned, initialise the `repository` state to `"${repo.owner}/${repo.repo}"` instead of `''`.
+3. Store the parsed `branch` value for use after login.
+4. In `handleSubmit`, after calling `login(pat, parsed.owner, parsed.repo)`, pass the URL-specified branch as the 4th argument: `login(pat, parsed.owner, parsed.repo, urlBranch ?? undefined)`.
 
-Destructure `sidecarBranch` and `setSidecarBranch` from `useAuth()`.
-
-**Checklist:**
-
-- [x] "Comments branch" input appears only in remote mode
-- [x] Input pre-populated with current `sidecarBranch` value
-- [x] Save calls `setSidecarBranch` with the input value
-- [x] Confirmation message shown after save
-- [x] Input follows the existing Settings page styling (same form structure, label pattern)
-- [x] Not rendered in local mode section of Settings
-
-**Tests:**
-
-- [x] `npx vitest run src/routes src/components/layout`
-- [x] Settings in remote mode renders "Comments branch" input
-- [x] Settings in local mode does not render "Comments branch" input
-- [x] Saving the form calls `setSidecarBranch` with the entered value
-
-**Commit:**
-
-- [x] Read `skill://commit`, commit with message like `feat: add comments branch setting to Settings page`
-
-### Task 6: Local Server — Git Commit Route Split
-
-**Files:**
-
-- Modify: `server/routes/git.ts` — exclude `.redraft/` from doc commits, add plumbing sidecar commit
-- Modify: `server/routes/git.test.ts` — integration tests for both commit paths
-- Modify: `server/routes/index.ts` — pass sidecar branch to git route helpers (if needed)
-
-**Interface:**
-
-`GitRouteHelpers` gains:
-
-- `sidecarBranch: string` — the sidecar branch name, provided from the CLI flag. Default: `'redraft'`.
-
-The existing `POST /api/git/commit` route splits its work:
-
-1. **Document commit** (existing behavior, modified):
-   - `git add -- <scope> ':!<relativeScope>/.redraft/'` — excludes `.redraft/` relative to the served directory scope. When serving a subdirectory like `docs/`, the exclusion pathspec must be `':!docs/.redraft/'`, not `':!.redraft/'`.
-   - `git commit` — as before.
-   - If no document changes are staged after exclusion, skip the document commit (don't error on empty).
-
-2. **Sidecar commit** (new plumbing path):
-   - Check if `.redraft/` has changes: `git status --porcelain -- <relativeScope>/.redraft/` scoped to the served directory. All `.redraft/` pathspecs MUST be prefixed with `relativeScope` from `getRepoContext()` to handle subdirectory-served repos.
-   - If there are sidecar changes, commit them to the sidecar branch using git plumbing:
-     a. Create a temp index file (use `os.tmpdir()` + unique name).
-     b. If the sidecar branch ref exists (`git rev-parse refs/heads/<sidecarBranch>`), read its tree into the temp index: `GIT_INDEX_FILE=<tmp> git read-tree <sidecarBranch>`.
-     c. For each changed sidecar file, add it to the temp index: `GIT_INDEX_FILE=<tmp> git update-index --add --cacheinfo 100644,<blob-hash>,<path>` where blob-hash comes from `git hash-object -w <file>`.
-     d. Write the tree: `GIT_INDEX_FILE=<tmp> git write-tree` → tree SHA.
-     e. Create the commit: `git commit-tree <tree> [-p <parent>] -m "Update review comments"`. If the sidecar branch exists, `-p` is the current tip. If it doesn't exist (first commit), omit `-p` for an orphan root commit.
-     f. Update the ref: `git update-ref refs/heads/<sidecarBranch> <commit>`.
-     g. Clean up the temp index file.
-   - All plumbing commands use `env: { GIT_INDEX_FILE: tmpPath }` — never touch the real index.
-   - Use git config for author: `-c user.name=ReDraft -c user.email=redraft@local` on `commit-tree` (via `GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL`/`GIT_COMMITTER_NAME`/`GIT_COMMITTER_EMAIL` env vars, since `commit-tree` doesn't accept `-c`).
-
-3. **Response**: Return both SHAs (document commit SHA if any, sidecar commit SHA if any). The response shape can extend the current `{ sha, message }` — e.g., `{ sha, message, sidecar?: { sha: string, message: string } }`.
-
-**Error handling:**
-
-- If plumbing fails mid-way, the ref hasn't been updated yet (it's the last step), so no corruption. Clean up temp index in a `finally` block.
-- If the repo is not a git repository, the existing 404 error from `getRepoContext` handles it.
-- If no changes exist for either documents or sidecars, return success with appropriate indication.
+The user sees the repo field prefilled. They enter their PAT and click Connect. The branch override is applied during login via the `overrideBranch` mechanism from Task 2.
 
 **Checklist:**
 
-- [x] `git add` for documents excludes `.redraft/` via scope-relative pathspec (e.g., `':!docs/.redraft/'` when serving `docs/`)
-- [x] Empty document commits don't error (skip gracefully)
-- [x] Sidecar changes detected via `git status --porcelain -- <relativeScope>/.redraft/`
-- [x] Git plumbing uses a temp index file — never touches the real index
-- [x] Temp index cleaned up in a `finally` block
-- [x] Orphan commit created when sidecar branch doesn't exist yet
-- [x] Parent commit used when sidecar branch already exists
-- [x] Author/committer set via env vars for `commit-tree`
-- [x] Response includes sidecar commit info when applicable
-- [x] `GitRouteHelpers` extended with `sidecarBranch` property
+- [ ] Repo field prefilled from URL params on mount
+- [ ] User can still edit the prefilled repo value
+- [ ] URL branch is passed to `login` as `overrideBranch`
+- [ ] When no URL params exist, behavior is unchanged (empty repo field, no override)
+- [ ] `parseShareableParams` is imported from `src/lib/url.ts` (not `useSearchParams`)
 
 **Tests:**
 
-- [x] `npx vitest run server/routes/git.test.ts`
-- [x] Document-only commit: change a `.md` file, commit, verify `.redraft/` is not staged
-- [x] Sidecar-only commit: change a `.redraft/` file, commit, verify sidecar branch has the file and working tree is untouched
-- [x] Mixed commit: change both `.md` and `.redraft/` files, verify documents go to current branch and sidecars go to sidecar branch
-- [x] First sidecar commit (orphan): verify sidecar branch is created as orphan
-- [x] Subsequent sidecar commit: verify parent chain on sidecar branch
-- [x] No changes: commit with nothing dirty returns gracefully
-- [x] Subdirectory-served repo: verify pathspecs use relative scope (test with a non-root basePath)
+- [ ] Run: `npx vitest run src/components/auth/__tests__/AuthForm.test.tsx`
+- [ ] Test file uses `// @vitest-environment jsdom`. Follow pattern from `src/components/auth/__tests__/AuthGate.test.tsx`.
+- [ ] Mock `useAuth` to provide a mock `login` function. Mock `window.location.hash`.
+- [ ] Test: repo field prefilled when URL has `?repo=acme/proj`
+- [ ] Test: repo field empty when no URL params
+- [ ] Test: `login` called with `overrideBranch` when URL has `?branch=review-1`
+- [ ] Test: `login` called without `overrideBranch` when no branch in URL
 
 **Commit:**
 
-- [x] Read `skill://commit`, commit with message like `feat: split git commit route for sidecar branch plumbing`
+- [ ] Read `skill://commit`, stage files, commit: `feat(auth): prefill AuthForm repo from URL params and thread overrideBranch to login`
 
-### Task 7: CLI Flag and Server Wiring
+### Task 5: Header Copy Link Button + BranchSelector URL Sync
 
 **Files:**
 
-- Modify: `server/cli.ts` — add `--sidecar-branch` option
-- Modify: `server/app.ts` — thread `sidecarBranch` through to route helpers
-- Modify: `server/routes/index.ts` — pass `sidecarBranch` to `buildGitHubApiRouter` and down to git route helpers
+- Modify: `src/components/layout/Header.tsx` — add Copy Link button
+- Modify: `src/components/tree/BranchSelector.tsx` — update URL params on branch change
+- Modify: `src/components/layout/__tests__/Header.test.tsx` — add Copy Link tests
+
+**Header — Copy Link button:**
+
+Add a button in the right section of the header, between the rate-limit display and the Settings link. Remote mode only — hidden when `isLocalMode()` returns `true`.
+
+- Import `useShareableLink` and `isLocalMode`.
+- Extract current document path from `useLocation()`: if pathname matches `/d/*`, strip the `/d/` prefix to get the doc path.
+- Default state: render a link icon (use an inline SVG or Unicode character like 🔗 — follow existing icon conventions in the project) + "Copy link" text.
+- On click: call `copyLink(docPath)`. On success, change button text to "Copied ✓" for 2 seconds (use `useState` + `setTimeout`), then revert. On failure, show "Failed" briefly.
+- Style: match the existing Settings link style (`rounded-md border border-slate-700 px-3 py-2 font-medium hover:border-slate-500`).
+
+**BranchSelector — bidirectional URL sync:**
+
+In `handleSelect`, after calling `setBranch(nextBranch)`:
+
+- Import `useSearchParams` from react-router-dom.
+- Build updated search params: set `branch` to `nextBranch`, preserve existing `repo` param.
+- Change `navigate('/')` to include the updated search params in the navigation target (e.g. `navigate({ pathname: '/', search: updatedParams.toString() })`), so the params survive the navigation. The current `navigate('/')` drops all search params.
+- This is best-effort — if it fails, branch selection still works via localStorage.
+
+**Checklist:**
+
+- [ ] Copy Link button visible in remote mode
+- [ ] Copy Link button hidden in local mode
+- [ ] Clicking copies a well-formed shareable URL to clipboard
+- [ ] Button shows "Copied ✓" for ~2 seconds after successful copy
+- [ ] Button shows "Failed" briefly on clipboard error
+- [ ] URL includes doc path when on a document route
+- [ ] URL omits doc path when on home/settings route
+- [ ] BranchSelector updates URL `branch` param on selection
+- [ ] BranchSelector preserves existing `repo` param in URL
+
+**Tests:**
+
+- [ ] Run: `npx vitest run src/components/layout/__tests__/Header.test.tsx`
+- [ ] Mock `useShareableLink` to control `copyLink` return value. Mock `isLocalMode`.
+- [ ] Test: Copy Link button renders in remote mode
+- [ ] Test: Copy Link button absent in local mode
+- [ ] Test: clicking Copy Link calls `copyLink` with the correct doc path
+- [ ] Test: button text changes to "Copied ✓" after successful copy
+
+**Commit:**
+
+- [ ] Read `skill://commit`, stage files, commit: `feat(ui): add Copy Link button to Header and bidirectional URL sync in BranchSelector`
+
+### Task 6: E2E Tests
+
+**Files:**
+
+- Create: `e2e/shareable-links.spec.ts` — Playwright E2E tests
 
 **Behavior:**
 
-Add `--sidecar-branch <string>` to the Commander CLI options via `registerServeOptions`:
+These tests verify the full shareable-link flow in a real browser. Check `playwright.config.ts` and any existing `e2e/` tests for project conventions before writing.
 
-- Default value: `'redraft'`
-- Description: "Git branch for sidecar comment files (default: redraft)"
+1. **Shareable link round-trip:** Navigate to a document page. Click the Copy Link button. Verify the clipboard contains a URL with `repo` and `branch` params and the correct doc path. Navigate to that URL in a fresh browser context. After authenticating, verify the same document loads on the correct branch.
 
-Thread the value through:
-
-1. `ServeOptions` interface gains `sidecarBranch?: string`.
-2. `runServe` passes it to `startReDraftServer`.
-3. `ReDraftServerOptions` / `ReDraftAppOptions` gain `sidecarBranch: string` (with default `'redraft'`).
-4. `buildReDraftApp` passes it to `buildGitHubApiRouter`.
-5. `buildGitHubApiRouter` passes it in the helpers object to `registerGitRoute`.
+2. **Auth prefill flow:** Open a shared link (`#/d/some-doc.md?repo=owner/repo&branch=feature-1`) in an unauthenticated state. Verify the AuthForm's repository field is prefilled with `owner/repo`. Complete authentication. Verify the correct branch is loaded.
 
 **Checklist:**
 
-- [x] `--sidecar-branch` option added to both the default command and the `serve` subcommand (via `registerServeOptions`)
-- [x] Default value is `'redraft'`
-- [x] Value threaded through `ServeOptions` → `ReDraftServerOptions` → `ReDraftAppOptions` → `buildGitHubApiRouter` → git route helpers
-- [x] No other routes need the sidecar branch — only git route uses it
+- [ ] E2E tests cover shareable link round-trip (AC-1)
+- [ ] E2E tests cover auth prefill from URL params (AC-5)
+- [ ] Tests verify PAT is never in the generated URL (AC-6)
 
 **Tests:**
 
-- [x] `npx vitest run server/`
-- [x] Existing server tests still pass (sidecar branch defaults to `'redraft'` when not specified)
-- [x] The git route integration tests from Task 6 verify the sidecar branch is used correctly
+- [ ] Run: `npx playwright test e2e/shareable-links.spec.ts`
 
 **Commit:**
 
-- [x] Read `skill://commit`, commit with message like `feat: add --sidecar-branch CLI flag`
+- [ ] Read `skill://commit`, stage files, commit: `test(e2e): add Playwright tests for shareable document links`
 
-### Task 8: Local Server — Filesystem Operations for Branch-Namespaced Paths
-
-**Files:**
-
-- Modify: `server/fs/operations.ts` — update `documentPathFromCommentPath()`, `walkCommentFiles()`, `listReviewEntries()` for branch-namespaced paths
-- Modify: `server/fs/operations.test.ts` — update tests for new path scheme
-- Modify: `server/fs/watcher.ts` — update comment file detection if it uses the old path prefix
-- Modify: `server/fs/watcher.test.ts` — update tests
-
-**Behavior:**
-
-The local server filesystem operations need to understand the new branch-namespaced sidecar path scheme:
-
-1. **`COMMENTS_ROOT`** stays `.redraft/comments` — the top-level directory is unchanged.
-
-2. **`walkCommentFiles(basePath, branch?)`** — the function currently walks all `.comments.json` files under `.redraft/comments/`. After this change:
-   - If `branch` is provided, walk only `.redraft/comments/<sanitized-branch>/` subdirectory.
-   - If no `branch` provided (backward compat for non-scoped callers), walk all subdirectories.
-   - Import `sanitizeBranch` from `src/lib/comments/paths` — or, since server code may not share frontend imports, duplicate the simple `/` → `--` replacement as a server-side utility.
-
-3. **`documentPathFromCommentPath(commentPath)`** — currently strips the `COMMENTS_ROOT/` prefix and converts `.comments.json` → `.md`. After the change, it ALSO needs to strip the branch subdirectory. The path `.redraft/comments/main/docs/auth.comments.json` should produce `docs/auth.md`, not `main/docs/auth.md`. Implementation: after stripping `COMMENTS_ROOT/`, strip the first path segment (the branch name).
-
-4. **`listReviewEntries(basePath, branch?)`** — gains an optional `branch` parameter. When provided, scopes `walkCommentFiles` to that branch subdirectory. The tree route (`server/routes/tree.ts`) should pass the current branch (detected via `git rev-parse --abbrev-ref HEAD`, same as the new `/api/git/branch` endpoint).
-
-5. **Watcher** (`server/fs/watcher.ts`) — the `COMMENTS_ROOT` prefix check may need updating if it filters by path prefix. Verify the watcher correctly detects changes in branch-namespaced subdirectories.
-
-**Checklist:**
-
-- [x] `documentPathFromCommentPath('.redraft/comments/main/docs/auth.comments.json')` → `'docs/auth.md'`
-- [x] `documentPathFromCommentPath('.redraft/comments/feature--auth/docs/auth.comments.json')` → `'docs/auth.md'`
-- [x] `walkCommentFiles(basePath, 'main')` only returns files under `.redraft/comments/main/`
-- [x] `walkCommentFiles(basePath)` returns files under all branch subdirectories
-- [x] `listReviewEntries` correctly scopes to a specific branch
-- [x] Watcher detects changes in branch-namespaced subdirectories
-- [x] `sanitizeBranch` logic available server-side (shared or duplicated)
-
-**Tests:**
-
-- [x] `npx vitest run server/fs/operations.test.ts server/fs/watcher.test.ts`
-- [x] `documentPathFromCommentPath` strips branch prefix correctly
-- [x] `walkCommentFiles` with branch parameter scopes to correct subdirectory
-- [x] `listReviewEntries` returns correct document paths with branch-namespaced sidecars
-- [x] Existing watcher tests pass with branch-namespaced paths
-
-**Commit:**
-
-- [x] Read `skill://commit`, commit with message like `feat: update local server fs operations for branch-namespaced sidecar paths`
-
-### Task 9: Sidecar Branch Missing — Error UX
-
-**Files:**
-
-- Modify: `src/hooks/useDocuments.ts` — toast dispatch on sidecar 404 (if not already done in Task 4)
-- Modify: `src/lib/github/client.ts` — ensure `getTree` throws a distinguishable error when the branch doesn't exist
-- Modify: `src/components/comments/CommentsSidebar.tsx` (or equivalent) — inline error message when sidecar branch is unavailable
-- Create or modify: relevant test files for error states
-
-**Behavior:**
-
-This task ensures the error UX from the spec is fully wired. A key prerequisite is **distinguishing "branch not found" from "file not found"**:
-
-1. **`getTree(sidecarBranch)` already throws on 404** — `GitHubClient.getTree` does not have an `optional` mode; a 404 is a thrown `NotFoundError`. This makes branch-missing detection straightforward in `useDocuments`. Catch the error, check if it's a `NotFoundError`, and treat the sidecar tree as empty instead of failing the query.
-
-2. **`getFileContent` with `optional: true` swallows all 404s** — In `useComments`, a missing sidecar branch returns `null` (same as missing file), making it indistinguishable. To detect the missing branch in the comments sidebar, either:
-   a. Have `useDocuments` expose a `sidecarBranchExists: boolean` flag (derived from whether the sidecar tree fetch succeeded). The comments sidebar reads this flag from the parent context.
-   b. Or, do a lightweight branch-existence check (e.g., `getTree` call) in the comments hook.
-   **Option (a)** is preferred — single source of truth, no redundant API calls.
-
-3. **Toast on sidecar tree fetch failure**:
-   - When `getTree(sidecarBranch)` throws a `NotFoundError` in `useDocuments`, dispatch a toast: "Branch '<name>' not found. Create it with the setup script or update the branch name in Settings."
-   - Fire the toast once per branch-change, not on every re-render. Use a ref to track whether the toast has been shown for the current sidecar branch.
-
-4. **Inline message in comments sidebar**:
-   - Read `sidecarBranchExists` from the documents/query context.
-   - When `false`, show an inline message instead of the comment form: "Comments branch '<name>' does not exist."
-   - Save button hidden or disabled.
-
-**Checklist:**
-
-- [x] `useDocuments` catches `NotFoundError` from sidecar tree fetch and sets `sidecarBranchExists` flag
-- [x] Toast fires on sidecar tree 404 in `useDocuments`
-- [x] Toast fires only once per branch-change, not repeatedly
-- [x] `sidecarBranchExists` flag exposed for comments sidebar consumption
-- [x] Comments sidebar shows inline error when sidecar branch is missing
-- [x] Save/comment actions disabled when sidecar branch is unavailable
-- [x] Error state is visually consistent with existing app error patterns
-
-**Tests:**
-
-- [x] Verify toast dispatch on sidecar branch 404
-- [x] Verify `sidecarBranchExists` is false when sidecar tree fetch fails
-- [x] Verify sidebar renders inline error message when sidecar branch is missing
-- [x] Verify comment form is not shown / save is disabled in error state
-
-**Commit:**
-
-- [x] Read `skill://commit`, commit with message like `feat: error UX for missing sidecar branch`
-
-### Task 10: Test Fixtures Submodule Update
-
-**Files:**
-
-- Modify: `test-fixtures/` submodule (`tcamise-gpsw/redraft-test-repo`)
-- Modify: root repo submodule pointer
-
-**Behavior:**
-
-Update the test-fixtures repo to reflect the new sidecar path scheme:
-
-1. **On `main` branch of test-fixtures repo:**
-   - Remove `.redraft/comments/api-design-v2.comments.json` (old un-namespaced path).
-   - Ensure no `.redraft/` directory remains on `main`.
-
-2. **Create an orphan `redraft` branch:**
-   - Use the setup script pattern: `git checkout --orphan redraft && git rm -rf . && git commit --allow-empty -m "Initialize sidecar branch"`.
-   - Add namespaced sidecar files:
-     - `.redraft/comments/main/api-design-v2.comments.json` — the existing comment data, moved to the branch-namespaced path.
-   - Optionally add a second branch namespace for testing: `.redraft/comments/feature--example/api-design-v2.comments.json` with a different comment set.
-   - Commit and push.
-
-3. **Update the submodule pointer** in the main redraft repo to the new commit on `main` of test-fixtures.
-
-**Checklist:**
-
-- [x] Old sidecar path removed from `main` branch of test-fixtures
-- [x] Orphan `redraft` branch created in test-fixtures repo
-- [x] Branch-namespaced sidecar files present on `redraft` branch
-- [x] Submodule pointer updated in the main repo
-- [x] Existing tests that reference test-fixtures data are updated if they depend on old sidecar paths
-
-**Tests:**
-
-- [x] `npx vitest run` — all tests pass with updated fixtures
-
-**Commit:**
-
-- [x] Read `skill://commit`, commit with message like `chore: update test-fixtures submodule for sidecar branch paths`
-
-### Task 11: Setup Script
-
-**Files:**
-
-- Create: `scripts/create-sidecar-branch.sh` — orphan branch creation script
-
-**Behavior:**
-
-A simple shell script that creates an orphan sidecar branch:
-
-- Accepts an optional argument for the branch name (default: `redraft`).
-- Creates an orphan branch: `git checkout --orphan <branch>`.
-- Removes all tracked files from the index: `git rm -rf .`.
-- Creates an empty initial commit: `git commit --allow-empty -m "Initialize ReDraft sidecar branch"`.
-- Switches back to the previous branch: `git checkout -`.
-- Prints instructions: "Created orphan branch '<branch>'. Push with: git push origin <branch>".
-
-The script should be executable (`chmod +x`).
-
-**Checklist:**
-
-- [x] Script is executable
-- [x] Default branch name is `redraft`
-- [x] Custom branch name accepted as first argument
-- [x] Creates orphan branch (no parent commit, no files)
-- [x] Returns to previous branch after creation
-- [x] Prints push instructions
-
-**Tests:**
-
-- [x] Manual verification: run the script in a test repo, verify orphan branch exists with empty tree
-
-**Commit:**
-
-- [x] Read `skill://commit`, commit with message like `feat: add sidecar branch setup script`
-
-### Task 12: Final Validation
+### Task 7: Final Validation
 
 **Checks:**
 
-- [x] Full test suite passes: `npx vitest run`
-- [x] Type check passes: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
-- [x] Lint passes: `npx eslint src/ server/`
-- [x] Format check passes: `npx prettier --check src/ server/`
-- [x] All acceptance criteria verified:
-  - Comment reads use sidecar branch ref
-  - Comment writes target sidecar branch
-  - Document tree detects under-review status from sidecar branch
-  - Dual tree fetch fires when branches differ
-  - Single tree fetch when branches match
-  - Settings UI shows "Comments branch" in remote mode only
-  - Local server excludes `.redraft/` from document commits
-  - Local server commits sidecars to sidecar branch via plumbing
-  - Local server fs operations handle branch-namespaced paths correctly
-  - Local mode detects current git branch for path namespacing
-  - `--sidecar-branch` CLI flag works with default `'redraft'`
-  - Missing sidecar branch shows toast + inline error
-  - Setup script creates orphan branch
-  - Test-fixtures submodule updated with branch-namespaced paths
-- [x] No regressions: existing document editing, branch switching, and local mode all still work
+- [ ] Full test suite passes: `npx vitest run`
+- [ ] Type check passes: `npx tsc --noEmit && npx tsc --noEmit -p server/tsconfig.json`
+- [ ] Lint passes: `npx eslint src/ server/`
+- [ ] Format check passes: `npx prettier --check src/ server/`
+- [ ] E2E tests pass: `npx playwright test`
+- [ ] All acceptance criteria from issue #14 verified:
+  - [ ] AC-1: A copied link opens the same document, repo, and branch for an authenticated recipient
+  - [ ] AC-2: URL params take precedence over localStorage; localStorage remains fallback
+  - [ ] AC-3: Async race in `updateRepo` handled — URL branch not clobbered by `loadBranchState`
+  - [ ] AC-4: Tests cover URL param parsing, precedence, and copy-link output
+  - [ ] AC-5: Unauthenticated recipient sees repo prefilled in AuthForm
+  - [ ] AC-6: PAT never present in generated URLs
+  - [ ] AC-7: Copy Link button hidden in local mode
+- [ ] No regressions: existing auth flow, branch selection, and document navigation all work as before
