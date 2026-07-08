@@ -6,10 +6,11 @@ interface QuoteContext {
 interface AnchorInput {
   quote: string;
   quoteContext: QuoteContext;
+  offset: number;
 }
 
 export interface AnchorResult {
-  status: 'exact' | 'context' | 'fuzzy' | 'orphaned';
+  status: 'exact' | 'context' | 'orphaned';
   startIndex: number;
   endIndex: number;
   matchedText: string;
@@ -26,63 +27,6 @@ function orphaned(): AnchorResult {
 
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
-}
-
-function longestCommonSubstring(a: string, b: string): string {
-  if (!a || !b) {
-    return '';
-  }
-
-  const rows = a.length + 1;
-  const cols = b.length + 1;
-  const table = Array.from({ length: rows }, () => Array<number>(cols).fill(0));
-  let bestLength = 0;
-  let bestEnd = 0;
-
-  for (let row = 1; row < rows; row += 1) {
-    for (let col = 1; col < cols; col += 1) {
-      if (a[row - 1] === b[col - 1]) {
-        table[row][col] = table[row - 1][col - 1] + 1;
-        if (table[row][col] > bestLength) {
-          bestLength = table[row][col];
-          bestEnd = row;
-        }
-      }
-    }
-  }
-
-  return a.slice(bestEnd - bestLength, bestEnd);
-}
-
-function longestCommonSubsequenceLength(a: string, b: string): number {
-  const rows = a.length + 1;
-  const cols = b.length + 1;
-  const table = Array.from({ length: rows }, () => Array<number>(cols).fill(0));
-
-  for (let row = 1; row < rows; row += 1) {
-    for (let col = 1; col < cols; col += 1) {
-      if (a[row - 1] === b[col - 1]) {
-        table[row][col] = table[row - 1][col - 1] + 1;
-      } else {
-        table[row][col] = Math.max(table[row - 1][col], table[row][col - 1]);
-      }
-    }
-  }
-
-  return table[a.length][b.length];
-}
-
-function similarity(a: string, b: string): number {
-  if (!a || !b) {
-    return 0;
-  }
-
-  return (
-    Math.max(
-      longestCommonSubstring(a, b).length,
-      longestCommonSubsequenceLength(a, b),
-    ) / Math.max(a.length, b.length)
-  );
 }
 
 function scoreContext(
@@ -132,70 +76,67 @@ function findExactOccurrences(documentText: string, quote: string): number[] {
   return positions;
 }
 
-function findFuzzyCandidate(
+function resolveByOffset(
   documentText: string,
-  quote: string,
-  context: QuoteContext,
-): AnchorResult {
-  const normalizedPrefix = normalizeWhitespace(context.prefix);
-  const normalizedSuffix = normalizeWhitespace(context.suffix);
-
-  if (normalizedPrefix && normalizedSuffix) {
-    const prefixStart = documentText.indexOf(normalizedPrefix);
-    if (prefixStart >= 0) {
-      const suffixSearchStart = prefixStart + normalizedPrefix.length;
-      const suffixStart = documentText.indexOf(
-        normalizedSuffix,
-        suffixSearchStart,
-      );
-
-      if (suffixStart > suffixSearchStart) {
-        const candidate = documentText
-          .slice(suffixSearchStart, suffixStart)
-          .trim();
-        if (similarity(candidate, quote) >= 0.7) {
-          const candidateStart = documentText.indexOf(
-            candidate,
-            suffixSearchStart,
-          );
-          return {
-            status: 'fuzzy',
-            startIndex: candidateStart,
-            endIndex: candidateStart + candidate.length,
-            matchedText: candidate,
-          };
-        }
-      }
-    }
+  anchor: AnchorInput,
+): AnchorResult | null {
+  if (anchor.offset < 0 || anchor.offset >= documentText.length) {
+    return null;
   }
 
-  let bestMatch = orphaned();
-  let bestScore = 0;
-  const minLength = Math.max(1, Math.floor(quote.length * 0.6));
-  const maxLength = Math.max(minLength, Math.ceil(quote.length * 1.6));
+  const endIndex = anchor.offset + anchor.quote.length;
+  if (documentText.slice(anchor.offset, endIndex) !== anchor.quote) {
+    return null;
+  }
 
-  for (let start = 0; start < documentText.length; start += 1) {
-    for (
-      let length = minLength;
-      length <= maxLength && start + length <= documentText.length;
-      length += 1
-    ) {
-      const candidate = documentText.slice(start, start + length).trim();
-      const score = similarity(candidate, quote);
+  return {
+    status: 'exact',
+    startIndex: anchor.offset,
+    endIndex,
+    matchedText: anchor.quote,
+  };
+}
 
-      if (score > bestScore) {
-        bestScore = score;
-        bestMatch = {
-          status: 'fuzzy',
-          startIndex: start,
-          endIndex: start + candidate.length,
+function resolveByContext(
+  documentText: string,
+  anchor: AnchorInput,
+): AnchorResult | null {
+  const normalizedQuote = normalizeWhitespace(anchor.quote);
+  const normalizedPrefix = normalizeWhitespace(anchor.quoteContext.prefix);
+  const normalizedSuffix = normalizeWhitespace(anchor.quoteContext.suffix);
+
+  if (!normalizedQuote || !normalizedPrefix || !normalizedSuffix) {
+    return null;
+  }
+
+  let prefixStart = documentText.indexOf(anchor.quoteContext.prefix);
+
+  while (prefixStart >= 0) {
+    const candidateStart = prefixStart + anchor.quoteContext.prefix.length;
+    const suffixStart = documentText.indexOf(
+      anchor.quoteContext.suffix,
+      candidateStart,
+    );
+
+    if (suffixStart > candidateStart) {
+      const candidate = documentText.slice(candidateStart, suffixStart);
+      if (normalizeWhitespace(candidate) === normalizedQuote) {
+        return {
+          status: 'context',
+          startIndex: candidateStart,
+          endIndex: suffixStart,
           matchedText: candidate,
         };
       }
     }
+
+    prefixStart = documentText.indexOf(
+      anchor.quoteContext.prefix,
+      prefixStart + anchor.quoteContext.prefix.length,
+    );
   }
 
-  return bestScore >= 0.7 ? bestMatch : orphaned();
+  return null;
 }
 
 export function resolveAnchor(
@@ -204,6 +145,11 @@ export function resolveAnchor(
 ): AnchorResult {
   if (!documentText || !anchor.quote) {
     return orphaned();
+  }
+
+  const offsetMatch = resolveByOffset(documentText, anchor);
+  if (offsetMatch) {
+    return offsetMatch;
   }
 
   const occurrences = findExactOccurrences(documentText, anchor.quote);
@@ -272,45 +218,5 @@ export function resolveAnchor(
     };
   }
 
-  return findFuzzyCandidate(documentText, anchor.quote, anchor.quoteContext);
-}
-
-export function createAnchor(
-  documentText: string,
-  selectedText: string,
-  selectionStartIndex: number,
-): { quote: string; quoteContext: QuoteContext } {
-  const prefixStart = Math.max(0, selectionStartIndex - 100);
-  const suffixEnd = Math.min(
-    documentText.length,
-    selectionStartIndex + selectedText.length + 100,
-  );
-  let prefix = documentText.slice(prefixStart, selectionStartIndex);
-  let suffix = documentText.slice(
-    selectionStartIndex + selectedText.length,
-    suffixEnd,
-  );
-
-  if (prefixStart > 0) {
-    const boundary = prefix.search(/\b/);
-    if (boundary > 0) {
-      prefix = prefix.slice(boundary);
-    }
-  }
-
-  if (suffixEnd < documentText.length) {
-    const matches = [...suffix.matchAll(/\b/g)];
-    const lastBoundary = matches.at(-1)?.index;
-    if (typeof lastBoundary === 'number' && lastBoundary > 0) {
-      suffix = suffix.slice(0, lastBoundary);
-    }
-  }
-
-  return {
-    quote: selectedText,
-    quoteContext: {
-      prefix,
-      suffix,
-    },
-  };
+  return resolveByContext(documentText, anchor) ?? orphaned();
 }

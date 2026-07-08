@@ -17,6 +17,7 @@ export interface CommentThread {
     prefix: string;
     suffix: string;
   };
+  offset: number;
   author: Author;
   body: string;
   createdAt: string;

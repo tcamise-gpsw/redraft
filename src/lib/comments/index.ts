@@ -1,4 +1,4 @@
-export { createAnchor, resolveAnchor } from './anchoring';
+export { resolveAnchor } from './anchoring';
 export type { AnchorResult } from './anchoring';
 export { positionThreads } from './positioning';
 export { commentPath, sanitizeBranch } from './paths';
