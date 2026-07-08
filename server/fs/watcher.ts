@@ -1,10 +1,5 @@
 import chokidar from 'chokidar';
-import {
-  existsSync,
-  readdirSync,
-  readFileSync,
-  watch as fsWatch,
-} from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 
 import ignore, { type Ignore } from 'ignore';
@@ -119,16 +114,6 @@ function toRelativePath(basePath: string, filePath: string): string | null {
 export function startWatcher(
   basePath: string,
   onEvent: (event: FileEvent) => void,
-  // Injected in tests so the native watcher can be faked without mocking
-  // the entire node:fs built-in module.  Only `on` and `close` are used.
-  watchFn: (
-    path: string,
-    options: { recursive: boolean; persistent: boolean },
-  ) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    on(event: string, listener: (...args: any[]) => void): unknown;
-    close(): void;
-  } = (path, opts) => fsWatch(path, opts),
 ): () => void {
   const ignoreMatcher = loadIgnoreMatcher(basePath);
   const pendingEvents = new Map<string, PendingEventType>();
@@ -187,43 +172,8 @@ export function startWatcher(
     }
   };
 
-  if (process.platform === 'darwin' || process.platform === 'win32') {
-    const nativeWatcher = watchFn(basePath, {
-      recursive: true,
-      persistent: true,
-    });
-
-    nativeWatcher.on(
-      'change',
-      (eventType: string, filename: string | Buffer | null) => {
-        if (!filename) {
-          return;
-        }
-        const name = Buffer.isBuffer(filename) ? filename.toString() : filename;
-        const absolutePath = resolve(basePath, name);
-
-        if (eventType === 'rename') {
-          const type: PendingEventType = existsSync(absolutePath)
-            ? 'file:created'
-            : 'file:deleted';
-          queueEvent(type, absolutePath);
-        } else {
-          queueEvent('file:changed', absolutePath);
-        }
-      },
-    );
-
-    nativeWatcher.on('error', (err: Error) => {
-      console.error('[redraft] watcher error:', err);
-    });
-
-    return () => {
-      stopFlush();
-      nativeWatcher.close();
-    };
-  }
-
-  // Chokidar fallback for platforms that do not support recursive fs.watch.
+  // Chokidar is used on every platform. Native recursive fs.watch is flaky for
+  // nested markdown updates on macOS, which breaks local-mode live refresh.
   const watcher = chokidar.watch(basePath, {
     ignoreInitial: true,
     persistent: true,

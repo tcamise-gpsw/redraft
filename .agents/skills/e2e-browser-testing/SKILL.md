@@ -105,6 +105,7 @@ The local project is expected to:
 - build the frontend first
 - serve a writable filesystem-backed repo root
 - isolate writes from the checked-in repo content
+- use the chokidar-backed watcher path on every platform; local watcher failures are actionable regressions, not the old macOS `fs.watch` flake
 
 ### Local fixture rule
 Do not point destructive tests at the real checked-in repo unless the user explicitly wants that. Prefer a writable copy, e.g. `/tmp/redraft-local-playwright`, seeded with representative markdown files and `.redraft/comments/` metadata.
