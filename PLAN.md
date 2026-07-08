@@ -126,7 +126,7 @@ In `login`: forward `overrideBranch` to `loadBranchState` call on line 194.
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage files, commit: `feat(auth): thread overrideBranch through loadBranchState, updateRepo, login`
+- [x] Read `skill://commit`, stage files, commit: `feat(auth): thread overrideBranch through loadBranchState, updateRepo, login`
 
 ### Task 3: `useShareableLink` Hook + `ShareableLinkBridge` Component
 
@@ -179,26 +179,26 @@ A component that renders `null`. On mount (via `useEffect`):
 
 **Checklist:**
 
-- [ ] Hook reads URL params reactively via `useSearchParams`
-- [ ] `buildLink` produces correct URL format with encoded params
-- [ ] `buildLink` never includes PAT
-- [ ] `copyLink` returns boolean success/failure
-- [ ] Bridge applies URL overrides exactly once on mount
-- [ ] Bridge calls `updateRepo` with `overrideBranch` when URL repo differs
-- [ ] Bridge calls `setBranch` when only URL branch differs
-- [ ] Bridge renders `null`
-- [ ] `ShareableLinkBridge` added to `AppBody` in `App.tsx`
+- [x] Hook reads URL params reactively via `useSearchParams`
+- [x] `buildLink` produces correct URL format with encoded params
+- [x] `buildLink` never includes PAT
+- [x] `copyLink` returns boolean success/failure
+- [x] Bridge applies URL overrides exactly once on mount
+- [x] Bridge calls `updateRepo` with `overrideBranch` when URL repo differs
+- [x] Bridge calls `setBranch` when only URL branch differs
+- [x] Bridge renders `null`
+- [x] `ShareableLinkBridge` added to `AppBody` in `App.tsx`
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/hooks/__tests__/useShareableLink.test.tsx`
-- [ ] Test file uses `// @vitest-environment jsdom`. Wrap hook render in `MemoryRouter` with `initialEntries` to simulate URL params.
-- [ ] Mock `useAuth` to control current repo/branch state.
-- [ ] Test: `urlRepo` and `urlBranch` correctly parsed from various URL shapes
-- [ ] Test: `buildLink` with doc path → correct URL with repo and branch params
-- [ ] Test: `buildLink` without doc path → URL without `/d/` path segment
-- [ ] Test: `copyLink` success → returns `true` (mock `navigator.clipboard.writeText`)
-- [ ] Test: `copyLink` failure → returns `false` (mock clipboard to throw)
+- [x] Run: `npx vitest run src/hooks/__tests__/useShareableLink.test.tsx`
+- [x] Test file uses `// @vitest-environment jsdom`. Wrap hook render in `MemoryRouter` with `initialEntries` to simulate URL params.
+- [x] Mock `useAuth` to control current repo/branch state.
+- [x] Test: `urlRepo` and `urlBranch` correctly parsed from various URL shapes
+- [x] Test: `buildLink` with doc path → correct URL with repo and branch params
+- [x] Test: `buildLink` without doc path → URL without `/d/` path segment
+- [x] Test: `copyLink` success → returns `true` (mock `navigator.clipboard.writeText`)
+- [x] Test: `copyLink` failure → returns `false` (mock clipboard to throw)
 
 **Commit:**
 
