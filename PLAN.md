@@ -294,7 +294,7 @@ In `handleSelect`, after calling `setBranch(nextBranch)`:
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage files, commit: `feat(ui): add Copy Link button to Header and bidirectional URL sync in BranchSelector`
+- [x] Read `skill://commit`, stage files, commit: `feat(ui): add Copy Link button to Header and bidirectional URL sync in BranchSelector`
 
 ### Task 6: E2E Tests
 
@@ -312,13 +312,13 @@ These tests verify the full shareable-link flow in a real browser. Check `playwr
 
 **Checklist:**
 
-- [ ] E2E tests cover shareable link round-trip (AC-1)
-- [ ] E2E tests cover auth prefill from URL params (AC-5)
-- [ ] Tests verify PAT is never in the generated URL (AC-6)
+- [x] E2E tests cover shareable link round-trip (AC-1)
+- [x] E2E tests cover auth prefill from URL params (AC-5)
+- [x] Tests verify PAT is never in the generated URL (AC-6)
 
 **Tests:**
 
-- [ ] Run: `npx playwright test e2e/shareable-links.spec.ts`
+- [x] Run: `npx playwright test e2e/shareable-links.spec.ts`
 
 **Commit:**
 
