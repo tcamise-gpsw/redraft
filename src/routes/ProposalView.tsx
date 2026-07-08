@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { CommentsSidebar } from '../components/comments/CommentsSidebar';
@@ -39,7 +39,13 @@ export function ProposalView() {
       prefix: string;
       suffix: string;
     };
+    offset: number;
   } | null>(null);
+  const [renderedText, setRenderedText] = useState(content);
+
+  useEffect(() => {
+    setRenderedText(content);
+  }, [content]);
 
   return (
     <AppLayout
@@ -57,12 +63,13 @@ export function ProposalView() {
           onTextSelect={(selection) => {
             setPendingSelection(selection);
           }}
+          onRenderedText={setRenderedText}
         />
       }
       aside={
         <CommentsSidebar
           comments={threads}
-          documentText={content}
+          documentText={renderedText}
           activeCommentId={activeCommentId}
           onCommentClick={(id) => {
             setActiveCommentId(id);

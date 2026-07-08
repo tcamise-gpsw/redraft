@@ -45,6 +45,7 @@ const EXISTING_THREAD = {
   id: 'thread-1',
   quote: 'initialize lazily',
   quoteContext: { prefix: 'camera should ', suffix: ' during preview' },
+  offset: 18,
   author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
   body: 'Question',
   createdAt: '2026-06-21T05:00:00Z',
@@ -110,7 +111,7 @@ describe('useComments – local state', () => {
     expect(result.current.isDirty).toBe(false);
   });
 
-  it('addComment appends a thread locally without any API call', async () => {
+  it('addComment stores the provided rendered-text offset on the new thread without any API call', async () => {
     getFileContent.mockResolvedValueOnce(null);
 
     const { result } = renderHook(() => useComments('docs/doc.md'), {
@@ -123,6 +124,7 @@ describe('useComments – local state', () => {
       result.current.addComment({
         quote: 'initialize lazily',
         quoteContext: { prefix: '', suffix: '' },
+        offset: 18,
         author: { login: 'jdoe', avatarUrl: 'https://example.com/avatar.png' },
         body: 'Question',
         resolved: false,
@@ -130,7 +132,13 @@ describe('useComments – local state', () => {
     });
 
     expect(result.current.threads).toHaveLength(1);
-    expect(result.current.threads[0]?.body).toBe('Question');
+    expect(result.current.threads[0]).toEqual(
+      expect.objectContaining({
+        quote: 'initialize lazily',
+        body: 'Question',
+        offset: 18,
+      }),
+    );
     expect(result.current.isDirty).toBe(true);
     expect(createFile).not.toHaveBeenCalled();
     expect(updateFile).not.toHaveBeenCalled();
