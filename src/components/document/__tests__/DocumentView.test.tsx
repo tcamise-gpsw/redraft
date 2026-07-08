@@ -60,6 +60,7 @@ const COMMENT_THREAD: CommentThread = {
   id: 'comment-1',
   quote: 'Proposal',
   quoteContext: { prefix: '', suffix: '' },
+  offset: 0,
   author: { login: 'jdoe', avatarUrl: '' },
   body: 'A comment',
   createdAt: '2026-06-21T00:00:00Z',

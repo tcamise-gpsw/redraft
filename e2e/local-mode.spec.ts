@@ -60,6 +60,9 @@ test('local mode writes markdown edits back to disk and reflects external file c
       '# Authentication Overhaul Proposal\n\nChanged outside the UI\n',
       'utf8',
     );
+    await expect
+      .poll(async () => readFile(AUTH_DOC_PATH, 'utf8'))
+      .toContain('Changed outside the UI');
     // Cross-process propagation (fs watcher -> WebSocket -> query invalidation ->
     // Milkdown re-render) can exceed the 5s default; allow more headroom.
     await expect(page.getByText('Changed outside the UI')).toBeVisible({

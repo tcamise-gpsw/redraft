@@ -336,6 +336,7 @@ describe('useComments – saveComments', () => {
       result.current.addComment({
         quote: 'initialize lazily',
         quoteContext: { prefix: '', suffix: '' },
+        offset: 18,
         author: { login: 'jdoe', avatarUrl: '' },
         body: 'Question',
         resolved: false,
@@ -447,6 +448,7 @@ describe('useComments – saveComments', () => {
       result.current.addComment({
         quote: 'a',
         quoteContext: { prefix: '', suffix: '' },
+        offset: 0,
         author: { login: 'u', avatarUrl: '' },
         body: 'first',
         resolved: false,
@@ -463,6 +465,7 @@ describe('useComments – saveComments', () => {
       result.current.addComment({
         quote: 'b',
         quoteContext: { prefix: '', suffix: '' },
+        offset: 1,
         author: { login: 'u', avatarUrl: '' },
         body: 'second',
         resolved: false,
@@ -496,6 +499,7 @@ describe('useComments – saveComments', () => {
       result.current.addComment({
         quote: 'a',
         quoteContext: { prefix: '', suffix: '' },
+        offset: 0,
         author: { login: 'u', avatarUrl: '' },
         body: 'Q',
         resolved: false,
