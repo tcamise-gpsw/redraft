@@ -14,10 +14,28 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
     'idle',
   );
-  const lowRateLimit =
-    typeof rateLimit?.remaining === 'number' &&
-    rateLimit.remaining > 0 &&
-    rateLimit.remaining < 100;
+  const quotaLevel =
+    rateLimit == null
+      ? null
+      : rateLimit.limit > 0
+        ? rateLimit.remaining / rateLimit.limit
+        : null;
+  const quotaColor =
+    quotaLevel === null
+      ? 'bg-slate-500'
+      : quotaLevel < 0.1
+        ? 'bg-red-500'
+        : quotaLevel < 0.25
+          ? 'bg-amber-400'
+          : 'bg-emerald-500';
+  const quotaTextColor =
+    quotaLevel === null
+      ? 'text-slate-400'
+      : quotaLevel < 0.1
+        ? 'text-red-400'
+        : quotaLevel < 0.25
+          ? 'text-amber-300'
+          : 'text-slate-300';
 
   const docPath = location.pathname.startsWith('/d/')
     ? location.pathname.slice('/d/'.length)
@@ -49,10 +67,23 @@ export function Header({ rateLimit }: { rateLimit?: RateLimitInfo | null }) {
         </div>
 
         <div className="flex items-center gap-4 text-sm text-slate-300">
-          {rateLimit != null && (
-            <span className={lowRateLimit ? 'text-amber-300' : ''}>
-              {rateLimit.remaining} / {rateLimit.limit} remaining
-            </span>
+          {rateLimit != null && quotaLevel !== null && (
+            <div
+              className="flex flex-col items-end gap-0.5"
+              title={`GitHub API quota: ${rateLimit.remaining.toLocaleString()} of ${rateLimit.limit.toLocaleString()} calls remaining. Resets at ${rateLimit.reset.toLocaleTimeString()}.`}
+            >
+              <span className={`text-xs tabular-nums ${quotaTextColor}`}>
+                {rateLimit.remaining} / {rateLimit.limit}
+              </span>
+              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-700">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${quotaColor}`}
+                  style={{
+                    width: `${Math.max(2, quotaLevel * 100).toFixed(1)}%`,
+                  }}
+                />
+              </div>
+            </div>
           )}
           {!isLocalMode() ? (
             <button

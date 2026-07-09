@@ -55,10 +55,6 @@ function AppShell() {
     const handleRateLimit = (event: Event) => {
       const customEvent = event as CustomEvent<RateLimitInfo>;
       setRateLimit(customEvent.detail);
-      showToast({
-        tone: 'error',
-        title: `GitHub rate limit hit. Resets at ${customEvent.detail.reset.toLocaleTimeString()}.`,
-      });
     };
 
     const handleBranchWarning = (event: Event) => {
