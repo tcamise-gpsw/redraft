@@ -118,6 +118,10 @@ function resolveByContext(
       candidateStart,
     );
 
+    if (suffixStart === -1) {
+      return null;
+    }
+
     if (suffixStart > candidateStart) {
       const candidate = documentText.slice(candidateStart, suffixStart);
       if (normalizeWhitespace(candidate) === normalizedQuote) {
