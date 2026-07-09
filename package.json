@@ -1,6 +1,6 @@
 {
   "name": "redraft-local",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Local-first proposal review tool — serve and review Markdown proposals from any directory",
   "repository": {
     "type": "git",
