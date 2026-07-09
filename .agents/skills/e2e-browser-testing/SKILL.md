@@ -115,6 +115,13 @@ This keeps tests honest — real file writes, real watcher events, real server b
 ### Local server rule
 The local server serves built assets. If you change frontend code, rebuild before trusting a local-mode browser result.
 
+### Worktree submodule rule
+Git worktrees do **not** inherit submodule checkouts from the main worktree. When working in a new worktree, always initialize submodules explicitly before running any E2E that depends on fixture content:
+```bash
+git submodule update --init test-fixtures
+```
+Without this, `test-fixtures/` is an empty directory, rsync copies nothing, and any spec that navigates to fixture documents will time out on "button not found" rather than fail with a clear message.
+
 ---
 
 ## Startup and isolation rules
@@ -127,10 +134,29 @@ If that happens:
 2. rerun Playwright after the standalone build finishes
 
 ### Clean server lifecycle
-For manual local smoke tests:
-- start the exact command: `npm run serve`
-- if port `4200` is occupied, inspect the listener and clear stale ReDraft processes before retrying
-- stop the server when finished so you do not leave orphan listeners behind
+
+**Via npm script (default port 4200, serves repo root):**
+```bash
+npm run build          # rebuild if frontend changed
+npm run serve          # starts node dist-server/cli.mjs serve . --port 4200
+```
+
+**Direct invocation — preferred for debugging, worktrees, or custom paths/ports:**
+```bash
+npm run build
+node dist-server/cli.mjs serve <path-to-content-root> --port <N>
+```
+
+Use the direct form when:
+- working in a git worktree (the npm script always uses `.`, not the worktree root)
+- you need a port other than 4200 to avoid colliding with a running dev server or another worktree
+- pointing the server at a fixture directory or `/tmp` copy rather than the real repo
+- investigating a bug with the `browser` tool while keeping the main dev server running
+
+The `browser` tool can connect to any port — open `http://127.0.0.1:<N>/` and drive it exactly like the Playwright-managed server.
+
+If a port is occupied, inspect the listener (`lsof -i :<N>`) and clear stale ReDraft processes before retrying.
+Stop the server when finished so you do not leave orphan listeners behind.
 
 ---
 

@@ -102,6 +102,11 @@ test('local mode saves a new large-document comment with an offset in the sideca
     await page.getByRole('button', { name: 'Save', exact: true }).click();
 
     await expect(page.getByText(NEW_COMMENT_BODY)).toBeVisible();
+    // The new comment must be anchored — not in the Orphaned section.
+    const orphanedSection = page
+      .getByText('⚠️ Orphaned comments')
+      .locator('xpath=ancestor::section[1]');
+    await expect(orphanedSection.getByText(NEW_COMMENT_BODY)).toHaveCount(0);
     await expect
       .poll(async () => {
         const raw = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
