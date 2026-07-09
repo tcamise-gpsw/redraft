@@ -171,6 +171,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
       } catch {
         dispatchBranchWarning();
+        if (overrideBranch) {
+          setStoredBranch(owner, repo, overrideBranch);
+        }
         return {
           defaultBranch: null,
           branch: overrideBranch ?? getStoredBranch(owner, repo),
