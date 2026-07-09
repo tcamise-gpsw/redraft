@@ -519,4 +519,58 @@ describe('useComments – saveComments', () => {
     expect(result.current.isDirty).toBe(true);
     expect(result.current.isSaving).toBe(false);
   });
+
+  it('updates the TanStack Query cache after a first-write so SPA navigation back seeds correctly', async () => {
+    // Regression: with staleTime: Infinity, the cache holds the null from the
+    // initial 404 forever. Navigating away resets localThreads; navigating back
+    // seeds from the stale null rather than the just-saved content. The fix
+    // calls queryClient.setQueryData after every successful write.
+    getFileContent.mockResolvedValueOnce(null);
+    createFile.mockResolvedValueOnce({ sha: 'first-write-sha' });
+
+    const { result } = renderHook(() => useComments('docs/doc.md'), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.addComment({
+        quote: 'initialize lazily',
+        quoteContext: {
+          prefix: 'The camera should ',
+          suffix: ' when preview starts.',
+        },
+        offset: 18,
+        author: { login: 'jdoe', avatarUrl: '' },
+        body: 'First comment',
+        resolved: false,
+      });
+    });
+
+    await act(async () => {
+      await result.current.saveComments();
+    });
+
+    expect(result.current.isDirty).toBe(false);
+
+    // The query cache must now hold the written content so that when the
+    // component remounts (path change + back) it seeds from real data.
+    const cached = queryClient.getQueryData([
+      'document',
+      'docs/doc.md',
+      'comments',
+      'dev', // branch from useAuth mock
+      'redraft', // sidecarBranch from useAuth mock
+    ]) as { sha: string; content: string } | null;
+
+    expect(cached).not.toBeNull();
+    expect(cached?.sha).toBe('first-write-sha');
+    const parsed = JSON.parse(cached?.content ?? '{}') as {
+      comments?: Array<{ body?: string }>;
+    };
+    expect(
+      parsed.comments?.find((c) => c.body === 'First comment'),
+    ).toBeTruthy();
+  });
 });
