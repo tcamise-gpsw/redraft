@@ -45,7 +45,7 @@ export function ProposalView() {
 
   useEffect(() => {
     setRenderedText(content);
-  }, [content]);
+  }, [path]);
 
   return (
     <AppLayout
