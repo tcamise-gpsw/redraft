@@ -177,11 +177,17 @@ export function useComments(path: string) {
       }
 
       setLocalSha(newSha);
-      // Update the TanStack Query cache so that navigating away and back
-      // seeds from the just-written content rather than the stale null
-      // that was cached on the initial 404 (staleTime: Infinity means the
-      // cache is never automatically invalidated between hard reloads).
+      // Update the comments cache so navigating away and back seeds correctly.
       queryClient.setQueryData(queryKey, { sha: newSha, content });
+      // On a first-write (creating a brand-new sidecar), invalidate the
+      // document tree so the Under Review list refreshes without a hard reload.
+      // staleTime: Infinity on that query means it never auto-refetches, so
+      // we must nudge it explicitly when the sidecar set changes.
+      if (!localSha) {
+        void queryClient.invalidateQueries({
+          queryKey: ['documents', 'tree', branch, sidecarBranch],
+        });
+      }
       setIsDirty(false);
     } catch (error) {
       if (
