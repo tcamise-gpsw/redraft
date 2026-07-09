@@ -163,6 +163,284 @@ async function selectFirstParagraphText(page: Page): Promise<string> {
   });
 }
 
+/**
+ * Walk every text node inside the ProseMirror editor and build a DOM Range
+ * that covers exactly `quote`. Fires the selectionchange + mouseup events so
+ * the sidebar picks up the pending selection.
+ *
+ * Works correctly for quotes that span across inline marks (bold, italic,
+ * inline code, links) because it concatenates raw text node content, which
+ * matches what ProseMirror's `doc.textBetween` produces within a single block.
+ */
+async function selectQuoteInEditor(page: Page, quote: string): Promise<void> {
+  const result = await page.locator('.ProseMirror').evaluate((root, q) => {
+    const nodes: [Text, number][] = [];
+    let pos = 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node: Text | null;
+    while ((node = walker.nextNode() as Text | null)) {
+      nodes.push([node, pos]);
+      pos += node.textContent?.length ?? 0;
+    }
+
+    const fullText = nodes.map(([n]) => n.textContent ?? '').join('');
+    const start = fullText.indexOf(q);
+    if (start < 0) return { error: `"${q}" not found in rendered text` };
+    const end = start + q.length;
+
+    let startNode: Text | null = null;
+    let startOffset = 0;
+    let endNode: Text | null = null;
+    let endOffset = 0;
+
+    for (const [n, nodeStart] of nodes) {
+      const nodeEnd = nodeStart + (n.textContent?.length ?? 0);
+      if (!startNode && nodeEnd > start) {
+        startNode = n;
+        startOffset = start - nodeStart;
+      }
+      if (!endNode && nodeEnd >= end) {
+        endNode = n;
+        endOffset = end - nodeStart;
+        break;
+      }
+    }
+
+    if (!startNode || !endNode) return { error: 'DOM positions not found' };
+
+    const range = document.createRange();
+    range.setStart(startNode, startOffset);
+    range.setEnd(endNode, endOffset);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    root.focus();
+
+    // Scroll the start of the selection into the centre of the viewport so
+    // ProseMirror's coordsAtPos returns in-viewport coordinates. The Comment
+    // button is position:fixed at those coords, so it must be on-screen for
+    // Playwright to click it.
+    startNode.parentElement?.scrollIntoView({
+      block: 'center',
+      behavior: 'instant',
+    });
+
+    document.dispatchEvent(new Event('selectionchange'));
+    root.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    return { ok: true };
+  }, quote);
+  if ('error' in result)
+    throw new Error(`selectQuoteInEditor: ${result.error}`);
+}
+
+// ─── first write (no pre-existing sidecar) ───────────────────────────────────
+
+const FIRST_WRITE_SIDECAR = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/main/getting-started.comments.json`;
+const FIRST_WRITE_BODY = 'First comment on a doc with no prior sidecar';
+
+test('local mode: first comment on a doc with no sidecar creates the file and anchors correctly', async ({
+  page,
+}) => {
+  test.setTimeout(30_000);
+
+  // Playwright's webServer resets the workspace on every run, so the sidecar
+  // genuinely does not exist — this exercises the create-via-PUT path rather
+  // than the SHA-based update path in the local server.
+  await expect
+    .poll(() =>
+      readFile(FIRST_WRITE_SIDECAR, 'utf8')
+        .then(() => true)
+        .catch(() => false),
+    )
+    .toBe(false);
+
+  await page.goto('/');
+  await page.getByRole('link', { name: /getting-started\.md/ }).click();
+  await expect(page.locator('.ProseMirror')).toBeVisible({ timeout: 15_000 });
+
+  await selectFirstParagraphText(page);
+  await expect(page.getByRole('button', { name: 'Comment' })).toBeVisible();
+  await page.getByRole('button', { name: 'Comment' }).click();
+  await page.getByLabel('Comment body').fill(FIRST_WRITE_BODY);
+  await page.getByRole('button', { name: 'Submit comment' }).click();
+
+  // Not orphaned immediately after submission.
+  await expect(page.getByText(FIRST_WRITE_BODY)).toBeVisible();
+  await expect(orphanedSection(page).getByText(FIRST_WRITE_BODY)).toHaveCount(
+    0,
+  );
+
+  await expect(page.getByText('Unsaved comment changes')).toBeVisible();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+
+  // Sidecar created on disk with a numeric offset — confirms first-write path.
+  await expect
+    .poll(async () => {
+      const raw = await readFile(FIRST_WRITE_SIDECAR, 'utf8').catch(() => '');
+      if (!raw) return -1;
+      const parsed = JSON.parse(raw) as {
+        comments?: Array<{ body?: string; offset?: number }>;
+      };
+      const thread = parsed.comments?.find((c) => c.body === FIRST_WRITE_BODY);
+      return typeof thread?.offset === 'number' ? thread.offset : -1;
+    })
+    .toBeGreaterThanOrEqual(0);
+});
+
+// ─── markdown-formatted selections ───────────────────────────────────────────
+
+// The platform-architecture fixture contains this line (Service Boundary 1):
+//   `inline-code-1` appears near [the architecture guide](./architecture.md),
+//   and **bold emphasis** plus _italic emphasis_ make sure rendered text
+//   differs from markdown source.
+//
+// The three quotes below do NOT appear verbatim in the raw markdown due to
+// surrounding syntax (backticks, asterisks, underscores, link brackets).
+// With the renderedText bug (documentText = rawMarkdown), resolveByExact
+// would find no substring match and these comments would all orphan.
+// With the fix (documentText = rendered plain text), all three anchor.
+
+const BOLD_ITALIC_QUOTE = 'bold emphasis plus italic emphasis';
+const BOLD_ITALIC_BODY = 'Comment spanning bold and italic marks';
+
+const INLINE_CODE_QUOTE = 'inline-code-1 appears near the architecture guide';
+const INLINE_CODE_BODY = 'Comment spanning inline-code and link text';
+
+const HEADING_QUOTE = 'Service Boundary 1';
+const HEADING_BODY =
+  'Comment on a heading — offset differs between markdown and rendered';
+
+test('local mode: comment spanning bold + italic marks anchors correctly', async ({
+  page,
+}) => {
+  test.setTimeout(30_000);
+
+  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
+    () => null,
+  );
+
+  try {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'docs', exact: true }).click();
+    await page
+      .getByRole('link', { name: /platform-architecture\.md/ })
+      .first()
+      .click();
+    await expect(page.locator('.ProseMirror')).toBeVisible({ timeout: 15_000 });
+
+    await selectQuoteInEditor(page, BOLD_ITALIC_QUOTE);
+    await expect(page.getByRole('button', { name: 'Comment' })).toBeVisible();
+    await page.getByRole('button', { name: 'Comment' }).click();
+    await page.getByLabel('Comment body').fill(BOLD_ITALIC_BODY);
+    await page.getByRole('button', { name: 'Submit comment' }).click();
+
+    await expect(page.getByText(BOLD_ITALIC_BODY)).toBeVisible();
+    await expect(orphanedSection(page).getByText(BOLD_ITALIC_BODY)).toHaveCount(
+      0,
+    );
+  } finally {
+    if (originalComments === null) {
+      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
+    } else {
+      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
+    }
+  }
+});
+
+test('local mode: comment spanning inline-code and link text anchors correctly', async ({
+  page,
+}) => {
+  test.setTimeout(30_000);
+
+  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
+    () => null,
+  );
+
+  try {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'docs', exact: true }).click();
+    await page
+      .getByRole('link', { name: /platform-architecture\.md/ })
+      .first()
+      .click();
+    await expect(page.locator('.ProseMirror')).toBeVisible({ timeout: 15_000 });
+
+    await selectQuoteInEditor(page, INLINE_CODE_QUOTE);
+    await expect(page.getByRole('button', { name: 'Comment' })).toBeVisible();
+    await page.getByRole('button', { name: 'Comment' }).click();
+    await page.getByLabel('Comment body').fill(INLINE_CODE_BODY);
+    await page.getByRole('button', { name: 'Submit comment' }).click();
+
+    await expect(page.getByText(INLINE_CODE_BODY)).toBeVisible();
+    await expect(orphanedSection(page).getByText(INLINE_CODE_BODY)).toHaveCount(
+      0,
+    );
+  } finally {
+    if (originalComments === null) {
+      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
+    } else {
+      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
+    }
+  }
+});
+
+test('local mode: comment on heading text anchors via offset tier (offset differs from raw markdown position)', async ({
+  page,
+}) => {
+  test.setTimeout(30_000);
+
+  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
+    () => null,
+  );
+
+  try {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'docs', exact: true }).click();
+    await page
+      .getByRole('link', { name: /platform-architecture\.md/ })
+      .first()
+      .click();
+    await expect(page.locator('.ProseMirror')).toBeVisible({ timeout: 15_000 });
+
+    await selectQuoteInEditor(page, HEADING_QUOTE);
+    await expect(page.getByRole('button', { name: 'Comment' })).toBeVisible();
+    await page.getByRole('button', { name: 'Comment' }).click();
+    await page.getByLabel('Comment body').fill(HEADING_BODY);
+    await page.getByRole('button', { name: 'Submit comment' }).click();
+
+    await expect(page.getByText(HEADING_BODY)).toBeVisible();
+    await expect(orphanedSection(page).getByText(HEADING_BODY)).toHaveCount(0);
+
+    // Save and confirm the stored offset is the rendered-text position, not
+    // the raw-markdown position. In raw markdown "## Service Boundary 1"
+    // the text starts at char 3; in rendered text it is further in.
+    await expect(page.getByText('Unsaved comment changes')).toBeVisible();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+
+    await expect
+      .poll(async () => {
+        const raw = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
+          () => '',
+        );
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as {
+          comments?: Array<{ body?: string; offset?: number }>;
+        };
+        return (
+          parsed.comments?.find((c) => c.body === HEADING_BODY)?.offset ?? null
+        );
+      })
+      // Offset must be > 3 (proves it's NOT the raw-markdown position of the
+      // heading after "## "; in rendered space the heading falls much later).
+      .toBeGreaterThan(3);
+  } finally {
+    if (originalComments === null) {
+      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
+    } else {
+      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
+    }
+  }
+});
+
 // ─── new comment survives navigation ─────────────────────────────────────────
 
 test('local mode: new comment stays anchored after navigating away and back', async ({
