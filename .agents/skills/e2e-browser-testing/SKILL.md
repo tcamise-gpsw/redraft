@@ -84,6 +84,43 @@ npx playwright test e2e/editing.spec.ts --project=remote
 - In this repo, the comments flow was flaky under parallel Playwright execution. `workers: 1` is intentional and should not be "optimized away" casually.
 - If a remote spec fails only in the grouped suite, compare with an isolated run before concluding the app regressed.
 
+### Real-repo remote testing (browser-driven, no mocks)
+
+For deeper confidence — especially after changes to comment anchoring, rendering, or the GitHub client — run the dev server against the real fixture repo instead of the mocked Playwright suite.
+
+**Setup:**
+```bash
+# 1. Start the Vite dev server (same port the remote Playwright project uses)
+npm run dev -- --host 127.0.0.1 --port 4173
+# Or from a worktree:
+cd ~/gopro/redraft-<branch> && npm run dev -- --host 127.0.0.1 --port 4173
+```
+
+**Then open the browser tool and authenticate:**
+```javascript
+// Connect using the gh CLI PAT and the sandbox fixture repo
+await tab.fill('input[aria-label="GitHub PAT"]', await /* gh auth token */);
+await tab.fill('input[aria-label="Repository"]', 'tcamise-gpsw/redraft-test-repo');
+await tab.click('button[type="submit"]');
+```
+
+The sandbox repo (`tcamise-gpsw/redraft-test-repo`) is the `test-fixtures` submodule
+remote. It has real markdown documents and a `redraft` sidecar branch. The PAT is
+available via `gh auth token`.
+
+**What this covers that mocked tests cannot:**
+- Real GitHub API latency triggering TanStack Query window-focus refetches
+- Actual sidecar reads and writes against the GitHub contents API
+- Backward compatibility for sidecars without the `offset` field (real historical data)
+- The `renderedText` data flow under realistic async content-load timing
+
+**Known behavior in real-repo mode:**
+- SPA navigation back to a document after saving new comments may show stale state
+  (TanStack Query cache) until a hard reload. This is a pre-existing remote-mode
+  limitation unrelated to comment anchoring correctness.
+- Any test artifacts (newly created sidecars) must be cleaned up manually via
+  `gh api ... --method DELETE` after testing. Always restore the original sidecar
+  SHA or delete the file if it was a first-write.
 ---
 
 ## Local mode workflow
@@ -115,13 +152,6 @@ This keeps tests honest — real file writes, real watcher events, real server b
 ### Local server rule
 The local server serves built assets. If you change frontend code, rebuild before trusting a local-mode browser result.
 
-### Worktree submodule rule
-Git worktrees do **not** inherit submodule checkouts from the main worktree. When working in a new worktree, always initialize submodules explicitly before running any E2E that depends on fixture content:
-```bash
-git submodule update --init test-fixtures
-```
-Without this, `test-fixtures/` is an empty directory, rsync copies nothing, and any spec that navigates to fixture documents will time out on "button not found" rather than fail with a clear message.
-
 ---
 
 ## Startup and isolation rules
@@ -134,29 +164,10 @@ If that happens:
 2. rerun Playwright after the standalone build finishes
 
 ### Clean server lifecycle
-
-**Via npm script (default port 4200, serves repo root):**
-```bash
-npm run build          # rebuild if frontend changed
-npm run serve          # starts node dist-server/cli.mjs serve . --port 4200
-```
-
-**Direct invocation — preferred for debugging, worktrees, or custom paths/ports:**
-```bash
-npm run build
-node dist-server/cli.mjs serve <path-to-content-root> --port <N>
-```
-
-Use the direct form when:
-- working in a git worktree (the npm script always uses `.`, not the worktree root)
-- you need a port other than 4200 to avoid colliding with a running dev server or another worktree
-- pointing the server at a fixture directory or `/tmp` copy rather than the real repo
-- investigating a bug with the `browser` tool while keeping the main dev server running
-
-The `browser` tool can connect to any port — open `http://127.0.0.1:<N>/` and drive it exactly like the Playwright-managed server.
-
-If a port is occupied, inspect the listener (`lsof -i :<N>`) and clear stale ReDraft processes before retrying.
-Stop the server when finished so you do not leave orphan listeners behind.
+For manual local smoke tests:
+- start the exact command: `npm run serve`
+- if port `4200` is occupied, inspect the listener and clear stale ReDraft processes before retrying
+- stop the server when finished so you do not leave orphan listeners behind
 
 ---
 
