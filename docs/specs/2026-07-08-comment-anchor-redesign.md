@@ -45,7 +45,7 @@ This runs synchronously inside `CommentsSidebar`'s `useMemo` for every comment o
 
 **`AnchorResult.status`** values reduce to `'exact' | 'context' | 'orphaned'`. The `'fuzzy'` status is removed; all consumers updated.
 
-**`AnchorInput`** gains `offset?: number`.
+**`AnchorInput`** gains a required `offset: number` (rendered-text space, matching `CommentThread.offset`).
 
 ### 2. Data model — `src/types/comments.ts`
 
@@ -116,7 +116,7 @@ Update the **Anchor Reconciliation** section of `docs/specs/2025-06-21-proposal-
 | ------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Modify  | `src/lib/comments/anchoring.ts`                                        | Rewrite: delete fuzzy/LCS/similarity/createAnchor, new resolution order |
 | Modify  | `src/lib/comments/index.ts`                                            | Drop `createAnchor` export                                              |
-| Modify  | `src/types/comments.ts`                                                | Add optional `offset` to `CommentThread`                                |
+| Modify  | `src/types/comments.ts`                                                | Add required `offset` to `CommentThread`                                |
 | Modify  | `src/hooks/useComments.ts`                                             | Thread `offset` through `addComment`                                    |
 | Modify  | `src/components/document/milkdown/selectionCapture.ts`                 | Compute and emit `offset`                                               |
 | Modify  | `src/components/document/milkdown/useCrepeInstance.ts`                 | Emit rendered doc text                                                  |
