@@ -207,7 +207,7 @@ describe('ProposalView comment interactions', () => {
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
 
-  it('passes rendered editor text from DocumentView into the sidebar and resets to new raw content on document changes', () => {
+  it('passes rendered editor text from DocumentView into the sidebar; content refetch does not overwrite it', () => {
     let currentContent =
       '# Camera setup\n\n**The** camera should initialize lazily when preview starts.';
     useDocument.mockImplementation(() => ({
@@ -231,10 +231,13 @@ describe('ProposalView comment interactions', () => {
         onRenderedText: expect.any(Function),
       }),
     );
+    // Before editor fires onRenderedText, sidebar receives the raw content as
+    // a loading fallback.
     expect(commentsSidebarProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ documentText: currentContent }),
     );
 
+    // Editor fires onRenderedText with the plain-text representation.
     act(() => {
       documentViewProps.mock.lastCall?.[0].onRenderedText(
         'The camera should initialize lazily when preview starts.',
@@ -245,19 +248,35 @@ describe('ProposalView comment interactions', () => {
       'document: The camera should initialize lazily when preview starts.',
     );
 
-    currentContent = '# Updated\n\nA different document.';
-    view.rerender(
-      <MemoryRouter initialEntries={['/d/doc.md']}>
-        <Routes>
-          <Route path="/d/*" element={<ProposalView />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    // Simulate a TanStack Query refetch (same path, new content object).
+    // renderedText must NOT reset to raw markdown — the editor-provided
+    // plain text must be preserved so offset-based anchor resolution keeps
+    // working after any background refetch.
+    currentContent =
+      '# Camera setup\n\n**The** camera should initialize lazily when preview starts.';
+    act(() => {
+      view.rerender(
+        <MemoryRouter initialEntries={['/d/doc.md']}>
+          <Routes>
+            <Route path="/d/*" element={<ProposalView />} />
+          </Routes>
+        </MemoryRouter>,
+      );
+    });
 
     expect(commentsSidebarProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ documentText: currentContent }),
+      expect.objectContaining({
+        documentText:
+          'The camera should initialize lazily when preview starts.',
+      }),
     );
   });
+
+  // Navigation-reset behavior (renderedText resets to raw content when path
+  // changes) is not unit-testable here because MemoryRouter.initialEntries is
+  // not reactive — rerendering with a new path leaves useParams unchanged.
+  // This contract is covered by the local Playwright E2E in comment-perf.spec.ts
+  // and local-mode.spec.ts (navigate away and back flows).
 
   it('strips a trailing edit suffix before loading the document', () => {
     render(
