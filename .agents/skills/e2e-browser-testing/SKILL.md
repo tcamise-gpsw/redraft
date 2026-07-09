@@ -88,6 +88,12 @@ npx playwright test e2e/editing.spec.ts --project=remote
 
 For deeper confidence — especially after changes to comment anchoring, rendering, or the GitHub client — run the dev server against the real fixture repo instead of the mocked Playwright suite.
 
+**Dev server lifetime note:**
+The bash tool caps at 3600 s. For sessions longer than an hour, start the dev
+server in a real terminal instead — not via the agent's bash tool — so it does not
+time out mid-test. Restart with `timeout=3600` in the bash tool as a workaround
+for shorter sessions.
+
 **Setup:**
 ```bash
 # 1. Start the Vite dev server (same port the remote Playwright project uses)
@@ -96,16 +102,27 @@ npm run dev -- --host 127.0.0.1 --port 4173
 cd ~/gopro/redraft-<branch> && npm run dev -- --host 127.0.0.1 --port 4173
 ```
 
-**Then open the browser tool and authenticate:**
+**HMR + worktree sync:**
+When the dev server runs from a worktree (`redraft-<branch>/`) and you edit files
+in the main repo (`redraft/`), HMR never fires — the watcher is scoped to the
+worktree. Sync the changed file explicitly before testing:
+```bash
+cp src/hooks/useComments.ts ~/gopro/redraft-<branch>/src/hooks/useComments.ts
+```
+
+**Authenticate with the real PAT:**
 ```javascript
-// Connect using the gh CLI PAT and the sandbox fixture repo
-await tab.fill('input[aria-label="GitHub PAT"]', await /* gh auth token */);
+// Get PAT from gh CLI
+const token = (await Bun.$`gh auth token`.text()).trim();
+await tab.fill('input[aria-label="GitHub PAT"]', token);
 await tab.fill('input[aria-label="Repository"]', 'tcamise-gpsw/redraft-test-repo');
 await tab.click('button[type="submit"]');
 ```
 
 The sandbox repo (`tcamise-gpsw/redraft-test-repo`) is the `test-fixtures` submodule
-remote. It has real markdown documents and a `redraft` sidecar branch. The PAT is
+remote. Documents on `main`: `api-design-v2.md` (has existing seeded comments),
+`getting-started.md`, `docs/architecture.md`, `rfcs/rfc-001-pagination.md`,
+`README.md`. Sidecar branch: `redraft` (`.redraft/comments/main/…`). The PAT is
 available via `gh auth token`.
 
 **What this covers that mocked tests cannot:**
@@ -115,12 +132,22 @@ available via `gh auth token`.
 - The `renderedText` data flow under realistic async content-load timing
 
 **Known behavior in real-repo mode:**
-- SPA navigation back to a document after saving new comments may show stale state
-  (TanStack Query cache) until a hard reload. This is a pre-existing remote-mode
-  limitation unrelated to comment anchoring correctness.
-- Any test artifacts (newly created sidecars) must be cleaned up manually via
-  `gh api ... --method DELETE` after testing. Always restore the original sidecar
-  SHA or delete the file if it was a first-write.
+- After saving a comment, navigating away and back no longer shows stale state.
+  `saveComments` now calls `queryClient.setQueryData` to seed the comments cache
+  and `queryClient.invalidateQueries(['documents','tree',…])` on first-write so
+  the Under Review list also refreshes — no hard reload required.
+- Any test artifacts (newly created sidecars) must be cleaned up manually after
+  testing. Pattern:
+  ```bash
+  SHA=$(gh api "repos/OWNER/REPO/contents/.redraft/comments/BRANCH/PATH.comments.json?ref=SIDECAR" --jq '.sha')
+  gh api "repos/OWNER/REPO/contents/.redraft/comments/BRANCH/PATH.comments.json" \
+    --method DELETE \
+    -f message="chore(test): remove test artifact" \
+    -f sha="$SHA" \
+    -f branch=SIDECAR \
+    --jq '.commit.sha'
+  ```
+  Always delete artifacts before committing or creating a PR.
 ---
 
 ## Local mode workflow
@@ -249,6 +276,129 @@ Use these as the default checklist for local E2E coverage.
 8. **Optional git convenience**
    - only if the local git endpoints are in scope
    - verify status/commit UI against actual repo state
+
+---
+
+## SPA cache and hard-reload behavior
+
+ReDraft uses TanStack Query with `staleTime: Infinity` for both the document tree
+and comment sidecar queries. This means **in-memory caches never auto-refresh**
+between navigations unless explicitly invalidated.
+
+### `page.goto(hash-url)` does NOT clear the cache
+Because the app is a hash-router SPA, `page.goto('http://…/#/d/foo.md')` is a
+SPA navigation — React stays mounted, TanStack Query cache is preserved. Use it
+to simulate what the user experiences navigating within the app.
+
+### `page.evaluate(() => location.reload())` clears the cache
+This forces a full browser reload (equivalent to Ctrl-F5). JS memory is wiped,
+TanStack Query starts fresh, and all queries refetch from the network. Use it
+when you need to validate behavior on a clean mount, or to verify that a file
+written to GitHub will actually be read back correctly.
+
+### After `saveComments`
+- **Comments cache**: `queryClient.setQueryData` is called immediately — the
+  cached thread list reflects the just-written content on the next mount without
+  a network round-trip.
+- **Document tree / Under Review**: on first-write (brand-new sidecar),
+  `queryClient.invalidateQueries(['documents','tree',…])` is called so the Under
+  Review list updates in the same session without any reload.
+
+---
+
+## Delete operation confirmations
+
+Both "Delete thread" and "Delete reply" show an in-UI confirmation step before
+executing. If automation misses it, the delete silently does nothing.
+
+| Action | First button clicked | Confirmation button name |
+|---|---|---|
+| Delete thread | `"Delete thread"` | `"Confirm delete"` |
+| Delete reply | `"Delete reply"` | `"Confirm"` |
+
+Automation pattern:
+```javascript
+// click the action button
+const deleteBtn = obs.elements.find(e => e.role === 'button' && e.name === 'Delete thread');
+await (await tab.id(deleteBtn.id)).click();
+await new Promise(r => setTimeout(r, 200));
+// re-observe — a confirmation button has appeared
+const obs2 = await tab.observe();
+const confirmBtn = obs2.elements.find(e => e.role === 'button' && e.name === 'Confirm delete');
+await (await tab.id(confirmBtn.id)).click();
+```
+
+---
+
+## Text selection across formatted DOM nodes
+
+`innerText.indexOf(quote)` fails when the quote spans formatted nodes (`<strong>`,
+`<em>`, `<code>`, `<a>`). ProseMirror splits text across these element boundaries,
+so a substring that looks continuous in rendered output may not appear in any
+single text node.
+
+**Correct approach: walk the text-node tree**
+```javascript
+// In page.evaluate() — builds a flat text + text-node map, then constructs a Range
+const root = document.querySelector('.ProseMirror');
+const nodes = [];
+const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+let pos = 0, n;
+while ((n = walker.nextNode())) { nodes.push([n, pos]); pos += n.textContent?.length ?? 0; }
+const fullText = nodes.map(([n]) => n.textContent ?? '').join('');
+
+const quote = 'your target substring';
+const start = fullText.indexOf(quote);
+// if start === -1, the substring doesn't exist in rendered text — check rendered vs raw
+
+let startNode = null, startOffset = 0, endNode = null, endOffset = 0;
+for (const [x, xs] of nodes) {
+  const xe = xs + (x.textContent?.length ?? 0);
+  if (!startNode && xe > start) { startNode = x; startOffset = start - xs; }
+  if (!endNode && xe >= start + quote.length) { endNode = x; endOffset = start + quote.length - xs; break; }
+}
+const range = document.createRange();
+range.setStart(startNode, startOffset);
+range.setEnd(endNode, endOffset);
+window.getSelection()?.removeAllRanges();
+window.getSelection()?.addRange(range);
+root.focus();
+startNode.parentElement?.scrollIntoView({ block: 'center', behavior: 'instant' });
+document.dispatchEvent(new Event('selectionchange'));
+root.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+```
+
+**Key pitfalls:**
+- The `fullText` here is plain-text concatenation of ALL text nodes — it matches
+  what ProseMirror's `doc.textBetween` returns, NOT what `innerText` returns.
+  `innerText` collapses whitespace and inserts `\n` at block boundaries; `fullText`
+  from text nodes does not. Prefer short, distinctive quotes to avoid boundary issues.
+- In headless Chromium, `coordsAtPos` from ProseMirror returns pixel coordinates
+  relative to the current viewport. If the selection is below the fold, the
+  Comment button (position: fixed) uses these coords and may land off-screen.
+  `scrollIntoView` before dispatching `mouseup` prevents this.
+- After the mouseup, wait ≥ 400 ms before observing — the Comment button appears
+  asynchronously via a React state update triggered by `selectionchange`.
+
+---
+
+## Sidecar path convention
+
+`commentPath(docPath, branch)` strips the `.md` extension before appending
+`.comments.json`. Examples:
+
+| Document path | Sidecar branch | Sidecar path |
+|---|---|---|
+| `README.md` | `redraft` | `.redraft/comments/main/README.comments.json` |
+| `rfcs/rfc-001-pagination.md` | `redraft` | `.redraft/comments/main/rfcs/rfc-001-pagination.comments.json` |
+| `docs/architecture.md` | `redraft` | `.redraft/comments/main/docs/architecture.comments.json` |
+
+The `main` segment is the **document branch** (where the `.md` files live), not
+the sidecar branch. Verify with:
+```bash
+gh api "repos/OWNER/REPO/git/trees/SIDECAR_BRANCH?recursive=true" \
+  --jq '[.tree[] | select(.path | endswith(".comments.json")) | .path]'
+```
 
 ---
 
