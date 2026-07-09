@@ -1,2 +1,0 @@
-import{_ as e,v as s,a7 as o,w as i}from"./index-C5uziilM.js";import{p as g}from"./wardley-L42UT6IY-Cag1rJDs.js";var v={parse:e(async r=>{const a=await g("info",r);s.debug(a)},"parse")},p={version:"11.15.0"},d=e(()=>p.version,"getVersion"),m={getVersion:d},c=e((r,a,n)=>{s.debug(`rendering info diagram
-`+r);const t=o(a);i(t,100,400,!0),t.append("g").append("text").attr("x",100).attr("y",40).attr("class","version").attr("font-size",32).style("text-anchor","middle").text(`v${n}`)},"draw"),f={draw:c},_={parser:v,db:m,renderer:f};export{_ as diagram};
