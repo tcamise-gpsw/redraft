@@ -43,46 +43,52 @@ describe('Header', () => {
     isLocalMode.mockReset().mockReturnValue(false);
   });
 
-  it('displays remaining quota count prominently', () => {
+  it('displays remaining quota count', () => {
     renderHeader({ remaining: 4750, limit: 5000, reset: new Date() });
 
-    expect(screen.getByText(/4750/u)).toBeInTheDocument();
+    expect(screen.getByText('4750 / 5000')).toBeInTheDocument();
   });
 
-  it('label text explicitly says "remaining" so the number is unambiguous', () => {
+  it('shows a progress bar when rate limit info is provided', () => {
     renderHeader({ remaining: 3200, limit: 5000, reset: new Date() });
 
-    const label = screen.getByText(/remaining/iu);
-    expect(label).toBeInTheDocument();
-    expect(label.textContent).toMatch(/3200/u);
+    // The quota meter span contains the formatted numbers
+    expect(screen.getByText('3200 / 5000')).toBeInTheDocument();
   });
 
-  it('shows amber warning when fewer than 100 calls remain', () => {
+  it('shows red text when fewer than 10% of quota remains', () => {
     renderHeader({ remaining: 42, limit: 5000, reset: new Date() });
 
-    const label = screen.getByText(/remaining/iu);
+    const label = screen.getByText('42 / 5000');
+    expect(label).toHaveClass('text-red-400');
+  });
+
+  it('shows amber text when 10–25% of quota remains', () => {
+    renderHeader({ remaining: 1000, limit: 5000, reset: new Date() });
+
+    const label = screen.getByText('1000 / 5000');
     expect(label).toHaveClass('text-amber-300');
   });
 
-  it('does not show amber styling when plenty of quota remains', () => {
+  it('shows normal text when plenty of quota remains', () => {
     renderHeader({ remaining: 4999, limit: 5000, reset: new Date() });
 
-    const label = screen.getByText(/remaining/iu);
+    const label = screen.getByText('4999 / 5000');
+    expect(label).toHaveClass('text-slate-300');
     expect(label).not.toHaveClass('text-amber-300');
+    expect(label).not.toHaveClass('text-red-400');
   });
 
   it('hides rate-limit display when no rateLimit is provided', () => {
     renderHeader(undefined);
 
-    expect(screen.queryByText(/remaining/iu)).toBeNull();
+    expect(screen.queryByText(/\/\s*5000/u)).toBeNull();
   });
 
   it('shows rate-limit display when rateLimit is provided', () => {
     renderHeader({ remaining: 1234, limit: 5000, reset: new Date() });
 
-    const label = screen.getByText(/remaining/iu);
-    expect(label).toBeInTheDocument();
-    expect(label.textContent).toMatch(/1234/u);
+    expect(screen.getByText('1234 / 5000')).toBeInTheDocument();
   });
 
   it('renders a Copy Link button in remote mode', () => {
