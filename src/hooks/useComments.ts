@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 
 import { ConflictError, GitHubClient } from '../lib/github';
@@ -18,6 +18,7 @@ function fileName(path: string): string {
 
 export function useComments(path: string) {
   const { pat, repo, branch, sidecarBranch } = useAuth();
+  const queryClient = useQueryClient();
 
   // Local draft state — mutations never touch the network directly.
   // saveComments() flushes the full state in a single write.
@@ -153,7 +154,9 @@ export function useComments(path: string) {
         comments: localThreads ?? [],
       };
       const content = JSON.stringify(nextFile);
+      const queryKey = ['document', path, 'comments', branch, sidecarBranch];
 
+      let newSha: string;
       if (localSha) {
         const result = await client.updateFile(
           commentsPath,
@@ -162,7 +165,7 @@ export function useComments(path: string) {
           `Update comments on ${fileName(path)}`,
           sidecarBranch ?? undefined,
         );
-        setLocalSha(result.sha);
+        newSha = result.sha;
       } else {
         const result = await client.createFile(
           commentsPath,
@@ -170,8 +173,15 @@ export function useComments(path: string) {
           `Add comments on ${fileName(path)}`,
           sidecarBranch ?? undefined,
         );
-        setLocalSha(result.sha);
+        newSha = result.sha;
       }
+
+      setLocalSha(newSha);
+      // Update the TanStack Query cache so that navigating away and back
+      // seeds from the just-written content rather than the stale null
+      // that was cached on the initial 404 (staleTime: Infinity means the
+      // cache is never automatically invalidated between hard reloads).
+      queryClient.setQueryData(queryKey, { sha: newSha, content });
       setIsDirty(false);
     } catch (error) {
       if (
