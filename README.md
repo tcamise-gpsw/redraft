@@ -19,6 +19,7 @@ ReDraft turns any Git repository into a review workspace for markdown documents.
 **Built for everyone on the team.** Non-technical reviewers use the WYSIWYG editor — no markdown syntax required. Engineers switch to raw mode for full control. AI agents edit files directly on disk. Everyone works on the same documents in the same review threads, each in the mode that fits them.
 
 **Remote and local are the same UI.** Use [redraft-docs.dev](https://redraft-docs.dev) to review any GitHub repo in the browser, or run `npx redraft-local` to serve your local checkout. Local mode lets you edit with your own tools — your editor, your scripts, your AI agents — and see changes reflected live. ReDraft ships with [built-in skills](.agents/skills/redraft-review/) for walking comment threads, drafting replies, and revising documents, so agents work alongside human reviewers out of the box.
+
 **Documentation stays next to the code.** Docs live as plain `.md` files in the same repo as the code they describe — no wiki, no external platform, no sync to maintain. When code changes, the docs are right there to update in the same PR. ReDraft adds a review layer on top without moving anything out of your repository.
 
 ---
