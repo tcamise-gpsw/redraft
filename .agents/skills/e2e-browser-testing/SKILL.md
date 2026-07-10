@@ -155,8 +155,9 @@ available via `gh auth token`.
 ### What local mode means here
 - App served by the local ReDraft server
 - No PAT prompt; auth is bypassed as `local-user`
-- Browser reads/writes real `.md` and `.comments.json` files
-- Live updates come from filesystem watcher + WebSocket invalidation
+- Browser reads/writes real `.md` files from the working tree
+- Comment sidecars live on the local Git sidecar branch (`redraft` by default), at `.redraft/comments/<document-branch>/…` paths — not in the working tree
+- Live document updates come from filesystem watcher + WebSocket invalidation
 
 ### Preferred automated path
 Use the repo's local Playwright project:
@@ -168,16 +169,37 @@ npx playwright test --project=local
 The local project is expected to:
 - build the frontend first
 - serve a writable filesystem-backed repo root
-- isolate writes from the checked-in repo content
-- use the chokidar-backed watcher path on every platform; local watcher failures are actionable regressions, not the old macOS `fs.watch` flake
+- initialize that writable copy as a Git repo with markdown documents on `main`
+- seed an orphan `redraft` branch containing `.redraft/comments/main/…` sidecar files
+- isolate writes from checked-in repo content
+- use the chokidar polling watcher path on every platform; watcher failures that break child `git` subprocesses are actionable regressions
 
 ### Local fixture rule
-Do not point destructive tests at the real checked-in repo unless the user explicitly wants that. Prefer a writable copy, e.g. `/tmp/redraft-local-playwright`, seeded with representative markdown files and `.redraft/comments/` metadata.
+Do not point destructive tests at the real checked-in repo unless the user explicitly wants that. Prefer a writable copy, e.g. `/tmp/redraft-local-playwright`, seeded with representative markdown files on `main` and sidecar JSON on a local `redraft` branch.
 
-This keeps tests honest — real file writes, real watcher events, real server behavior — without leaving dirty repo content behind.
+This keeps tests honest — real document file writes, real sidecar branch commits, real watcher events, real server behavior — without leaving dirty repo content behind.
 
 ### Local server rule
 The local server serves built assets. If you change frontend code, rebuild before trusting a local-mode browser result.
+
+### Stable local manual startup
+For manual browser smoke tests, use a deterministic startup harness:
+
+1. Kill stale listeners on the target port range before starting. ReDraft auto-increments if the requested port is occupied; if you do not clear old listeners, you may test the wrong server.
+2. Run `npm run build` after frontend/server changes.
+3. Start the built CLI on an explicit port and capture its log:
+   ```bash
+   node dist-server/cli.mjs /absolute/path/to/repo --port 4450 </dev/null >/tmp/redraft-local.log 2>&1 &
+   ```
+4. Read `/tmp/redraft-local.log` and use the actual URL printed by `ReDraft local server listening at ...`; do not assume the requested port.
+5. Before opening a browser, verify:
+   ```bash
+   curl http://127.0.0.1:<port>/api/git/branch
+   curl 'http://127.0.0.1:<port>/api/github/repos/local/redraft/git/trees/HEAD?recursive=1&sidecarBranch=redraft'
+   ```
+6. Only then drive Chromium.
+
+Use the repo-owned `test-fixtures` submodule for repeatable local smoke tests. It should be copied into a writable temp workspace, initialized with documents on `main`, and seeded with sidecars on a local `redraft` branch.
 
 ---
 
@@ -225,12 +247,12 @@ After clicking `Raw`, confirm the editor actually changed:
 Do not assume the click worked just because the button was visible.
 
 ### 5. Verify writes at the storage boundary
-For local mode, the success toast is not enough. Verify the file on disk.
+For local mode, the success toast is not enough. Verify the real storage boundary.
 
 Examples:
-- markdown save → read the `.md` file and confirm the new text
-- comment save → read or poll the `.comments.json` sidecar
-- external change → write to disk outside the browser and wait for UI update
+- markdown save → read the `.md` file in the served working tree and confirm the new text
+- comment save/reply/resolve → inspect the `redraft` branch, e.g. `git show redraft:.redraft/comments/main/docs/foo.comments.json` and `git log -1 redraft`
+- external document change → write to disk outside the browser and wait for UI update
 
 ---
 
@@ -257,13 +279,13 @@ Use these as the default checklist for local E2E coverage.
 4. **Comment operations**
    - select text or reply to an existing thread
    - save
-   - verify the `.redraft/comments/` sidecar is updated
+   - verify the matching sidecar JSON changed on the local `redraft` branch with `git show`
 
 5. **Large-document comment performance**
-   - open a ≥20 KB fixture doc with seeded comments
+   - open a ≥20 KB fixture doc with seeded comments from the `redraft` branch
    - verify the comments sidebar renders without freezing
    - verify anchored and orphaned comments classify correctly
-   - verify comment saves still write `.redraft/comments/` sidecars
+   - verify comment saves commit updated sidecar JSON to the `redraft` branch
 
 6. **Live file watching**
    - mutate the open document outside the browser
