@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { Avatar } from '../components/ui/Avatar';
 import { useAuth } from '../hooks/useAuth';
@@ -7,6 +8,7 @@ import { isLocalMode } from '../lib/mode';
 export function Settings() {
   const { user, repo, logout, updateRepo, sidecarBranch, setSidecarBranch } =
     useAuth();
+  const navigate = useNavigate();
   const [repository, setRepository] = useState(
     repo ? `${repo.owner}/${repo.repo}` : '',
   );
@@ -39,7 +41,15 @@ export function Settings() {
 
   const wrapper = (children: React.ReactNode) => (
     <main className="min-h-screen bg-slate-950 px-6 py-16 text-slate-50">
-      <div className="mx-auto max-w-2xl space-y-8 rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl shadow-black/30">
+      <div className="relative mx-auto max-w-2xl space-y-8 rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl shadow-black/30">
+        <button
+          type="button"
+          aria-label="Close settings"
+          onClick={() => navigate(-1)}
+          className="absolute right-4 top-4 text-slate-400 hover:text-slate-100"
+        >
+          ✕
+        </button>
         {children}
       </div>
     </main>
