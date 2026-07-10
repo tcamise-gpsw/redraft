@@ -69,9 +69,17 @@ function buildTree(items: TreeItem[]): DocumentNode[] {
   return sortNodes(root);
 }
 
-async function fetchLocalTree(baseUrl: string, owner: string, repo: string) {
+async function fetchLocalTree(
+  baseUrl: string,
+  owner: string,
+  repo: string,
+  sidecarBranch: string | null,
+) {
+  const sidecarQuery = sidecarBranch
+    ? `&sidecarBranch=${encodeURIComponent(sidecarBranch)}`
+    : '';
   const response = await fetch(
-    `${baseUrl}/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`,
+    `${baseUrl}/repos/${owner}/${repo}/git/trees/HEAD?recursive=1${sidecarQuery}`,
   );
 
   if (!response.ok) {
@@ -119,6 +127,7 @@ export function useDocuments() {
           getApiBaseUrl(),
           repo.owner,
           repo.repo,
+          sidecarBranch,
         );
         return {
           documents: buildTree(response.documents),

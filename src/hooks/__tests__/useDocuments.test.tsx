@@ -28,6 +28,7 @@ const authState = vi.hoisted(() => ({
   branch: 'dev' as string | null,
   sidecarBranch: 'redraft' as string | null,
 }));
+const modeState = vi.hoisted(() => ({ localMode: false }));
 
 vi.mock('../../lib/github/client', () => ({
   NotFoundError: TestNotFoundError,
@@ -50,8 +51,8 @@ vi.mock('../useAuth', () => ({
 }));
 
 vi.mock('../../lib/mode', () => ({
-  isLocalMode: () => false,
-  getApiBaseUrl: () => 'https://api.github.com',
+  isLocalMode: () => modeState.localMode,
+  getApiBaseUrl: () => 'http://127.0.0.1:4200/api/github',
 }));
 
 vi.mock('../useToast', () => ({
@@ -77,6 +78,8 @@ describe('useDocuments (remote mode)', () => {
     authState.sidecarBranch = 'redraft';
     setSidecarBranch.mockReset();
     showToast.mockReset();
+    modeState.localMode = false;
+    vi.unstubAllGlobals();
   });
 
   it('classifies under-review documents from a sidecar branch tree without calling getFileContent', async () => {
@@ -208,6 +211,39 @@ describe('useDocuments (remote mode)', () => {
       title:
         "Branch 'redraft' not found. Create it with the setup script or update the branch name in Settings.",
     });
+  });
+});
+
+describe('useDocuments (local mode)', () => {
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    modeState.localMode = true;
+    authState.branch = 'main';
+    authState.sidecarBranch = 'redraft';
+    vi.unstubAllGlobals();
+  });
+
+  it('passes the active sidecar branch to the local tree endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        documents: [{ path: 'README.md', type: 'blob' }],
+        underReview: [{ path: 'README.md', unresolvedCount: 1 }],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useDocuments(), { wrapper });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:4200/api/github/repos/acme/workspace/git/trees/HEAD?recursive=1&sidecarBranch=redraft',
+    );
+    expect(result.current.underReview).toEqual([
+      { path: 'README.md', unresolvedCount: 1 },
+    ]);
   });
 });
 

@@ -202,7 +202,7 @@ describe('useAuth branch state', () => {
       expect(authState(result.current).branch).toBe('feature/local-docs'),
     );
     expect(authState(result.current).defaultBranch).toBeNull();
-    expect(authState(result.current).sidecarBranch).toBeNull();
+    expect(authState(result.current).sidecarBranch).toBe('redraft');
 
     act(() => {
       authState(result.current).setBranch('release/2026.09');
@@ -211,7 +211,7 @@ describe('useAuth branch state', () => {
 
     expect(authState(result.current).branch).toBe('feature/local-docs');
     expect(authState(result.current).defaultBranch).toBeNull();
-    expect(authState(result.current).sidecarBranch).toBeNull();
+    expect(authState(result.current).sidecarBranch).toBe('redraft');
     expect(localStorage.getItem('redraft.branch.local/redraft')).toBeNull();
     expect(
       localStorage.getItem('redraft.sidecarBranch.local/redraft'),
@@ -225,7 +225,7 @@ describe('useAuth branch state', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await waitFor(() => expect(authState(result.current).branch).toBe('main'));
-    expect(authState(result.current).sidecarBranch).toBeNull();
+    expect(authState(result.current).sidecarBranch).toBe('redraft');
   });
 
   it('falls back to main for local mode namespacing when git reports detached HEAD', async () => {
@@ -241,7 +241,7 @@ describe('useAuth branch state', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await waitFor(() => expect(authState(result.current).branch).toBe('main'));
-    expect(authState(result.current).sidecarBranch).toBeNull();
+    expect(authState(result.current).sidecarBranch).toBe('redraft');
   });
 
   it('login defaults sidecarBranch to redraft when no persisted override exists', async () => {

@@ -298,7 +298,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let canceled = false;
       void loadLocalBranch().then((branch) => {
         if (!canceled) {
-          setBranchState({ branch, defaultBranch: null, sidecarBranch: null });
+          setBranchState({
+            branch,
+            defaultBranch: null,
+            sidecarBranch: 'redraft',
+          });
         }
       });
 

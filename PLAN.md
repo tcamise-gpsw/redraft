@@ -225,17 +225,17 @@ Also check the CLI `--sidecar-branch` option. If the user configured a non-defau
 
 **Checklist:**
 
-- [ ] `useAuth.ts`: local mode sets `sidecarBranch: 'redraft'` instead of `null`
-- [ ] `fetchLocalTree` accepts and passes `sidecarBranch`
-- [ ] `useDocuments` passes `sidecarBranch` from auth state
-- [ ] `useComments` now receives a non-null `sidecarBranch` in local mode, so `ref` and `branch` params are sent to the server
+- [x] `useAuth.ts`: local mode sets `sidecarBranch: 'redraft'` instead of `null`
+- [x] `fetchLocalTree` accepts and passes `sidecarBranch`
+- [x] `useDocuments` passes `sidecarBranch` from auth state
+- [x] `useComments` now receives a non-null `sidecarBranch` in local mode, so `ref` and `branch` params are sent to the server
 
 **Tests:**
 
-- [ ] Run: `npx vitest run src/hooks/__tests__/useAuth.test.tsx src/hooks/__tests__/useDocuments.test.ts`
-- [ ] Verify the local-mode auth state test expects `sidecarBranch: 'redraft'` instead of `null`
-- [ ] Existing tests pass (update assertions/mocks for the new sidecarBranch value)
-- [ ] Type check: `npx tsc --noEmit`
+- [x] Run: `npx vitest run src/hooks/__tests__/useAuth.test.tsx src/hooks/__tests__/useDocuments.test.ts`
+- [x] Verify the local-mode auth state test expects `sidecarBranch: 'redraft'` instead of `null`
+- [x] Existing tests pass (update assertions/mocks for the new sidecarBranch value)
+- [x] Type check: `npx tsc --noEmit`
 
 **Commit:**
 
