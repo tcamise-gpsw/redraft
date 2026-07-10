@@ -661,4 +661,115 @@ describe('CommentsSidebar positioned layout', () => {
         .map((node) => node.textContent),
     ).toEqual(['initialize lazily', 'preview starts']);
   });
+
+  it('renders the pending comment form inside the anchor stack on desktop (issue #24)', () => {
+    Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+      configurable: true,
+      value: function getBoundingClientRect(this: HTMLElement): DOMRect {
+        if (this.getAttribute('data-testid') === 'comment-anchor-stack') {
+          return makeRect(0);
+        }
+        return makeRect(0);
+      },
+    });
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        comments={[]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={{
+          quote: 'initialize lazily',
+          context: {
+            prefix: 'The camera should ',
+            suffix: ' when preview starts.',
+          },
+          offset: 18,
+          coords: { top: 250 },
+        }}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const stack = screen.getByTestId('comment-anchor-stack');
+    const pendingForm = screen.getByTestId('pending-comment-form');
+
+    // Form must be inside the stack, not before it (regression: was above stack).
+    expect(stack).toContainElement(pendingForm);
+    expect(pendingForm).toHaveClass('absolute');
+  });
+
+  it('aligns the pending comment form top to selection coords relative to container', async () => {
+    const CONTAINER_TOP = 50;
+    const SELECTION_TOP = 300;
+
+    Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+      configurable: true,
+      value: function getBoundingClientRect(this: HTMLElement): DOMRect {
+        if (this.getAttribute('data-testid') === 'comment-anchor-stack') {
+          return makeRect(CONTAINER_TOP);
+        }
+        return makeRect(0);
+      },
+    });
+
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        comments={[]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={{
+          quote: 'initialize lazily',
+          context: {
+            prefix: 'The camera should ',
+            suffix: ' when preview starts.',
+          },
+          offset: 18,
+          coords: { top: SELECTION_TOP },
+        }}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent(window, new Event('resize'));
+    });
+
+    await waitFor(() => {
+      const pendingForm = screen.getByTestId('pending-comment-form');
+      // top = selection viewport top − container viewport top = 300 − 50 = 250
+      expect(pendingForm.style.top).toBe(`${SELECTION_TOP - CONTAINER_TOP}px`);
+    });
+  });
+
+  it('does not render the pending form before the stack on desktop', () => {
+    render(
+      <CommentsSidebar
+        {...mutationProps()}
+        comments={[]}
+        documentText="The camera should initialize lazily when preview starts."
+        activeCommentId={null}
+        onCommentClick={vi.fn()}
+        pendingSelection={{
+          quote: 'initialize lazily',
+          context: {
+            prefix: 'The camera should ',
+            suffix: ' when preview starts.',
+          },
+          offset: 18,
+          coords: { top: 250 },
+        }}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const stack = screen.getByTestId('comment-anchor-stack');
+    // The comment form textarea must NOT appear as a sibling before the stack.
+    const textarea = screen.getByLabelText(/comment body/i);
+    expect(stack).toContainElement(textarea);
+  });
 });

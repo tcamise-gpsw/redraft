@@ -22,6 +22,8 @@ interface PendingSelection {
     suffix: string;
   };
   offset: number;
+  /** Viewport coords of the selection start; present when coming from the Milkdown editor. */
+  coords?: { top: number };
 }
 
 // Vertical gap enforced between stacked anchored cards.
@@ -107,6 +109,8 @@ export function CommentsSidebar({
   const [tops, setTops] = useState<Map<string, number>>(new Map());
   const [stackHeight, setStackHeight] = useState(0);
   const [positioned, setPositioned] = useState(false);
+  const pendingFormRef = useRef<HTMLDivElement | null>(null);
+  const [pendingFormTop, setPendingFormTop] = useState(0);
 
   const registerCard = useCallback(
     (id: string) => (el: HTMLDivElement | null) => {
@@ -142,34 +146,62 @@ export function CommentsSidebar({
       return;
     }
     const originTop = container.getBoundingClientRect().top;
-    const inputs = orderedIds.map((id) => {
-      let highlight: HTMLElement | null = null;
-      try {
-        const escaped =
-          typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(id) : id;
-        highlight = document.querySelector<HTMLElement>(
-          `[data-comment-id="${escaped}"]`,
-        );
-      } catch {
-        // A malformed selector (missing CSS.escape + exotic id) must never
-        // crash the measurement pass — treat it as "no highlight found".
-        highlight = null;
-      }
-      const card = cardRefs.current.get(id);
-      const height = card?.offsetHeight ?? 0;
-      const target = highlight
-        ? Math.max(
-            0,
-            Math.round(highlight.getBoundingClientRect().top - originTop),
-          )
-        : 0;
-      return { id, target, height };
-    });
+    const inputs: Array<{ id: string; target: number; height: number }> =
+      orderedIds.map((id) => {
+        let highlight: HTMLElement | null = null;
+        try {
+          const escaped =
+            typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(id) : id;
+          highlight = document.querySelector<HTMLElement>(
+            `[data-comment-id="${escaped}"]`,
+          );
+        } catch {
+          // A malformed selector (missing CSS.escape + exotic id) must never
+          // crash the measurement pass — treat it as "no highlight found".
+          highlight = null;
+        }
+        const card = cardRefs.current.get(id);
+        const height = card?.offsetHeight ?? 0;
+        const target = highlight
+          ? Math.max(
+              0,
+              Math.round(highlight.getBoundingClientRect().top - originTop),
+            )
+          : 0;
+        return { id, target, height };
+      });
+
+    // Include the pending comment form in the positioning pass so it lands
+    // next to the selection and participates in collision avoidance.
+    const PENDING_ID = '__pending_form__';
+    const formCoords = pendingSelection?.coords;
+    if (formCoords) {
+      const formTarget = Math.max(0, Math.round(formCoords.top - originTop));
+      inputs.push({
+        id: PENDING_ID,
+        target: formTarget,
+        height: pendingFormRef.current?.offsetHeight ?? 0,
+      });
+    }
 
     const { placements, height } = positionThreads(inputs, { gap: CARD_GAP });
 
+    if (formCoords) {
+      const formPlacement = placements.find((p) => p.id === PENDING_ID);
+      if (formPlacement !== undefined) {
+        setPendingFormTop((prev) => {
+          const rounded = Math.round(formPlacement.top);
+          return prev === rounded ? prev : rounded;
+        });
+      }
+    }
+
     setTops((prev) => {
-      const next = new Map(placements.map((p) => [p.id, Math.round(p.top)]));
+      const next = new Map(
+        placements
+          .filter((p) => p.id !== PENDING_ID)
+          .map((p) => [p.id, Math.round(p.top)]),
+      );
       if (
         prev.size === next.size &&
         [...next].every(([id, top]) => prev.get(id) === top)
@@ -182,7 +214,7 @@ export function CommentsSidebar({
       const rounded = Math.round(height);
       return prev === rounded ? prev : rounded;
     });
-  }, [orderedIds]);
+  }, [orderedIds, pendingSelection]);
 
   useLayoutEffect(() => {
     if (!positioned) {
@@ -261,7 +293,8 @@ export function CommentsSidebar({
         </div>
       ) : null}
 
-      {pendingSelection && !sidecarBranchMissing ? (
+      {/* Narrow (non-positioned) screens: form floats above the stack. */}
+      {!positioned && pendingSelection && !sidecarBranchMissing ? (
         <CommentForm
           quote={pendingSelection.quote}
           onCancel={onClearSelection}
@@ -288,6 +321,36 @@ export function CommentsSidebar({
         style={positioned ? { height: stackHeight || undefined } : undefined}
         data-testid="comment-anchor-stack"
       >
+        {/* Desktop (positioned) screens: form is placed inside the stack,
+            aligned to the selection coords and collision-avoided with threads. */}
+        {positioned && pendingSelection && !sidecarBranchMissing ? (
+          <div
+            ref={pendingFormRef}
+            className="absolute left-0 right-0 transition-[top] duration-200 ease-out"
+            style={{ top: pendingFormTop, zIndex: 10 }}
+            data-testid="pending-comment-form"
+          >
+            <CommentForm
+              quote={pendingSelection.quote}
+              onCancel={onClearSelection}
+              onSubmit={(body) => {
+                addComment({
+                  quote: pendingSelection.quote,
+                  quoteContext: pendingSelection.context,
+                  offset: pendingSelection.offset,
+                  author: {
+                    login: user?.login ?? '',
+                    avatarUrl: user?.avatarUrl ?? '',
+                  },
+                  body,
+                  resolved: false,
+                });
+                onClearSelection();
+              }}
+            />
+          </div>
+        ) : null}
+
         {ordered.map((thread) => {
           const card = (
             <ThreadCard

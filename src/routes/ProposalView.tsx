@@ -40,6 +40,7 @@ export function ProposalView() {
       suffix: string;
     };
     offset: number;
+    coords: { left: number; top: number; bottom: number };
   } | null>(null);
   const [renderedText, setRenderedText] = useState(content);
 
