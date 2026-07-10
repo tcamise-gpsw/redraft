@@ -22,6 +22,7 @@ export function DocumentView({
     quote: string;
     context: { prefix: string; suffix: string };
     offset: number;
+    coords: { left: number; top: number; bottom: number };
   }) => void;
   onRenderedText?: (text: string) => void;
 }) {
