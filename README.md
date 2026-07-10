@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.png" alt="ReDraft" height="64" />
+  <img src="assets/hero.png" alt="ReDraft — GitHub-based document review workspace">
 </p>
 
 <p align="center">
@@ -16,7 +16,14 @@
 
 ReDraft turns any Git repository into a review workspace for markdown documents. Select text, leave a comment, reply in threads, resolve feedback — all without leaving the browser. No database, no platform migration, no new accounts. Your documents stay as `.md` files. Review threads live on a sidecar branch. That's it.
 
-**One command** to start reviewing locally. **One URL** for hosted GitHub-backed review.
+|                 | **Local mode**                                        | **Remote mode**                              |
+| --------------- | ----------------------------------------------------- | -------------------------------------------- |
+| **Start with**  | `npx redraft-local`                                   | [redraft-docs.dev](https://redraft-docs.dev) |
+| **Data source** | Files on disk                                         | GitHub REST API                              |
+| **Auth**        | None — automatic                                      | Fine-grained GitHub PAT                      |
+| **Editing**     | Browser UI (view · WYSIWYG · raw) + direct file edits | Browser UI (view · WYSIWYG · raw)            |
+| **Comments**    | Git sidecar branch (local)                            | Git sidecar branch (remote)                  |
+| **Best for**    | Power users, AI agents                                | Reviewers, contributors                      |
 
 ---
 
