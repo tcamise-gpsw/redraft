@@ -8,8 +8,14 @@ const logout = vi.hoisted(() => vi.fn());
 const updateRepo = vi.hoisted(() => vi.fn());
 const setSidecarBranch = vi.hoisted(() => vi.fn());
 const localMode = vi.hoisted(() => vi.fn());
+const navigate = vi.hoisted(() => vi.fn());
+
 const authState = vi.hoisted(() => ({
   sidecarBranch: 'redraft' as string | null,
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => navigate,
 }));
 
 vi.mock('../hooks/useAuth', () => ({
@@ -35,6 +41,7 @@ describe('Settings', () => {
     updateRepo.mockReset();
     setSidecarBranch.mockReset();
     localMode.mockReset().mockReturnValue(false);
+    navigate.mockReset();
     authState.sidecarBranch = 'redraft';
   });
 
@@ -85,5 +92,17 @@ describe('Settings', () => {
     render(<Settings />);
 
     expect(screen.queryByLabelText(/comments branch/i)).not.toBeInTheDocument();
+  });
+  it('shows a close button that navigates back in github mode', () => {
+    render(<Settings />);
+    fireEvent.click(screen.getByRole('button', { name: /close settings/i }));
+    expect(navigate).toHaveBeenCalledWith(-1);
+  });
+
+  it('shows a close button that navigates back in local mode', () => {
+    localMode.mockReturnValue(true);
+    render(<Settings />);
+    fireEvent.click(screen.getByRole('button', { name: /close settings/i }));
+    expect(navigate).toHaveBeenCalledWith(-1);
   });
 });
