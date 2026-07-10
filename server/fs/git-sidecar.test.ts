@@ -253,4 +253,125 @@ describe('git sidecar operations', () => {
       listSidecarEntries(repoRoot, 'redraft', 'feature/docs'),
     ).resolves.toEqual([{ path: 'test-doc.md', unresolvedCount: 2 }]);
   });
+
+  it('pushes the sidecar branch to the remote after writing', async () => {
+    // Set up a bare remote so push has somewhere to go
+    const bareRemote = await mkdtemp(join(tmpdir(), 'redraft-bare-'));
+    await execGit('git', ['init', '--bare'], { cwd: bareRemote });
+    await execGit('git', ['remote', 'add', 'origin', bareRemote], {
+      cwd: repoRoot,
+    });
+    await execGit('git', ['push', 'origin', 'redraft'], { cwd: repoRoot });
+
+    const existing = await readGitFile(repoRoot, 'redraft', seededSidecarPath);
+    const updated = Buffer.from(commentsJson([true, true]), 'utf8');
+    await writeGitFile(
+      repoRoot,
+      'redraft',
+      seededSidecarPath,
+      updated,
+      existing.sha,
+      'Resolve both threads',
+    );
+
+    // Verify the remote received the push
+    const { stdout } = await execGit(
+      'git',
+      ['show', `redraft:${seededSidecarPath}`],
+      { cwd: bareRemote },
+    );
+    expect(stdout).toBe(updated.toString('utf8'));
+  });
+
+  it('succeeds silently when no remote is configured', async () => {
+    // repoRoot has no remote — writeGitFile should still work
+    const existing = await readGitFile(repoRoot, 'redraft', seededSidecarPath);
+    const updated = Buffer.from(commentsJson([true]), 'utf8');
+    const result = await writeGitFile(
+      repoRoot,
+      'redraft',
+      seededSidecarPath,
+      updated,
+      existing.sha,
+      'Resolve thread',
+    );
+    expect(result.sha).toBe(computeBlobSha(updated));
+  });
+
+  it('resets to remote and saves when sidecar branches diverge', async () => {
+    // Set up a bare remote
+    const bareRemote = await mkdtemp(join(tmpdir(), 'redraft-bare-'));
+    await execGit('git', ['init', '--bare'], { cwd: bareRemote });
+    await execGit('git', ['remote', 'add', 'origin', bareRemote], {
+      cwd: repoRoot,
+    });
+    await execGit('git', ['push', 'origin', 'redraft'], { cwd: repoRoot });
+
+    // Clone to a second working copy and push a diverging commit
+    const clone = await mkdtemp(join(tmpdir(), 'redraft-clone-'));
+    await execGit('git', ['clone', bareRemote, clone]);
+    await execGit('git', ['checkout', 'redraft'], { cwd: clone });
+    await execGit('git', ['config', 'user.name', 'Other'], { cwd: clone });
+    await execGit('git', ['config', 'user.email', 'other@test'], {
+      cwd: clone,
+    });
+    const cloneSidecar = join(clone, seededSidecarPath);
+    await mkdir(join(clone, '.redraft', 'comments', 'main'), {
+      recursive: true,
+    });
+    await writeFileText(cloneSidecar, commentsJson([false]), 'utf8');
+    await execGit('git', ['add', '.'], { cwd: clone });
+    await execGit('git', ['commit', '-m', 'Remote comment'], { cwd: clone });
+    await execGit('git', ['push', 'origin', 'redraft'], { cwd: clone });
+
+    // Make a local-only commit — the first sync will detect divergence,
+    // reset to remote, and this commit lands on top of remote state.
+    await createGitFile(
+      repoRoot,
+      'redraft',
+      seededSidecarPath,
+      Buffer.from(commentsJson([true, true]), 'utf8'),
+      'Local resolve',
+    );
+    // That write synced (reset to remote because of divergence) then committed
+    // on top. But the push after that commit succeeded, so local and remote
+    // are now in sync again. Simulate a SECOND divergence by pushing another
+    // commit from the clone.
+    await writeFileText(cloneSidecar, commentsJson([true]), 'utf8');
+    await execGit('git', ['add', '.'], { cwd: clone });
+    await execGit('git', ['commit', '-m', 'Another remote comment'], {
+      cwd: clone,
+    });
+    await execGit('git', ['push', 'origin', 'redraft', '--force'], {
+      cwd: clone,
+    });
+
+    // Now save again — divergence triggers reset, then save goes through
+    const finalContent = Buffer.from(
+      commentsJson([false, false, false]),
+      'utf8',
+    );
+    // Use createGitFile since the file state after reset may differ from
+    // what we just read (the reset replaces local with remote content).
+    const result = await createGitFile(
+      repoRoot,
+      'redraft',
+      seededSidecarPath,
+      finalContent,
+      'New comment after divergence',
+    );
+
+    expect(result.sha).toBe(computeBlobSha(finalContent));
+
+    // Verify the remote has the new content
+    const { stdout } = await execGit(
+      'git',
+      ['show', `redraft:${seededSidecarPath}`],
+      { cwd: bareRemote },
+    );
+    expect(stdout).toBe(finalContent.toString('utf8'));
+
+    await rm(clone, { recursive: true, force: true });
+    await rm(bareRemote, { recursive: true, force: true });
+  });
 });

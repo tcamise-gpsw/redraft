@@ -91,6 +91,68 @@ async function commitIndex(
   await execGitText(repoRoot, ['update-ref', `refs/heads/${branch}`, commit]);
 }
 
+async function syncWithRemote(repoRoot: string, branch: string): Promise<void> {
+  try {
+    await execGitText(repoRoot, ['fetch', 'origin', branch]);
+  } catch {
+    return; // No remote, offline, or branch not on remote — commit locally.
+  }
+
+  const local = await currentCommit(repoRoot, branch);
+  const remote = (
+    await execGitText(repoRoot, ['rev-parse', `origin/${branch}`])
+  ).trim();
+
+  if (!local || local === remote) return;
+
+  try {
+    await execGitText(repoRoot, [
+      'merge-base',
+      '--is-ancestor',
+      branch,
+      `origin/${branch}`,
+    ]);
+    // Local is behind remote — fast-forward.
+    await execGitText(repoRoot, ['update-ref', `refs/heads/${branch}`, remote]);
+    return;
+  } catch {
+    // Not a fast-forward — check the reverse.
+  }
+
+  try {
+    await execGitText(repoRoot, [
+      'merge-base',
+      '--is-ancestor',
+      `origin/${branch}`,
+      branch,
+    ]);
+    // Remote is behind local — push after commit will catch up.
+    return;
+  } catch {
+    // Neither is ancestor — branches diverged.
+    // Reset local to remote, preserving the old tip in the reflog.
+    console.warn(
+      `[ReDraft] Sidecar branch "${branch}" diverged from remote. ` +
+        `Resetting to origin/${branch}. ` +
+        `Previous local tip ${local} is recoverable via: git reflog show ${branch}`,
+    );
+    await execGitText(repoRoot, [
+      'update-ref',
+      `refs/heads/${branch}`,
+      remote,
+      local, // old-value — ensures reflog entry is created
+    ]);
+  }
+}
+
+async function tryPush(repoRoot: string, branch: string): Promise<void> {
+  try {
+    await execGitText(repoRoot, ['push', 'origin', branch]);
+  } catch {
+    // Best-effort: no remote, no network — local commit is safe.
+  }
+}
+
 async function withTemporaryIndex<T>(
   repoRoot: string,
   branch: string,
@@ -146,19 +208,26 @@ export async function writeGitFile(
   expectedSha: string,
   message: string,
 ): Promise<{ sha: string }> {
+  await syncWithRemote(repoRoot, branch);
   const actualSha = await currentBlobSha(repoRoot, branch, path);
   assertExpectedSha(actualSha, expectedSha);
 
-  return withTemporaryIndex(repoRoot, branch, async (env, parent, tempDir) => {
-    const blobSha = await hashContent(repoRoot, tempDir, content);
-    await execGitText(
-      repoRoot,
-      ['update-index', '--add', '--cacheinfo', `100644,${blobSha},${path}`],
-      { env },
-    );
-    await commitIndex(repoRoot, branch, message, env, parent);
-    return { sha: blobSha };
-  });
+  const result = await withTemporaryIndex(
+    repoRoot,
+    branch,
+    async (env, parent, tempDir) => {
+      const blobSha = await hashContent(repoRoot, tempDir, content);
+      await execGitText(
+        repoRoot,
+        ['update-index', '--add', '--cacheinfo', `100644,${blobSha},${path}`],
+        { env },
+      );
+      await commitIndex(repoRoot, branch, message, env, parent);
+      return { sha: blobSha };
+    },
+  );
+  await tryPush(repoRoot, branch);
+  return result;
 }
 
 export async function createGitFile(
@@ -168,16 +237,23 @@ export async function createGitFile(
   content: Buffer,
   message: string,
 ): Promise<{ sha: string }> {
-  return withTemporaryIndex(repoRoot, branch, async (env, parent, tempDir) => {
-    const blobSha = await hashContent(repoRoot, tempDir, content);
-    await execGitText(
-      repoRoot,
-      ['update-index', '--add', '--cacheinfo', `100644,${blobSha},${path}`],
-      { env },
-    );
-    await commitIndex(repoRoot, branch, message, env, parent);
-    return { sha: blobSha };
-  });
+  await syncWithRemote(repoRoot, branch);
+  const result = await withTemporaryIndex(
+    repoRoot,
+    branch,
+    async (env, parent, tempDir) => {
+      const blobSha = await hashContent(repoRoot, tempDir, content);
+      await execGitText(
+        repoRoot,
+        ['update-index', '--add', '--cacheinfo', `100644,${blobSha},${path}`],
+        { env },
+      );
+      await commitIndex(repoRoot, branch, message, env, parent);
+      return { sha: blobSha };
+    },
+  );
+  await tryPush(repoRoot, branch);
+  return result;
 }
 
 export async function deleteGitFile(
@@ -186,6 +262,7 @@ export async function deleteGitFile(
   path: string,
   expectedSha: string,
 ): Promise<void> {
+  await syncWithRemote(repoRoot, branch);
   const actualSha = await currentBlobSha(repoRoot, branch, path);
   assertExpectedSha(actualSha, expectedSha);
 
@@ -195,6 +272,7 @@ export async function deleteGitFile(
     });
     await commitIndex(repoRoot, branch, `Delete ${path}`, env, parent);
   });
+  await tryPush(repoRoot, branch);
 }
 
 export async function listSidecarEntries(
