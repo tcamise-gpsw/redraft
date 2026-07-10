@@ -241,6 +241,9 @@ export function CommentsSidebar({
       if (containerRef.current) {
         observer.observe(containerRef.current);
       }
+      if (pendingFormRef.current) {
+        observer.observe(pendingFormRef.current);
+      }
     }
 
     return () => {
