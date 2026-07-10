@@ -30,6 +30,9 @@ ReDraft turns any Git repository into a review workspace for markdown documents.
 
 Visit [redraft-docs.dev](https://redraft-docs.dev), enter a fine-grained GitHub PAT (`Contents: Read/Write` + `Metadata: Read`), point it at any repo, and start reviewing. Nothing to install.
 
+> [!NOTE]
+> ReDraft currently uses a fine-grained PAT for GitHub access. Real GitHub OAuth is coming soon.
+
 ### Local (advanced)
 
 For power users and AI agents who want to work with local tools:
