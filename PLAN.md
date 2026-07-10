@@ -177,19 +177,19 @@ Add `sidecarBranch: string` to the helpers object type used by tree route (eithe
 
 **Checklist:**
 
-- [ ] Tree route accepts `sidecarBranch` query parameter
-- [ ] Documents still come from filesystem walk (unchanged)
-- [ ] Under Review list comes from git sidecar branch
-- [ ] Falls back to configured sidecar branch when query param absent
-- [ ] `sidecarBranch` is typed on the helpers object
+- [x] Tree route accepts `sidecarBranch` query parameter
+- [x] Documents still come from filesystem walk (unchanged)
+- [x] Under Review list comes from git sidecar branch
+- [x] Falls back to configured sidecar branch when query param absent
+- [x] `sidecarBranch` is typed on the helpers object
 
 **Tests:**
 
-- [ ] Run: `npx vitest run server/routes/tree.test.ts`
-- [ ] Existing document-tree tests pass unchanged
-- [ ] New test: tree request with `?sidecarBranch=redraft` returns underReview entries from the git branch
-- [ ] New test: tree request with non-existent sidecar branch returns empty underReview
-- [ ] Test setup needs a seeded git repo with an orphan sidecar branch containing comment sidecars
+- [x] Run: `npx vitest run server/routes/tree.test.ts`
+- [x] Existing document-tree tests pass unchanged
+- [x] New test: tree request with `?sidecarBranch=redraft` returns underReview entries from the git branch
+- [x] New test: tree request with non-existent sidecar branch returns empty underReview
+- [x] Test setup needs a seeded git repo with an orphan sidecar branch containing comment sidecars
 
 **Commit:**
 

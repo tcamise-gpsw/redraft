@@ -3,7 +3,8 @@ import { promisify } from 'node:util';
 
 import type { Hono } from 'hono';
 
-import { listReviewEntries, walkMarkdownFiles } from '../fs/operations.js';
+import { listSidecarEntries } from '../fs/git-sidecar.js';
+import { walkMarkdownFiles } from '../fs/operations.js';
 import type { ReviewEntry, TreeEntry } from '../types.js';
 import type { RouteHelpers } from './user.js';
 const execGit = promisify(execFile);
@@ -32,6 +33,7 @@ async function resolveTreeBranch(
 export interface TreeRouteHelpers extends RouteHelpers {
   basePath: string;
   toApiPath: (localPath: string) => string;
+  sidecarBranch: string;
 }
 
 export function registerTreeRoute(app: Hono, helpers: TreeRouteHelpers): void {
@@ -39,7 +41,12 @@ export function registerTreeRoute(app: Hono, helpers: TreeRouteHelpers): void {
     const ref = c.req.param('ref');
     const branch = await resolveTreeBranch(helpers.basePath, ref);
     const documents = await walkMarkdownFiles(helpers.basePath);
-    const underReview = await listReviewEntries(helpers.basePath, branch);
+    const sidecarBranch = c.req.query('sidecarBranch') ?? helpers.sidecarBranch;
+    const underReview = await listSidecarEntries(
+      helpers.basePath,
+      sidecarBranch,
+      branch,
+    );
     return helpers.json({
       documents: documents.map((entry: TreeEntry) => ({
         path: helpers.toApiPath(entry.path),
