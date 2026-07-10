@@ -302,12 +302,12 @@ Using the `e2e-browser-testing` skill, perform a manual browser-driven local mod
 
 **Checklist:**
 
-- [ ] Under Review list populates from sidecar branch
-- [ ] Existing comments render correctly
-- [ ] New comment persists to sidecar branch (verified with git show)
-- [ ] Comment survives page reload
-- [ ] Reply and resolve persist to sidecar branch
-- [ ] Clean up: stop the local server
+- [x] Under Review list populates from sidecar branch
+- [x] Existing comments render correctly
+- [x] New comment persists to sidecar branch (verified with git show)
+- [x] Comment survives page reload
+- [x] Reply and resolve persist to sidecar branch
+- [x] Clean up: stop the local server
 
 ---
 
