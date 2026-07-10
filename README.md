@@ -43,7 +43,12 @@ Launches a local server and opens the browser automatically. Every `.md` file in
 
 ## How it works
 
-ReDraft stores nothing outside your repository. Documents are plain `.md` files on any branch — pick the branch you want to review from the branch selector. Comment threads live as structured JSON on a dedicated sidecar branch (`redraft` by default) under `.redraft/comments/`. The sidecar branch never touches your working tree — no merge conflicts, no noise in diffs.
+ReDraft stores nothing outside your repository. Documents are plain `.md` files on any branch — pick the branch you want to review from the branch selector. Comment threads live as structured JSON on a dedicated sidecar branch (`redraft` by default) under `.redraft/comments/`. The sidecar branch never touches your working tree — no merge conflicts, no noise in diffs. In local mode the branch is created automatically when you first comment; for remote mode, create it once:
+
+```bash
+# one-time setup — create an empty orphan branch for comment storage
+git checkout --orphan redraft && git rm -rf . && git commit --allow-empty -m "init redraft sidecar" && git push origin redraft
+```
 
 ```
 your-repo/
@@ -52,7 +57,7 @@ your-repo/
 │   ├── rfcs/rfc-001.md
 │   └── docs/architecture.md
 │
-└── redraft (sidecar branch — created automatically)
+└── redraft (sidecar branch)
     └── .redraft/comments/<document-branch>/
         ├── proposals/api-design.comments.json
         └── rfcs/rfc-001.comments.json
