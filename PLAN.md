@@ -91,7 +91,7 @@ Import `FileOperationError` from `../types.js` for error responses. Import `comp
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage and commit: `feat(server): add git-sidecar module for branch-backed sidecar operations`
+- [x] Read `skill://commit`, stage and commit: `feat(server): add git-sidecar module for branch-backed sidecar operations`
 
 ---
 
@@ -151,7 +151,7 @@ Each handler gains a branch check at the top:
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage and commit: `feat(server): route sidecar requests through git plumbing in contents route`
+- [x] Read `skill://commit`, stage and commit: `feat(server): route sidecar requests through git plumbing in contents route`
 
 ---
 
@@ -193,7 +193,7 @@ Add `sidecarBranch: string` to the helpers object type used by tree route (eithe
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage and commit: `feat(server): read under-review list from git sidecar branch`
+- [x] Read `skill://commit`, stage and commit: `feat(server): read under-review list from git sidecar branch`
 
 ---
 
@@ -239,7 +239,7 @@ Also check the CLI `--sidecar-branch` option. If the user configured a non-defau
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage and commit: `feat(auth): hydrate sidecar branch in local mode and pass to tree fetch`
+- [x] Read `skill://commit`, stage and commit: `feat(auth): hydrate sidecar branch in local mode and pass to tree fetch`
 
 ---
 
@@ -276,7 +276,7 @@ Also check if any imports of `listReviewEntries` or `walkCommentFiles` remain in
 
 **Commit:**
 
-- [ ] Read `skill://commit`, stage and commit: `refactor(server): remove filesystem-based sidecar helpers`
+- [x] Read `skill://commit`, stage and commit: `refactor(server): remove filesystem-based sidecar helpers`
 
 ---
 
@@ -287,7 +287,7 @@ Using the `e2e-browser-testing` skill, perform a manual browser-driven local mod
 **Setup:**
 
 - Build the frontend: `npm run build`
-- Start the local server against a repo that has a `redraft` sidecar branch with at least one seeded comment sidecar (e.g., `~/gopro/FUZZ-MONKEY` or the test-fixtures submodule). If no sidecar data exists, seed it first by committing a `.redraft/comments/main/<doc>.comments.json` to the `redraft` branch of the target repo via git plumbing.
+- Start the local server against the `test-fixtures` submodule copied into a writable temp repo with a `redraft` sidecar branch and at least one seeded comment sidecar. If no sidecar data exists, seed it first by committing a `.redraft/comments/main/<doc>.comments.json` to the `redraft` branch of the target repo via git plumbing.
 
 **Test scenarios:**
 
