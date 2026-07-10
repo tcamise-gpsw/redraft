@@ -1,13 +1,10 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-
 import type { Hono } from 'hono';
 
+import { execGitText } from '../fs/git-exec.js';
 import { listSidecarEntries } from '../fs/git-sidecar.js';
 import { walkMarkdownFiles } from '../fs/operations.js';
 import type { ReviewEntry, TreeEntry } from '../types.js';
 import type { RouteHelpers } from './user.js';
-const execGit = promisify(execFile);
 
 async function resolveTreeBranch(
   basePath: string,
@@ -18,11 +15,11 @@ async function resolveTreeBranch(
   }
 
   try {
-    const { stdout } = await execGit(
-      'git',
-      ['rev-parse', '--abbrev-ref', 'HEAD'],
-      { cwd: basePath },
-    );
+    const stdout = await execGitText(basePath, [
+      'rev-parse',
+      '--abbrev-ref',
+      'HEAD',
+    ]);
     const branch = stdout.trim();
     return branch === '' || branch === 'HEAD' ? 'main' : branch;
   } catch {

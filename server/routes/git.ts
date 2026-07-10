@@ -1,15 +1,12 @@
-import { execFile } from 'node:child_process';
 import { mkdtemp, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { promisify } from 'node:util';
 
 import type { Hono } from 'hono';
 
+import { execGitText } from '../fs/git-exec.js';
 import { FileOperationError } from '../types.js';
 import type { RouteHelpers } from './user.js';
-
-const execGit = promisify(execFile);
 
 interface GitRequestBody {
   message?: string;
@@ -29,6 +26,20 @@ export interface GitRouteHelpers extends RouteHelpers {
 interface RepoContext {
   repoRoot: string;
   relativeScope: string;
+}
+
+interface ExecGitOptions {
+  cwd: string;
+  env?: NodeJS.ProcessEnv;
+}
+
+async function execGit(
+  command: 'git',
+  args: string[],
+  options: ExecGitOptions,
+): Promise<{ stdout: string }> {
+  void command;
+  return { stdout: await execGitText(options.cwd, args, { env: options.env }) };
 }
 
 async function getRepoContext(basePath: string): Promise<RepoContext> {

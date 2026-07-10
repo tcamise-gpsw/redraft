@@ -176,7 +176,9 @@ export function startWatcher(
   // nested markdown updates on macOS, which breaks local-mode live refresh.
   const watcher = chokidar.watch(basePath, {
     ignoreInitial: true,
+    interval: 1000,
     persistent: true,
+    usePolling: true,
   });
 
   watcher.on('add', (filePath) => queueEvent('file:created', filePath));

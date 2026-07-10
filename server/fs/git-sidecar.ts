@@ -1,48 +1,14 @@
-import { execFile } from 'node:child_process';
 import { mkdtemp, rm, writeFile as writeFileToDisk } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
-
 import { FileOperationError, type ReviewEntry } from '../types.js';
+import { execGitBuffer, execGitText } from './git-exec.js';
 import { computeBlobSha } from './operations.js';
 
-const execGit = promisify(execFile);
 const COMMENTS_ROOT = '.redraft/comments';
-
-interface ExecGitTextResult {
-  stdout: string;
-}
-
-interface ExecGitBufferResult {
-  stdout: Buffer;
-}
 
 function sanitizeBranch(branch: string): string {
   return branch.replaceAll('/', '--');
-}
-
-async function execGitText(
-  repoRoot: string,
-  args: string[],
-  env?: NodeJS.ProcessEnv,
-): Promise<string> {
-  const { stdout } = (await execGit('git', args, {
-    cwd: repoRoot,
-    env,
-  })) as ExecGitTextResult;
-  return stdout;
-}
-
-async function execGitBuffer(
-  repoRoot: string,
-  args: string[],
-): Promise<Buffer> {
-  const { stdout } = (await execGit('git', args, {
-    cwd: repoRoot,
-    encoding: 'buffer',
-  })) as ExecGitBufferResult;
-  return stdout;
 }
 
 async function currentCommit(
@@ -98,7 +64,7 @@ async function commitIndex(
   env: NodeJS.ProcessEnv,
   parent: string | null,
 ): Promise<void> {
-  const tree = (await execGitText(repoRoot, ['write-tree'], env)).trim();
+  const tree = (await execGitText(repoRoot, ['write-tree'], { env })).trim();
   if (parent) {
     const parentTree = (
       await execGitText(repoRoot, ['rev-parse', `${parent}^{tree}`])
@@ -119,7 +85,9 @@ async function commitIndex(
     GIT_COMMITTER_NAME: 'ReDraft',
     GIT_COMMITTER_EMAIL: 'redraft@local',
   };
-  const commit = (await execGitText(repoRoot, commitArgs, commitEnv)).trim();
+  const commit = (
+    await execGitText(repoRoot, commitArgs, { env: commitEnv })
+  ).trim();
   await execGitText(repoRoot, ['update-ref', `refs/heads/${branch}`, commit]);
 }
 
@@ -138,7 +106,7 @@ async function withTemporaryIndex<T>(
 
   try {
     if (parent) {
-      await execGitText(repoRoot, ['read-tree', branch], env);
+      await execGitText(repoRoot, ['read-tree', branch], { env });
     }
     return await callback(env, parent, tempDir);
   } finally {
@@ -186,7 +154,7 @@ export async function writeGitFile(
     await execGitText(
       repoRoot,
       ['update-index', '--add', '--cacheinfo', `100644,${blobSha},${path}`],
-      env,
+      { env },
     );
     await commitIndex(repoRoot, branch, message, env, parent);
     return { sha: blobSha };
@@ -205,7 +173,7 @@ export async function createGitFile(
     await execGitText(
       repoRoot,
       ['update-index', '--add', '--cacheinfo', `100644,${blobSha},${path}`],
-      env,
+      { env },
     );
     await commitIndex(repoRoot, branch, message, env, parent);
     return { sha: blobSha };
@@ -222,7 +190,9 @@ export async function deleteGitFile(
   assertExpectedSha(actualSha, expectedSha);
 
   await withTemporaryIndex(repoRoot, branch, async (env, parent) => {
-    await execGitText(repoRoot, ['update-index', '--force-remove', path], env);
+    await execGitText(repoRoot, ['update-index', '--force-remove', path], {
+      env,
+    });
     await commitIndex(repoRoot, branch, `Delete ${path}`, env, parent);
   });
 }

@@ -101,6 +101,10 @@ describe('startWatcher', () => {
     const stop = startWatcher(basePath, vi.fn());
 
     expect(watchMock).toHaveBeenCalledOnce();
+    expect(watchMock).toHaveBeenCalledWith(
+      basePath,
+      expect.objectContaining({ usePolling: true, interval: 1000 }),
+    );
     stop();
   });
 
