@@ -1,10 +1,14 @@
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { buildGitHubApiRouter } from './index.js';
+
+const execGit = promisify(execFile);
 
 interface UserResponse {
   login: string;
@@ -36,6 +40,42 @@ interface CommitResponse {
   };
 }
 
+const sidecarPath = '.redraft/comments/main/auth-overhaul.comments.json';
+
+async function initializeSidecarBranch(basePath: string): Promise<void> {
+  await execGit('git', ['init'], { cwd: basePath });
+  await execGit('git', ['config', 'user.name', 'ReDraft Test'], {
+    cwd: basePath,
+  });
+  await execGit('git', ['config', 'user.email', 'redraft@example.com'], {
+    cwd: basePath,
+  });
+  await execGit('git', ['add', '.'], { cwd: basePath });
+  await execGit('git', ['commit', '-m', 'Initial documents'], {
+    cwd: basePath,
+  });
+  await execGit('git', ['branch', '-M', 'main'], { cwd: basePath });
+  await execGit('git', ['checkout', '--orphan', 'redraft'], {
+    cwd: basePath,
+  });
+  await execGit('git', ['rm', '-rf', '--ignore-unmatch', '.'], {
+    cwd: basePath,
+  });
+  await mkdir(join(basePath, '.redraft', 'comments', 'main'), {
+    recursive: true,
+  });
+  await writeFile(
+    join(basePath, sidecarPath),
+    '{"version":1,"comments":[{"id":"thread-1","resolved":false}]}',
+    'utf8',
+  );
+  await execGit('git', ['add', '.redraft'], { cwd: basePath });
+  await execGit('git', ['commit', '-m', 'Seed sidecar branch'], {
+    cwd: basePath,
+  });
+  await execGit('git', ['checkout', 'main'], { cwd: basePath });
+}
+
 describe('GitHub contents-style routes', () => {
   let basePath: string;
 
@@ -46,9 +86,7 @@ describe('GitHub contents-style routes', () => {
   });
 
   afterEach(async () => {
-    await import('node:fs/promises').then(({ rm }) =>
-      rm(basePath, { recursive: true, force: true }),
-    );
+    await rm(basePath, { recursive: true, force: true });
   });
 
   it('returns the local user identity', async () => {
@@ -174,6 +212,110 @@ describe('GitHub contents-style routes', () => {
 
     expect(response.status).toBe(422);
     expect(body.message).toMatch(/exists/i);
+  });
+
+  it('reads sidecar content from the git branch when ref is provided', async () => {
+    await initializeSidecarBranch(basePath);
+    const app = buildGitHubApiRouter(basePath);
+
+    const response = await app.request(
+      `http://local.test/api/github/repos/local/redraft/contents/${sidecarPath}?ref=redraft`,
+    );
+    const body = (await response.json()) as FileResponse;
+
+    expect(response.status).toBe(200);
+    expect(Buffer.from(body.content, 'base64').toString('utf8')).toContain(
+      'thread-1',
+    );
+    expect(body.sha).toMatch(/^[a-f0-9]{40}$/);
+  });
+
+  it('writes sidecar content to the git branch when branch is provided', async () => {
+    await initializeSidecarBranch(basePath);
+    const app = buildGitHubApiRouter(basePath);
+    const existing = await app.request(
+      `http://local.test/api/github/repos/local/redraft/contents/${sidecarPath}?ref=redraft`,
+    );
+    const existingBody = (await existing.json()) as FileResponse;
+    const nextContent =
+      '{"version":1,"comments":[{"id":"thread-2","resolved":false}]}';
+
+    const response = await app.request(
+      `http://local.test/api/github/repos/local/redraft/contents/${sidecarPath}`,
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          branch: 'redraft',
+          message: 'Update comments',
+          sha: existingBody.sha,
+          content: Buffer.from(nextContent, 'utf8').toString('base64'),
+        }),
+      },
+    );
+    const body = (await response.json()) as WriteResponse;
+
+    expect(response.status).toBe(200);
+    expect(body.content.sha).toMatch(/^[a-f0-9]{40}$/);
+    const { stdout } = await execGit(
+      'git',
+      ['show', `redraft:${sidecarPath}`],
+      {
+        cwd: basePath,
+      },
+    );
+    expect(stdout).toBe(nextContent);
+  });
+
+  it('creates sidecar content on the git branch when PUT has branch but no sha', async () => {
+    await initializeSidecarBranch(basePath);
+    const app = buildGitHubApiRouter(basePath);
+    const newSidecarPath = '.redraft/comments/main/nested/new.comments.json';
+    const content = '{"version":1,"comments":[]}';
+
+    const response = await app.request(
+      `http://local.test/api/github/repos/local/redraft/contents/${newSidecarPath}`,
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          branch: 'redraft',
+          message: 'Add comments',
+          content: Buffer.from(content, 'utf8').toString('base64'),
+        }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const { stdout } = await execGit(
+      'git',
+      ['show', `redraft:${newSidecarPath}`],
+      { cwd: basePath },
+    );
+    expect(stdout).toBe(content);
+  });
+
+  it('deletes sidecar content from the git branch when branch is provided', async () => {
+    await initializeSidecarBranch(basePath);
+    const app = buildGitHubApiRouter(basePath);
+    const existing = await app.request(
+      `http://local.test/api/github/repos/local/redraft/contents/${sidecarPath}?ref=redraft`,
+    );
+    const existingBody = (await existing.json()) as FileResponse;
+
+    const response = await app.request(
+      `http://local.test/api/github/repos/local/redraft/contents/${sidecarPath}`,
+      {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ branch: 'redraft', sha: existingBody.sha }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    await expect(
+      execGit('git', ['show', `redraft:${sidecarPath}`], { cwd: basePath }),
+    ).rejects.toThrow();
   });
 
   it('returns commit metadata from file stats for root-relative paths', async () => {

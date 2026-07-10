@@ -136,18 +136,18 @@ Each handler gains a branch check at the top:
 
 **Checklist:**
 
-- [ ] All four handlers have the branch check
-- [ ] Filesystem path (no ref/branch) is completely unchanged — no behavioral difference for document reads/writes
-- [ ] `ContentRequestBody` includes `branch?: string`
-- [ ] The PUT create-on-404 fallback works for git path (same pattern as filesystem)
-- [ ] Import `readGitFile`, `writeGitFile`, `createGitFile`, `deleteGitFile` from `../fs/git-sidecar.js`
+- [x] All four handlers have the branch check
+- [x] Filesystem path (no ref/branch) is completely unchanged — no behavioral difference for document reads/writes
+- [x] `ContentRequestBody` includes `branch?: string`
+- [x] The PUT create-on-404 fallback works for git path (same pattern as filesystem)
+- [x] Import `readGitFile`, `writeGitFile`, `createGitFile`, `deleteGitFile` from `../fs/git-sidecar.js`
 
 **Tests:**
 
-- [ ] Run: `npx vitest run server/routes/contents.test.ts`
-- [ ] Existing filesystem tests pass unchanged (regression)
-- [ ] New tests: GET with `?ref=<branch>` reads from git; PUT with `body.branch` writes to git; POST with `body.branch` creates on git; DELETE with `body.branch` deletes from git
-- [ ] The route integration tests need a seeded git repo — extend the test setup to create one with an orphan sidecar branch (can share the pattern with git-sidecar.test.ts)
+- [x] Run: `npx vitest run server/routes/contents.test.ts`
+- [x] Existing filesystem tests pass unchanged (regression)
+- [x] New tests: GET with `?ref=<branch>` reads from git; PUT with `body.branch` writes to git; POST with `body.branch` creates on git; DELETE with `body.branch` deletes from git
+- [x] The route integration tests need a seeded git repo — extend the test setup to create one with an orphan sidecar branch (can share the pattern with git-sidecar.test.ts)
 
 **Commit:**
 
