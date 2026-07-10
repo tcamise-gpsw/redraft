@@ -16,67 +16,60 @@
 
 ReDraft turns any Git repository into a review workspace for markdown documents. Select text, leave a comment, reply in threads, resolve feedback — all without leaving the browser. No database, no platform migration, no new accounts. Your documents stay as `.md` files. Review threads live on a sidecar branch. That's it.
 
-|                 | **Local mode**                                        | **Remote mode**                              |
-| --------------- | ----------------------------------------------------- | -------------------------------------------- |
-| **Start with**  | `npx redraft-local`                                   | [redraft-docs.dev](https://redraft-docs.dev) |
-| **Data source** | Files on disk                                         | GitHub REST API                              |
-| **Auth**        | None — automatic                                      | Fine-grained GitHub PAT                      |
-| **Editing**     | Browser UI (view · WYSIWYG · raw) + direct file edits | Browser UI (view · WYSIWYG · raw)            |
-| **Comments**    | Git sidecar branch (local)                            | Git sidecar branch (remote)                  |
-| **Best for**    | Power users, AI agents                                | Reviewers, contributors                      |
+**Built for everyone on the team.** Non-technical reviewers use the WYSIWYG editor — no markdown syntax required. Engineers switch to raw mode for full control. AI agents edit files directly on disk. Everyone works on the same documents in the same review threads, each in the mode that fits them.
+
+**Remote and local are the same UI.** Use [redraft-docs.dev](https://redraft-docs.dev) to review any GitHub repo in the browser, or run `npx redraft-local` to serve your local checkout. Local mode lets you edit with your own tools — your editor, your scripts, your AI agents — and see changes reflected live. ReDraft ships with [built-in skills](.agents/skills/redraft-review/) for walking comment threads, drafting replies, and revising documents, so agents work alongside human reviewers out of the box.
 
 ---
 
 ## Get started
 
-**Run locally against any directory:**
+### Remote
+
+Visit [redraft-docs.dev](https://redraft-docs.dev), enter a fine-grained GitHub PAT (`Contents: Read/Write` + `Metadata: Read`), point it at any repo, and start reviewing. Nothing to install.
+
+### Local (advanced)
+
+For power users and AI agents who want to work with local tools:
 
 ```bash
-npx redraft-local
+npx redraft-local --open
 ```
 
-Opens a browser at `http://127.0.0.1:4200` with every `.md` file in your working directory ready for review. No signup, no PAT, no config.
-
-**Or use the hosted site for GitHub-backed review:**
-
-Visit [redraft-docs.dev](https://redraft-docs.dev), enter a fine-grained PAT with `Contents: Read/Write` and `Metadata: Read`, point it at a repo, and start reviewing.
+Launches a local server and opens the browser automatically. Every `.md` file in your working directory is ready for review — no signup, no PAT, no config. Edit files in your own editor or with AI agents and see changes live in the browser.
 
 ---
 
 ## How it works
 
-ReDraft stores nothing outside your repository. Documents are plain `.md` files on any branch. Comment threads live as structured JSON on a dedicated sidecar branch (`redraft` by default) under `.redraft/comments/`. The sidecar branch never touches your working tree — no merge conflicts, no noise in diffs.
+ReDraft stores nothing outside your repository. Documents are plain `.md` files on any branch — pick the branch you want to review from the branch selector. Comment threads live as structured JSON on a dedicated sidecar branch (`redraft` by default) under `.redraft/comments/`. The sidecar branch never touches your working tree — no merge conflicts, no noise in diffs.
 
 ```
 your-repo/
-├── main (your documents)
+├── any branch (your documents)
 │   ├── proposals/api-design.md
 │   ├── rfcs/rfc-001.md
 │   └── docs/architecture.md
 │
 └── redraft (sidecar branch — created automatically)
-    └── .redraft/comments/main/
+    └── .redraft/comments/<document-branch>/
         ├── proposals/api-design.comments.json
         └── rfcs/rfc-001.comments.json
 ```
 
-One React frontend serves all three modes. In remote mode, it talks to the GitHub REST API. In local mode, it talks to a local server that mirrors the same API shape against your filesystem. The code path is identical — only the transport changes.
+One React frontend serves both modes. In remote mode, it talks to the GitHub REST API. In local mode, it talks to a local server that mirrors the same API shape against your filesystem. The code path is identical — only the transport changes.
 
 ---
 
-## 01 · Browse and review documents
+## 01 · Browse, review, and comment
 
 Open any markdown document in the repository. The left sidebar shows the full document tree and highlights documents with active review threads under **Under Review**. The center panel renders the document with full formatting. The right sidebar shows comment threads anchored to the text they reference.
 
+Select text to anchor a comment. Threads support replies, resolution, and deletion. Comments stay anchored even when the document changes — ReDraft uses surrounding context to relocate anchors after edits. If the anchor text is gone entirely, the thread moves to an **Orphaned** section instead of silently disappearing.
+
 ![Document view with tree, rendered markdown, and comment threads](assets/screenshots/document-view.png)
 
-## 02 · Inline comment threads
-
-Select text in the document to anchor a comment. Threads support replies, resolution, and deletion. Comments stay anchored even when the document changes — ReDraft uses surrounding context to relocate anchors after edits. If the anchor text is gone entirely, the thread moves to an **Orphaned** section instead of silently disappearing.
-
-![Comment threads anchored to document text](assets/screenshots/comment-threads.png)
-
-## 03 · Three editing modes
+## 02 · Three editing modes
 
 Switch between **View**, **WYSIWYG**, and **Raw** depending on how you work.
 
@@ -88,31 +81,27 @@ Switch between **View**, **WYSIWYG**, and **Raw** depending on how you work.
 
 ![Raw markdown editing with comment sidebar](assets/screenshots/raw-markdown.png)
 
-## 04 · Mermaid diagrams, code blocks, and full markdown
+## 03 · Mermaid diagrams, code blocks, and full markdown
 
 ReDraft renders the full CommonMark spec plus Mermaid diagrams, fenced code blocks with syntax highlighting, tables, blockquotes, and task lists. What you see in the browser is what your markdown looks like — no surprises.
 
 ![Mermaid flowchart rendered inline](assets/screenshots/mermaid-diagram.png)
 
-## 05 · Local mode — one command, zero config
+## 04 · Local mode — just files on disk
 
 ```bash
 npx redraft-local            # serve current directory
 npx redraft-local ./proposals # serve a specific path
 ```
 
-Local mode gives you:
+Everything is plain text. Documents are `.md` files. Comments are `.json` sidecars on a Git branch. Use any tool you want — your editor, `sed`, a Python script, an AI agent. ReDraft watches the filesystem and updates the browser live.
 
-- **No PAT prompt** — auto-authenticated as `local-user`
-- **Direct file read/write** — edits save straight to disk
-- **Live file watching** — change a file in your editor, see it update in the browser instantly
-- **Git sidecar comments** — review threads commit to a local `redraft` branch, never polluting your working tree
-- **Optional git convenience** — status and commit endpoints for lightweight workflows
+ReDraft ships with a [redraft-review skill](.agents/skills/redraft-review/) that lets AI agents walk unresolved threads, draft replies, resolve feedback, and revise documents through a structured API.
 
 **Options:**
 
 ```
-redraft [directory] [options]
+npx redraft-local [directory] [options]
 
   --port <number>   Port to listen on (default: 4200)
   --host <string>   Bind address (default: 127.0.0.1)
@@ -120,45 +109,16 @@ redraft [directory] [options]
   --no-ui           API-only mode, skip serving the frontend
 ```
 
-## 06 · Built for AI agents
-
-Local mode exposes a structured API that AI agents can drive directly. Agents edit `.md` files on disk while using the ReDraft API for comment operations — read threads, post replies, resolve feedback, revise documents. The browser UI updates live as agents work.
-
-Typical agent workflows:
-
-- Walk unresolved comment threads and draft responses
-- Revise a document based on accumulated feedback
-- Summarize open discussions across the repository
-- Post structured review comments on any document
-
-## 07 · Zero infrastructure
+## 05 · Zero infrastructure
 
 There is no database. No object store. No Redis. No account system. Your data is markdown files and JSON sidecars in a Git repository you already own. Remote mode is a static site on GitHub Pages. Local mode is a single Node process.
-
-| Concern         | How ReDraft handles it                      |
-| --------------- | ------------------------------------------- |
-| Storage         | Git repository (your existing one)          |
-| Authentication  | GitHub PAT (remote) · auto (local)          |
-| Hosting         | GitHub Pages (remote) · `npx` (local)       |
-| Conflict safety | SHA-based optimistic locking on every write |
-| Portability     | Plain `.md` + `.json` — no vendor lock-in   |
 
 ---
 
 ## Development
 
-```bash
-npm install        # install deps + set up pre-commit hooks
-npm run dev        # start Vite dev server (remote mode)
-npm run build      # build frontend + local server
-npm run serve      # start local server from built assets
-npx vitest run     # run unit tests
-npx playwright test # run E2E tests
-```
+See [docs/development.md](docs/development.md) for build, test, and deployment details.
 
-For architecture details, development setup, and design specs:
-
-- `docs/architecture.md` — system architecture and data flow
-- `docs/development.md` — build, test, and deployment details
-- `docs/specs/` — design specs and technical decisions
-- `AGENTS.md` — repository guidance for coding agents
+- [docs/architecture.md](docs/architecture.md) — system architecture and data flow
+- [docs/specs/](docs/specs/) — design specs and technical decisions
+- [AGENTS.md](AGENTS.md) — repository guidance for coding agents
