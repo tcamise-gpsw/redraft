@@ -6,10 +6,11 @@ interface AppLayoutProps {
   aside?: ReactNode;
 }
 
-const SIDEBAR_MIN = 140;
-const SIDEBAR_DEFAULT = 200;
-const ASIDE_MIN = 160;
-const ASIDE_DEFAULT = 260;
+const SIDEBAR_MIN = 180;
+const SIDEBAR_DEFAULT = 300;
+const ASIDE_MIN = 240;
+const ASIDE_DEFAULT = 420;
+const MAIN_MIN = 360;
 
 function ResizeHandle({
   onDrag,
@@ -130,7 +131,8 @@ export function AppLayout({ sidebar, main, aside }: AppLayoutProps) {
 
         {/* main */}
         <main
-          className="min-w-0 flex-1 min-h-[60vh] p-4 lg:p-6"
+          className="flex-1 min-h-[60vh] p-4 lg:p-6"
+          style={{ minWidth: MAIN_MIN }}
           data-testid="app-layout-main"
         >
           {main}
