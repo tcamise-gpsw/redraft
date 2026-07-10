@@ -264,15 +264,15 @@ Also check if any imports of `listReviewEntries` or `walkCommentFiles` remain in
 
 **Checklist:**
 
-- [ ] `walkCommentFiles`, `listReviewEntries`, `sanitizeBranch` (in operations.ts), `isCommentFile`, and `COMMENTS_ROOT` removed
-- [ ] No remaining imports of removed symbols (verify with grep or LSP references)
-- [ ] All other exports from `operations.ts` (`readFile`, `writeFile`, `createFile`, `deleteFile`, `walkMarkdownFiles`, `computeBlobSha`, `listFiles`) still intact
+- [x] `walkCommentFiles`, `listReviewEntries`, `sanitizeBranch` (in operations.ts), `isCommentFile`, and `COMMENTS_ROOT` removed
+- [x] No remaining imports of removed symbols (verify with grep or LSP references)
+- [x] All other exports from `operations.ts` (`readFile`, `writeFile`, `createFile`, `deleteFile`, `walkMarkdownFiles`, `computeBlobSha`, `listFiles`) still intact
 
 **Tests:**
 
-- [ ] Run: `npx vitest run server/`
-- [ ] All server tests pass
-- [ ] Type check: `npx tsc --noEmit -p server/tsconfig.json`
+- [x] Run: `npx vitest run server/`
+- [x] All server tests pass
+- [x] Type check: `npx tsc --noEmit -p server/tsconfig.json`
 
 **Commit:**
 

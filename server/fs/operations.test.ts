@@ -14,7 +14,6 @@ import {
   computeBlobSha,
   createFile,
   deleteFile,
-  listReviewEntries,
   readFile,
   walkMarkdownFiles,
   writeFile,
@@ -154,120 +153,6 @@ describe('filesystem operations', () => {
     const files = await walkMarkdownFiles(basePath);
 
     expect(files).toEqual([{ path: 'visible.md', type: 'blob' }]);
-  });
-
-  it('lists review entries with unresolved thread counts', async () => {
-    await mkdir(join(basePath, '.redraft', 'comments', 'main', 'docs'), {
-      recursive: true,
-    });
-    await writeFileText(
-      join(basePath, '.redraft', 'comments', 'main', 'README.comments.json'),
-      JSON.stringify({
-        version: 1,
-        comments: [
-          {
-            id: 'a',
-            quote: 'one',
-            quoteContext: { prefix: '', suffix: '' },
-            author: { login: 'u', avatarUrl: '' },
-            body: 'body',
-            createdAt: '2026-01-01T00:00:00.000Z',
-            resolved: false,
-            replies: [],
-          },
-          {
-            id: 'b',
-            quote: 'two',
-            quoteContext: { prefix: '', suffix: '' },
-            author: { login: 'u', avatarUrl: '' },
-            body: 'body',
-            createdAt: '2026-01-01T00:00:00.000Z',
-            resolved: true,
-            replies: [],
-          },
-        ],
-      }),
-      'utf8',
-    );
-    await writeFileText(
-      join(
-        basePath,
-        '.redraft',
-        'comments',
-        'main',
-        'docs',
-        'arch.comments.json',
-      ),
-      JSON.stringify({
-        version: 1,
-        comments: [
-          {
-            id: 'c',
-            quote: 'three',
-            quoteContext: { prefix: '', suffix: '' },
-            author: { login: 'u', avatarUrl: '' },
-            body: 'body',
-            createdAt: '2026-01-01T00:00:00.000Z',
-            resolved: false,
-            replies: [],
-          },
-          {
-            id: 'd',
-            quote: 'four',
-            quoteContext: { prefix: '', suffix: '' },
-            author: { login: 'u', avatarUrl: '' },
-            body: 'body',
-            createdAt: '2026-01-01T00:00:00.000Z',
-            resolved: false,
-            replies: [],
-          },
-        ],
-      }),
-      'utf8',
-    );
-
-    const entries = await listReviewEntries(basePath);
-
-    expect(entries).toEqual([
-      { path: 'docs/arch.md', unresolvedCount: 2 },
-      { path: 'README.md', unresolvedCount: 1 },
-    ]);
-  });
-
-  it('scopes review entries to the requested document branch namespace', async () => {
-    await mkdir(join(basePath, '.redraft', 'comments', 'main'), {
-      recursive: true,
-    });
-    await mkdir(join(basePath, '.redraft', 'comments', 'feature--docs'), {
-      recursive: true,
-    });
-    await writeFileText(
-      join(basePath, '.redraft', 'comments', 'main', 'README.comments.json'),
-      JSON.stringify({ version: 1, comments: [{ resolved: false }] }),
-      'utf8',
-    );
-    await writeFileText(
-      join(
-        basePath,
-        '.redraft',
-        'comments',
-        'feature--docs',
-        'README.comments.json',
-      ),
-      JSON.stringify({
-        version: 1,
-        comments: [{ resolved: false }, { resolved: false }],
-      }),
-      'utf8',
-    );
-
-    await expect(listReviewEntries(basePath, 'feature/docs')).resolves.toEqual([
-      { path: 'README.md', unresolvedCount: 2 },
-    ]);
-  });
-
-  it('returns no review entries when the comments directory is missing', async () => {
-    await expect(listReviewEntries(basePath)).resolves.toEqual([]);
   });
 
   it('creates a new file and returns its computed sha', async () => {

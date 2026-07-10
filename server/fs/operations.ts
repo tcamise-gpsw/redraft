@@ -11,17 +11,8 @@ import { dirname, relative, resolve } from 'node:path';
 
 import ignore, { type Ignore } from 'ignore';
 
-import {
-  FileOperationError,
-  type ReviewEntry,
-  type TreeEntry,
-} from '../types.js';
+import { FileOperationError, type TreeEntry } from '../types.js';
 
-const COMMENTS_ROOT = '.redraft/comments';
-
-function sanitizeBranch(branch: string): string {
-  return branch.replaceAll('/', '--');
-}
 const BUILT_IN_EXCLUDES = ['.git/', '.redraft/', 'node_modules/'];
 
 function resolvePath(basePath: string, relativePath: string): string {
@@ -38,10 +29,6 @@ function resolvePath(basePath: string, relativePath: string): string {
 
 function isMarkdownFile(path: string): boolean {
   return path.endsWith('.md');
-}
-
-function isCommentFile(path: string): boolean {
-  return path.endsWith('.comments.json');
 }
 
 function scopeGitignorePattern(currentPath: string, pattern: string): string {
@@ -129,54 +116,6 @@ async function walkMarkdownFilesInternal(
   }
 
   return files;
-}
-
-async function walkCommentFiles(
-  basePath: string,
-  branch?: string,
-  currentPath = branch
-    ? `${COMMENTS_ROOT}/${sanitizeBranch(branch)}`
-    : COMMENTS_ROOT,
-): Promise<string[]> {
-  const directoryPath = resolvePath(basePath, currentPath);
-
-  let entries;
-  try {
-    entries = await readdir(directoryPath, { withFileTypes: true });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return [];
-    }
-
-    throw error;
-  }
-
-  const files: string[] = [];
-
-  for (const entry of entries) {
-    const nextRelativePath = `${currentPath}/${entry.name}`;
-
-    if (entry.isDirectory()) {
-      files.push(
-        ...(await walkCommentFiles(basePath, branch, nextRelativePath)),
-      );
-      continue;
-    }
-
-    if (!entry.isFile() || !isCommentFile(nextRelativePath)) {
-      continue;
-    }
-
-    files.push(nextRelativePath);
-  }
-
-  return files;
-}
-
-function documentPathFromCommentPath(commentPath: string): string {
-  const pathWithinComments = commentPath.slice(`${COMMENTS_ROOT}/`.length);
-  const [, ...documentParts] = pathWithinComments.split('/');
-  return documentParts.join('/').replace(/\.comments\.json$/u, '.md');
 }
 
 export function computeBlobSha(content: Buffer): string {
@@ -270,30 +209,6 @@ export async function walkMarkdownFiles(
   matcher.add(BUILT_IN_EXCLUDES);
   const files = await walkMarkdownFilesInternal(basePath, matcher);
   return files.sort((left, right) => left.path.localeCompare(right.path));
-}
-
-export async function listReviewEntries(
-  basePath: string,
-  branch?: string,
-): Promise<ReviewEntry[]> {
-  const commentFiles = await walkCommentFiles(basePath, branch);
-  const entries = await Promise.all(
-    commentFiles.map(async (commentPath) => {
-      const { content } = await readFile(basePath, commentPath);
-      const parsed = JSON.parse(content.toString('utf8')) as {
-        comments?: Array<{ resolved?: boolean }>;
-      };
-
-      return {
-        path: documentPathFromCommentPath(commentPath),
-        unresolvedCount:
-          parsed.comments?.filter((comment) => comment.resolved !== true)
-            .length ?? 0,
-      };
-    }),
-  );
-
-  return entries.sort((left, right) => left.path.localeCompare(right.path));
 }
 
 export async function listFiles(basePath: string): Promise<TreeEntry[]> {
