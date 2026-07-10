@@ -175,12 +175,16 @@ export async function startReDraftServer(
   options: ReDraftServerOptions,
 ): Promise<RunningReDraftServer> {
   const host = options.host ?? '127.0.0.1';
-  const port = options.port ?? 4200;
+  const requestedPort = options.port ?? 4200;
   const app = buildReDraftApp(options);
   const hub = new WebSocketHub();
+  let actualPort = requestedPort;
   const server = createServer(async (request, response) => {
     const honoResponse = await app.fetch(
-      toRequest(request, `http://${request.headers.host ?? `${host}:${port}`}`),
+      toRequest(
+        request,
+        `http://${request.headers.host ?? `${host}:${actualPort}`}`,
+      ),
     );
     await sendResponse(honoResponse, response);
   });
@@ -188,7 +192,7 @@ export async function startReDraftServer(
   server.on('upgrade', (request, socket, head) => {
     const url = new URL(
       request.url ?? '/',
-      `http://${request.headers.host ?? `${host}:${port}`}`,
+      `http://${request.headers.host ?? `${host}:${actualPort}`}`,
     );
     if (url.pathname !== '/ws') {
       socket.destroy();
@@ -198,20 +202,43 @@ export async function startReDraftServer(
     hub.handleUpgrade(request, socket, head);
   });
 
-  const {
-    promise,
-    resolve: resolveListen,
-    reject: rejectListen,
-  } = Promise.withResolvers<void>();
-  server.listen(port, host, () => resolveListen());
-  server.once('error', rejectListen);
-  await promise;
+  const MAX_PORT_ATTEMPTS = 10;
+  for (let attempt = 0; attempt < MAX_PORT_ATTEMPTS; attempt++) {
+    const {
+      promise,
+      resolve: resolveListen,
+      reject: rejectListen,
+    } = Promise.withResolvers<void>();
+    server.listen(actualPort, host, () => resolveListen());
+    server.once('error', rejectListen);
+    try {
+      await promise;
+      break;
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
+      if (
+        nodeError.code !== 'EADDRINUSE' ||
+        attempt === MAX_PORT_ATTEMPTS - 1
+      ) {
+        if (nodeError.code === 'EADDRINUSE') {
+          throw new Error(
+            `Could not find a free port in range ${requestedPort}–${actualPort}. Use --port to specify a different starting port.`,
+          );
+        }
+        throw error;
+      }
+      console.log(
+        `Port ${actualPort} is in use, trying ${actualPort + 1} instead.`,
+      );
+      actualPort++;
+    }
+  }
 
   return {
     app,
     hub,
     server,
-    url: `http://${host}:${port}`,
+    url: `http://${host}:${actualPort}`,
     close: async () => {
       await hub.close();
       const {
