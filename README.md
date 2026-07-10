@@ -102,11 +102,13 @@ ReDraft ships with a [redraft-review skill](.agents/skills/redraft-review/) that
 
 ```
 npx redraft-local [directory] [options]
+npx redraft-local serve [directory] [options]
 
-  --port <number>   Port to listen on (default: 4200)
-  --host <string>   Bind address (default: 127.0.0.1)
-  --open            Open the browser automatically
-  --no-ui           API-only mode, skip serving the frontend
+  --port <number>           Port to listen on (default: 4200)
+  --host <string>           Bind address (default: 127.0.0.1)
+  --open                    Open the browser automatically
+  --sidecar-branch <string> Git branch for comments (default: redraft)
+  --no-ui                   API-only mode, skip serving the frontend
 ```
 
 ## 05 · Zero infrastructure

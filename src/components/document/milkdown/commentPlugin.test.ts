@@ -129,7 +129,7 @@ describe('commentPlugin', () => {
     // doc(0) p(1) "focusing on"(2..12) hard_break(13) "consistency..."(14...)
     // text index: "focusing on consistency and versioning"
     // "on" at char 9..10, space at char 11, "consistency" at char 12..22
-    // quote "on consistency" = chars 9..23, mapped to pos 10..25
+    // quote "on consistency" = chars 9..23, mapped to pos 10..24
     expect(decorations[0]?.from).toBe(10);
     expect(decorations[0]?.to).toBe(24);
   });
