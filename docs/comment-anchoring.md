@@ -268,7 +268,7 @@ sequenceDiagram
     BTI->>BTI: Walk doc tree recursively
     BTI->>BTI: Text nodes → append text + position map
     BTI->>BTI: Inline leaves (hardBreak) → append space + position map
-    BTI->>BTI: Block boundaries → append newline separator
+    BTI->>BTI: Block boundaries → append space separator
     BTI-->>CP: { text, spans[] }
     loop Each comment
         CP->>CP: text.indexOf(quote) → charFrom
@@ -300,7 +300,7 @@ The walker visits every node in the document:
 
 - **Text nodes** → appends the text content, records the position mapping
 - **Inline leaf nodes** (hardBreak) → appends a space, maps it to the node's position
-- **Block boundaries** → appends a newline separator (no position mapping needed)
+- **Block boundaries** → appends a space separator (no position mapping needed)
 - **Other nodes** → recurses into children
 
 After the walk, `text.indexOf(quote)` finds the character range, and
