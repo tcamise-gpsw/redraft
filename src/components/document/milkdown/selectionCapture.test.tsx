@@ -22,6 +22,7 @@ interface FakeEditorView {
         from: number,
         to: number,
         blockSeparator?: string,
+        leafText?: string,
       ) => string;
     };
   };
@@ -296,5 +297,72 @@ describe('useSelectionCapture', () => {
     });
 
     expect(onTextSelect).not.toHaveBeenCalled();
+  });
+
+  it('passes leafText to textBetween so inline breaks become spaces', () => {
+    const onTextSelect = vi.fn();
+    // Simulate a doc where position 12 is a hardBreak (nodeSize=1).
+    // Without leafText, textBetween would drop it; with leafText=' ', it becomes a space.
+    const textWithBreak = 'focusing on consistency';
+    const dom = document.createElement('div');
+    document.body.append(dom);
+
+    const textBetweenSpy = vi.fn(
+      (from: number, to: number, _blockSep?: string, leafText?: string) => {
+        const start = Math.max(0, from - 1);
+        const end = Math.max(start, to - 1);
+        // When leafText is passed, include the space for the hardbreak at position 12
+        if (leafText) {
+          return textWithBreak.slice(start, end);
+        }
+        // Without leafText, drop the space at index 11 (simulates missing hardbreak char)
+        const raw = textWithBreak.slice(start, end);
+        return raw.replace('on c', 'onc');
+      },
+    );
+
+    const view = {
+      dom,
+      state: {
+        selection: { empty: false, from: 1, to: textWithBreak.length + 1 },
+        doc: {
+          content: { size: textWithBreak.length + 2 },
+          textBetween: textBetweenSpy,
+        },
+      },
+      coordsAtPos: vi.fn().mockReturnValue({ left: 0, top: 0, bottom: 20 }),
+    };
+
+    const editor = {
+      action(callback: (ctx: { get: () => typeof view }) => unknown) {
+        return callback({ get: () => view });
+      },
+    } as unknown as Editor;
+
+    render(
+      <HookHarness
+        editorGetter={() => editor}
+        loading={false}
+        onTextSelect={onTextSelect}
+      />,
+    );
+
+    act(() => {
+      dom.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    });
+
+    // The quote should contain the space (leafText was passed)
+    expect(onTextSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        quote: expect.stringContaining('on c'),
+      }),
+    );
+    // Verify textBetween was called with leafText=' '
+    expect(textBetweenSpy).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.any(Number),
+      ' ',
+      ' ',
+    );
   });
 });

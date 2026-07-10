@@ -24,6 +24,15 @@ const schema = new Schema({
         return ['p', 0];
       },
     },
+    hard_break: {
+      inline: true,
+      group: 'inline',
+      selectable: false,
+      parseDOM: [{ tag: 'br' }],
+      toDOM() {
+        return ['br'];
+      },
+    },
     text: { group: 'inline' },
   },
   marks: {
@@ -102,6 +111,27 @@ describe('commentPlugin', () => {
     expect(decorations).toHaveLength(1);
     expect(decorations[0]?.from).toBe(7);
     expect(decorations[0]?.to).toBe(17);
+  });
+
+  it('creates a decoration when a quote spans a hard_break node', () => {
+    const state = createParagraphState(
+      [
+        schema.text('focusing on'),
+        schema.nodes.hard_break.create(),
+        schema.text('consistency and versioning'),
+      ],
+      [{ id: 'comment-1', quote: 'on consistency' }],
+    );
+
+    const decorations = getDecorations(state).find();
+
+    expect(decorations).toHaveLength(1);
+    // doc(0) p(1) "focusing on"(2..12) hard_break(13) "consistency..."(14...)
+    // text index: "focusing on consistency and versioning"
+    // "on" at char 9..10, space at char 11, "consistency" at char 12..22
+    // quote "on consistency" = chars 9..23, mapped to pos 10..25
+    expect(decorations[0]?.from).toBe(10);
+    expect(decorations[0]?.to).toBe(24);
   });
 
   it('skips decorations when a quote is not present in the document', () => {
