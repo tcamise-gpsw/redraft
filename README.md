@@ -116,7 +116,7 @@ What local mode gives you:
 
 - No PAT prompt
 - Direct read/write access to local `.md` files
-- Structured review threads stored under `.redraft/comments/`
+- Structured review threads stored on a Git sidecar branch (not in the working tree)
 - Live UI updates when files change on disk
 - Optional git convenience endpoints for status and commits
 
