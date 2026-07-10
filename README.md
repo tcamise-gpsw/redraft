@@ -48,7 +48,7 @@ ReDraft stores nothing outside your repository. Documents are plain `.md` files 
 
 ```bash
 # one-time setup — create an empty orphan branch for comment storage
-bash scripts/create-sidecar-branch.sh   # or: npx redraft-local init (coming soon)
+bash scripts/create-sidecar-branch.sh   # or: npx redraft-local init (#41)
 git push origin redraft
 ```
 
