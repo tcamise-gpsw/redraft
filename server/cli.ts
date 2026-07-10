@@ -65,7 +65,7 @@ async function runServe(
 
   console.log(`ReDraft local server listening at ${runningServer.url}`);
 
-  if (options.open) {
+  if (options.open !== false) {
     triggerBrowserOpen(runningServer.url);
   }
 
@@ -88,7 +88,7 @@ function registerServeOptions(command: Command): Command {
     .option('--port <number>', 'Port to listen on (default: 4200)', (value) =>
       Number(value),
     )
-    .option('--open', 'Open the ReDraft UI in the default browser', false)
+    .option('--no-open', 'Skip opening the browser on startup')
     .option('--no-ui', 'Skip serving the static frontend', false)
     .option('--host <string>', 'Bind address (default: 127.0.0.1)', '127.0.0.1')
     .option(

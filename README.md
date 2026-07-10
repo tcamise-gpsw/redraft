@@ -38,10 +38,10 @@ Visit [redraft-docs.dev](https://redraft-docs.dev), enter a fine-grained GitHub 
 For power users and AI agents who want to work with local tools:
 
 ```bash
-npx redraft-local --open
+npx redraft-local
 ```
 
-Launches a local server and opens the browser automatically. Every `.md` file in your working directory is ready for review — no signup, no PAT, no config. Edit files in your own editor or with AI agents and see changes live in the browser.
+Launches a local server and opens the browser. Every `.md` file in your working directory is ready for review — no signup, no PAT, no config. Edit files in your own editor or with AI agents and see changes live in the browser.
 
 ---
 
@@ -119,7 +119,7 @@ npx redraft-local serve [directory] [options]
 
   --port <number>           Port to listen on (default: 4200)
   --host <string>           Bind address (default: 127.0.0.1)
-  --open                    Open the browser automatically
+  --no-open                 Skip opening the browser on startup
   --sidecar-branch <string> Git branch for comments (default: redraft)
   --no-ui                   API-only mode, skip serving the frontend
 ```
