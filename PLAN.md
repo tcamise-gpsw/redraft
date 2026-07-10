@@ -353,13 +353,13 @@ npx vitest run
 
 **Checks:**
 
-- [ ] Full test suite passes: `npx vitest run`
-- [ ] Type check (frontend): `npx tsc --noEmit`
-- [ ] Type check (server): `npx tsc --noEmit -p server/tsconfig.json`
-- [ ] Lint: `npx eslint src/ server/`
-- [ ] Format: `npx prettier --check src/ server/`
-- [ ] Remote Playwright: `npx playwright test --project=remote`
-- [ ] Local Playwright: `npx playwright test --project=local`
-- [ ] All acceptance criteria from Tasks 1-7 verified
-- [ ] No dead code from the old filesystem sidecar path remains
-- [ ] Build succeeds: `npm run build`
+- [x] Full test suite passes: `npx vitest run`
+- [x] Type check (frontend): `npx tsc --noEmit`
+- [x] Type check (server): `npx tsc --noEmit -p server/tsconfig.json`
+- [x] Lint: `npx eslint src/ server/`
+- [x] Format: `npx prettier --check src/ server/`
+- [x] Remote Playwright: `npx playwright test --project=remote`
+- [x] Local Playwright: `npx playwright test --project=local`
+- [x] All acceptance criteria from Tasks 1-7 verified
+- [x] No dead code from the old filesystem sidecar path remains
+- [x] Build succeeds: `npm run build`
