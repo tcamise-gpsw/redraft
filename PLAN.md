@@ -339,13 +339,13 @@ npx vitest run
 
 **Checklist:**
 
-- [ ] Remote Playwright: all tests pass
-- [ ] Local Playwright: all tests pass (update fixtures if needed to seed sidecar branch)
-- [ ] Vitest: all tests pass
+- [x] Remote Playwright: all tests pass
+- [x] Local Playwright: all tests pass (update fixtures if needed to seed sidecar branch)
+- [x] Vitest: all tests pass
 
 **Commit:**
 
-- [ ] Read `skill://commit`, commit any fixture updates: `test(e2e): update local fixtures for git-backed sidecars`
+- [x] Read `skill://commit`, commit any fixture updates: `test(e2e): update local fixtures for git-backed sidecars`
 
 ---
 
