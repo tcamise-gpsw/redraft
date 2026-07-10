@@ -27,7 +27,7 @@ jobs:
 
       - name: Build
         env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_BASE_PATH: /
         run: npm run build
 
       - name: Prepare Pages output
