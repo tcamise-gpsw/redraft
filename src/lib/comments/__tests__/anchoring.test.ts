@@ -130,6 +130,30 @@ describe('comment anchoring', () => {
     ).toEqual(ORPHANED_RESULT);
   });
 
+  it('resolves a quote whose inline break was normalized to a space', () => {
+    // When textBetween renders hardBreaks as spaces, both the stored quote
+    // and the documentText use spaces. This test ensures the two stay aligned.
+    const documentText =
+      'API Design Overview This proposal outlines the second major revision of our REST API, focusing on consistency, versioning, and backwards compatibility.';
+    const quote = 'focusing on consistency, versioning';
+
+    const result = resolveAnchor(documentText, {
+      quote,
+      quoteContext: {
+        prefix: 'our REST API, ',
+        suffix: ', and backwards',
+      },
+      offset: documentText.indexOf(quote),
+    });
+
+    expect(result).toEqual({
+      status: 'exact',
+      startIndex: documentText.indexOf(quote),
+      endIndex: documentText.indexOf(quote) + quote.length,
+      matchedText: quote,
+    });
+  });
+
   it('stays under 50 ms for a ~50 KB document with no matching quote', () => {
     const documentText = 'abcdefghij '
       .repeat(Math.ceil((50 * 1024) / 11))

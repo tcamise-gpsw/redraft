@@ -45,7 +45,7 @@ function buildTextIndex(doc: ProseMirrorNode): TextIndex {
   };
 
   const appendSeparator = () => {
-    parts.push('\n');
+    parts.push(' ');
     charOffset += 1;
   };
 
@@ -64,6 +64,8 @@ function buildTextIndex(doc: ProseMirrorNode): TextIndex {
 
       if (child.isText) {
         emittedFromChild = appendText(child.text ?? '', childPos);
+      } else if (child.isLeaf && child.isInline) {
+        emittedFromChild = appendText(' ', childPos);
       } else {
         emittedFromChild = visit(child, childPos);
       }

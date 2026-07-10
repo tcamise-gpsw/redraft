@@ -67,7 +67,9 @@ export function useCrepeInstance(
 
     editor.action((ctx) => {
       const view = ctx.get(editorViewCtx);
-      callback(view.state.doc.textBetween(0, view.state.doc.content.size, ' '));
+      callback(
+        view.state.doc.textBetween(0, view.state.doc.content.size, ' ', ' '),
+      );
     });
   }, []);
 

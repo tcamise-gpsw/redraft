@@ -189,8 +189,13 @@ export function CommentsSidebar({
     if (formCoords) {
       const formPlacement = placements.find((p) => p.id === PENDING_ID);
       if (formPlacement !== undefined) {
+        const formHeight = pendingFormRef.current?.offsetHeight ?? 200;
+        const maxVisible = Math.max(
+          0,
+          window.innerHeight - originTop - formHeight - CARD_GAP,
+        );
         setPendingFormTop((prev) => {
-          const rounded = Math.round(formPlacement.top);
+          const rounded = Math.round(Math.min(formPlacement.top, maxVisible));
           return prev === rounded ? prev : rounded;
         });
       }

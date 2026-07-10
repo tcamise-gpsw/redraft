@@ -101,7 +101,7 @@ export function useSelectionCapture(
       }
 
       const rawQuote = doc
-        .textBetween(selection.from, selection.to, ' ')
+        .textBetween(selection.from, selection.to, ' ', ' ')
         .trim();
       if (!rawQuote) {
         return;
@@ -111,13 +111,15 @@ export function useSelectionCapture(
         Math.max(0, selection.from - 100),
         selection.from,
         ' ',
+        ' ',
       );
       const rawSuffix = doc.textBetween(
         selection.to,
         Math.min(doc.content.size, selection.to + 100),
         ' ',
+        ' ',
       );
-      const rawOffset = doc.textBetween(0, selection.from, ' ').length;
+      const rawOffset = doc.textBetween(0, selection.from, ' ', ' ').length;
       const { quote, prefix, suffix } = snapToWordBoundaries(
         rawPrefix,
         rawQuote,
