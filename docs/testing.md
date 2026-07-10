@@ -47,25 +47,32 @@ behavior landed — the fix is to expand the folder, not to change the app.
 
 ## Remote e2e can false-green off a stale dev server
 
-The remote Playwright project points at `npm run dev` (Vite, port 4173) with
-`reuseExistingServer: true`. If a dev server is already listening on 4173 (left
-over from a previous run or session), Playwright **reuses it** instead of
-starting a fresh one. A reused server can serve a module graph that predates
-your latest source change, so the suite passes locally while CI — which always
-starts fresh — fails on the real behavior.
+The remote Playwright project does **not** use Vite's default `5173` port. In
+`playwright.config.ts` it starts `npm run dev -- --host 127.0.0.1 --port 4173`
+and points the `remote` project at `4173` with `reuseExistingServer: true`.
+If a dev server is already listening on `4173` (left over from a previous run
+or session), Playwright **reuses it** instead of starting a fresh one. A reused
+server can serve a module graph that predates your latest source change, so the
+suite passes locally while CI — which always starts fresh — fails on the real
+behavior.
 
-Rule: before trusting a local remote-e2e result, kill stray servers so Playwright
-starts clean:
+Rule: before trusting a local e2e result or retrying after a failure, kill stray
+servers so Playwright starts clean:
 
 ```bash
-lsof -ti :4173 | xargs kill -9 2>/dev/null   # remote dev server
-lsof -ti :4201 | xargs kill -9 2>/dev/null   # local e2e server
-lsof -ti :5173 | xargs kill -9 2>/dev/null   # default `npm run dev`
-lsof -ti :4200 | xargs kill -9 2>/dev/null   # `npm run serve`
+lsof -ti :4173 | xargs kill -9 2>/dev/null   # remote Playwright Vite server
+lsof -ti :4201 | xargs kill -9 2>/dev/null   # local Playwright server
+lsof -ti :5173 | xargs kill -9 2>/dev/null   # ad hoc `npm run dev` / default Vite dev server
+lsof -ti :5174 | xargs kill -9 2>/dev/null   # Hono backend paired with `npm run dev:local`
+lsof -ti :4200 | xargs kill -9 2>/dev/null   # standalone `npm run serve`
 ```
 
-When local remote-e2e disagrees with CI, suspect a stale server first and treat
-CI as authoritative.
+`4173` and `4201` are Playwright-only ports. `5173` is the normal Vite dev
+server, `5174` is the manual Hono port behind `npm run dev:local`, and `4200`
+is the default standalone local server.
+
+When local remote-e2e disagrees with CI, suspect a stale `4173` server first and
+treat CI as authoritative.
 
 ## Local-mode external file changes use chokidar on every platform
 

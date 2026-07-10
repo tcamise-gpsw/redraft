@@ -35,7 +35,7 @@ Use **View** and **WYSIWYG** modes when you want to read, comment, and make ligh
 Typical workflow:
 
 1. Open [redraft-docs.dev](https://redraft-docs.dev).
-2. Enter a fine-grained GitHub PAT and `owner/repo`.
+2. Enter a GitHub PAT and `owner/repo`.
 3. Choose a document from the tree.
 4. Read in **View** mode or switch to **WYSIWYG**.
 5. Select text, add comments, reply to threads, and resolve feedback.
@@ -54,16 +54,15 @@ Typical workflow:
 
 ### Remote mode requirements
 
-ReDraft expects a fine-grained GitHub PAT with:
+ReDraft currently opens GitHub's classic PAT flow and expects a token with:
 
-- **Contents: Read/Write**
-- **Metadata: Read**
+- **repo**
 
 Repository conventions:
 
 - Markdown documents can live anywhere in the repo
-- Comment threads live under `.redraft/comments/<mirrored-path>.comments.json`
-- Document content and comment files are written with SHA checks for conflict detection
+- Comment threads live on the sidecar branch under `.redraft/comments/<sanitized-document-branch>/<mirrored-path>.comments.json`
+- Example: document branch `feature/docs` becomes `.redraft/comments/feature--docs/docs/spec.md.comments.json`
 
 ---
 
@@ -98,6 +97,7 @@ redraft serve [directory] [options]
   --host <string>   Bind address (default: 127.0.0.1)
   --open            Open the browser automatically
   --no-ui           API-only mode, skip serving the frontend
+  --sidecar-branch <string>  Sidecar branch for comments (default: redraft)
 ```
 
 `[directory]` is optional. Omit it to serve the current working directory.
@@ -116,7 +116,7 @@ What local mode gives you:
 
 - No PAT prompt
 - Direct read/write access to local `.md` files
-- Structured review threads stored on a Git sidecar branch (not in the working tree)
+- Structured review threads committed to the configured Git sidecar branch (default `redraft`) and kept out of the served working tree
 - Live UI updates when files change on disk
 - Optional git convenience endpoints for status and commits
 
@@ -145,7 +145,7 @@ ReDraft uses one React frontend across all modes.
 
 - In **remote mode**, the browser talks to the GitHub REST API.
 - In **local mode**, the browser talks to a local server that mimics the GitHub contents API while reading and writing the filesystem.
-- Comment threads are stored separately from document markdown under `.redraft/comments/`, so review discussion remains structured and portable.
+- In local mode, comment threads live under `.redraft/comments/<sanitized-document-branch>/...` and are committed to the configured sidecar branch, keeping review discussion out of the served working tree.
 
 For architecture details, see `docs/architecture.md`.
 
