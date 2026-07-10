@@ -3,7 +3,70 @@ import { readFile, rm, writeFile } from 'node:fs/promises';
 
 const LOCAL_WORKSPACE_ROOT = '/tmp/redraft-local-playwright';
 const AUTH_DOC_PATH = `${LOCAL_WORKSPACE_ROOT}/docs/auth-overhaul.md`;
-const AUTH_COMMENT_PATH = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/main/docs/auth-overhaul.comments.json`;
+const AUTH_COMMENT_PATH =
+  '.redraft/comments/main/docs/auth-overhaul.comments.json';
+const LOCAL_CONTENTS_API =
+  'http://127.0.0.1:4201/api/github/repos/local/redraft/contents';
+
+async function getSidecar(
+  path: string,
+): Promise<{ sha: string; content: string } | null> {
+  const response = await fetch(
+    `${LOCAL_CONTENTS_API}/${encodeURIComponent(path)}?ref=redraft`,
+  );
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  const body = (await response.json()) as { sha: string; content: string };
+  return {
+    sha: body.sha,
+    content: Buffer.from(body.content, 'base64').toString('utf8'),
+  };
+}
+
+async function writeSidecar(
+  path: string,
+  content: string | null,
+): Promise<void> {
+  const existing = await getSidecar(path);
+  if (content === null) {
+    if (!existing) {
+      return;
+    }
+    const response = await fetch(
+      `${LOCAL_CONTENTS_API}/${encodeURIComponent(path)}`,
+      {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ branch: 'redraft', sha: existing.sha }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+    return;
+  }
+
+  const response = await fetch(
+    `${LOCAL_CONTENTS_API}/${encodeURIComponent(path)}`,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        branch: 'redraft',
+        content: Buffer.from(content, 'utf8').toString('base64'),
+        message: `Restore ${path}`,
+        ...(existing ? { sha: existing.sha } : {}),
+      }),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+}
 
 test('local mode auto-authenticates and renders the split document tree', async ({
   page,
@@ -73,19 +136,17 @@ test('local mode writes markdown edits back to disk and reflects external file c
   }
 });
 
-test('local mode writes saved comment threads to .redraft/comments', async ({
+test('local mode writes saved comment threads to the redraft branch', async ({
   page,
 }) => {
-  const originalComments = await readFile(AUTH_COMMENT_PATH, 'utf8').catch(
-    () => null,
-  );
+  const originalComments = await getSidecar(AUTH_COMMENT_PATH);
 
   try {
-    await rm(AUTH_COMMENT_PATH, { force: true });
+    await writeSidecar(AUTH_COMMENT_PATH, null);
     await page.goto('/');
     // Subdirectories are collapsed by default — expand `docs` before opening the nested file.
     await page.getByRole('button', { name: 'docs', exact: true }).click();
-    await page.getByRole('link', { name: 'auth-overhaul.md' }).click();
+    await page.getByRole('link', { name: /auth-overhaul\.md/ }).click();
 
     await page.locator('.ProseMirror').evaluate((root) => {
       const paragraph = root.querySelector('p');
@@ -125,22 +186,17 @@ test('local mode writes saved comment threads to .redraft/comments', async ({
 
     await expect(page.getByText('Question from local mode')).toBeVisible();
     await expect
-      .poll(async () => readFile(AUTH_COMMENT_PATH, 'utf8').catch(() => ''))
+      .poll(async () => (await getSidecar(AUTH_COMMENT_PATH))?.content ?? '')
       .toContain('Question from local mode');
   } finally {
-    if (originalComments === null) {
-      await rm(AUTH_COMMENT_PATH, { force: true });
-    } else {
-      await writeFile(AUTH_COMMENT_PATH, originalComments, 'utf8');
-    }
+    await writeSidecar(AUTH_COMMENT_PATH, originalComments?.content ?? null);
   }
 });
 
-test('local mode updates the documents tree and under-review section when files change on disk', async ({
+test('local mode updates the documents tree when files change on disk', async ({
   page,
 }) => {
   const documentPath = `${LOCAL_WORKSPACE_ROOT}/playwright-local.md`;
-  const commentPath = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/main/playwright-local.comments.json`;
 
   await page.goto('/');
   await writeFile(
@@ -154,14 +210,7 @@ test('local mode updates the documents tree and under-review section when files 
     await expect(page.getByText('playwright-local.md')).toBeVisible({
       timeout: 15_000,
     });
-
-    await writeFile(commentPath, '{"version":1,"comments":[]}', 'utf8');
-
-    await expect(
-      page.getByRole('link', { name: /playwright-local.md/ }),
-    ).toBeVisible();
   } finally {
     await rm(documentPath, { force: true });
-    await rm(commentPath, { force: true });
   }
 });

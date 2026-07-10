@@ -116,6 +116,21 @@ describe('GitHub contents-style routes', () => {
     expect(body.sha).toMatch(/^[a-f0-9]{40}$/);
   });
 
+  it('ignores ref for document reads and still uses the filesystem', async () => {
+    await initializeSidecarBranch(basePath);
+    const app = buildGitHubApiRouter(basePath);
+
+    const response = await app.request(
+      'http://local.test/api/github/repos/local/redraft/contents/auth-overhaul.md?ref=main',
+    );
+    const body = (await response.json()) as FileResponse;
+
+    expect(response.status).toBe(200);
+    expect(Buffer.from(body.content, 'base64').toString('utf8')).toBe(
+      '# Auth\n',
+    );
+  });
+
   it('updates root-relative content when the incoming sha matches', async () => {
     const app = buildGitHubApiRouter(basePath);
     const existing = await app.request(
@@ -142,6 +157,36 @@ describe('GitHub contents-style routes', () => {
     await expect(
       readFile(join(basePath, 'auth-overhaul.md'), 'utf8'),
     ).resolves.toBe('# Updated\n');
+  });
+
+  it('ignores branch for document writes and still updates the filesystem', async () => {
+    await initializeSidecarBranch(basePath);
+    const app = buildGitHubApiRouter(basePath);
+    const existing = await app.request(
+      'http://local.test/api/github/repos/local/redraft/contents/auth-overhaul.md?ref=main',
+    );
+    const existingBody = (await existing.json()) as FileResponse;
+
+    const response = await app.request(
+      'http://local.test/api/github/repos/local/redraft/contents/auth-overhaul.md',
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          branch: 'main',
+          message: 'Update document',
+          sha: existingBody.sha,
+          content: Buffer.from('# Updated via filesystem\n', 'utf8').toString(
+            'base64',
+          ),
+        }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    await expect(
+      readFile(join(basePath, 'auth-overhaul.md'), 'utf8'),
+    ).resolves.toBe('# Updated via filesystem\n');
   });
 
   it('returns 409 when a PUT request uses a stale sha', async () => {

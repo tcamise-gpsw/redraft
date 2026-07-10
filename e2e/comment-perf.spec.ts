@@ -1,15 +1,84 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { readFile, rm, writeFile } from 'node:fs/promises';
 
-const LOCAL_WORKSPACE_ROOT = '/tmp/redraft-local-playwright';
-const LARGE_DOC_COMMENT_PATH = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/main/docs/platform-architecture.comments.json`;
+const LARGE_DOC_COMMENT_PATH =
+  '.redraft/comments/main/docs/platform-architecture.comments.json';
 
 const OFFSET_HIT_BODY = 'Offset hit thread stays anchored';
 const EXACT_FALLBACK_BODY = 'Exact fallback thread stays anchored';
 const CONTEXT_RELOCATION_BODY = 'Context relocation thread stays anchored';
 const ORPHANED_BODY = 'Fully rewritten paragraph is orphaned';
 const NEW_COMMENT_BODY = 'New comment saved from comment-perf spec';
+const LOCAL_CONTENTS_API =
+  'http://127.0.0.1:4201/api/github/repos/local/redraft/contents';
+
+async function getSidecarContent(path: string): Promise<string | null> {
+  const response = await fetch(
+    `${LOCAL_CONTENTS_API}/${encodeURIComponent(path)}?ref=redraft`,
+  );
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  const body = (await response.json()) as { content: string };
+  return Buffer.from(body.content, 'base64').toString('utf8');
+}
+
+async function writeSidecarContent(
+  path: string,
+  content: string | null,
+): Promise<void> {
+  const currentResponse = await fetch(
+    `${LOCAL_CONTENTS_API}/${encodeURIComponent(path)}?ref=redraft`,
+  );
+  const current = currentResponse.ok
+    ? ((await currentResponse.json()) as { sha: string })
+    : null;
+
+  if (content === null) {
+    if (!current) {
+      return;
+    }
+    const response = await fetch(
+      `${LOCAL_CONTENTS_API}/${encodeURIComponent(path)}`,
+      {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ branch: 'redraft', sha: current.sha }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+    return;
+  }
+
+  const response = await fetch(
+    `${LOCAL_CONTENTS_API}/${encodeURIComponent(path)}`,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        branch: 'redraft',
+        content: Buffer.from(content, 'utf8').toString('base64'),
+        message: `Restore ${path}`,
+        ...(current ? { sha: current.sha } : {}),
+      }),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+}
+
+async function restoreSidecarContent(
+  path: string,
+  content: string | null,
+): Promise<void> {
+  await writeSidecarContent(path, content);
+}
 
 test('local mode renders large seeded comment fixtures without freezing and separates orphaned threads', async ({
   page,
@@ -46,9 +115,7 @@ test('local mode renders large seeded comment fixtures without freezing and sepa
 test('local mode saves a new large-document comment with an offset in the sidecar', async ({
   page,
 }) => {
-  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-    () => null,
-  );
+  const originalComments = await getSidecarContent(LARGE_DOC_COMMENT_PATH);
 
   try {
     await page.goto('/');
@@ -105,8 +172,8 @@ test('local mode saves a new large-document comment with an offset in the sideca
     await expect(page.getByText(NEW_COMMENT_BODY)).toBeVisible();
     await expect
       .poll(async () => {
-        const raw = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-          () => '',
+        const raw = await getSidecarContent(LARGE_DOC_COMMENT_PATH).then(
+          (content) => content ?? '',
         );
         if (!raw) {
           return -1;
@@ -122,11 +189,7 @@ test('local mode saves a new large-document comment with an offset in the sideca
       })
       .toBeGreaterThanOrEqual(0);
   } finally {
-    if (originalComments === null) {
-      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
-    } else {
-      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
-    }
+    await restoreSidecarContent(LARGE_DOC_COMMENT_PATH, originalComments);
   }
 });
 
@@ -234,7 +297,8 @@ async function selectQuoteInEditor(page: Page, quote: string): Promise<void> {
 
 // ─── first write (no pre-existing sidecar) ───────────────────────────────────
 
-const FIRST_WRITE_SIDECAR = `${LOCAL_WORKSPACE_ROOT}/.redraft/comments/main/getting-started.comments.json`;
+const FIRST_WRITE_SIDECAR =
+  '.redraft/comments/main/getting-started.comments.json';
 const FIRST_WRITE_BODY = 'First comment on a doc with no prior sidecar';
 
 test('local mode: first comment on a doc with no sidecar creates the file and anchors correctly', async ({
@@ -247,9 +311,9 @@ test('local mode: first comment on a doc with no sidecar creates the file and an
   // than the SHA-based update path in the local server.
   await expect
     .poll(() =>
-      readFile(FIRST_WRITE_SIDECAR, 'utf8')
-        .then(() => true)
-        .catch(() => false),
+      getSidecarContent(FIRST_WRITE_SIDECAR).then(
+        (content) => content !== null,
+      ),
     )
     .toBe(false);
 
@@ -275,7 +339,9 @@ test('local mode: first comment on a doc with no sidecar creates the file and an
   // Sidecar created on disk with a numeric offset — confirms first-write path.
   await expect
     .poll(async () => {
-      const raw = await readFile(FIRST_WRITE_SIDECAR, 'utf8').catch(() => '');
+      const raw = await getSidecarContent(FIRST_WRITE_SIDECAR).then(
+        (content) => content ?? '',
+      );
       if (!raw) return -1;
       const parsed = JSON.parse(raw) as {
         comments?: Array<{ body?: string; offset?: number }>;
@@ -314,9 +380,7 @@ test('local mode: comment spanning bold + italic marks anchors correctly', async
 }) => {
   test.setTimeout(30_000);
 
-  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-    () => null,
-  );
+  const originalComments = await getSidecarContent(LARGE_DOC_COMMENT_PATH);
 
   try {
     await page.goto('/');
@@ -338,11 +402,7 @@ test('local mode: comment spanning bold + italic marks anchors correctly', async
       0,
     );
   } finally {
-    if (originalComments === null) {
-      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
-    } else {
-      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
-    }
+    await restoreSidecarContent(LARGE_DOC_COMMENT_PATH, originalComments);
   }
 });
 
@@ -351,9 +411,7 @@ test('local mode: comment spanning inline-code and link text anchors correctly',
 }) => {
   test.setTimeout(30_000);
 
-  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-    () => null,
-  );
+  const originalComments = await getSidecarContent(LARGE_DOC_COMMENT_PATH);
 
   try {
     await page.goto('/');
@@ -375,11 +433,7 @@ test('local mode: comment spanning inline-code and link text anchors correctly',
       0,
     );
   } finally {
-    if (originalComments === null) {
-      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
-    } else {
-      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
-    }
+    await restoreSidecarContent(LARGE_DOC_COMMENT_PATH, originalComments);
   }
 });
 
@@ -388,9 +442,7 @@ test('local mode: comment on heading text anchors via offset tier (offset differ
 }) => {
   test.setTimeout(30_000);
 
-  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-    () => null,
-  );
+  const originalComments = await getSidecarContent(LARGE_DOC_COMMENT_PATH);
 
   try {
     await page.goto('/');
@@ -418,8 +470,8 @@ test('local mode: comment on heading text anchors via offset tier (offset differ
 
     await expect
       .poll(async () => {
-        const raw = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-          () => '',
+        const raw = await getSidecarContent(LARGE_DOC_COMMENT_PATH).then(
+          (content) => content ?? '',
         );
         if (!raw) return null;
         const parsed = JSON.parse(raw) as {
@@ -433,11 +485,7 @@ test('local mode: comment on heading text anchors via offset tier (offset differ
       // heading after "## "; in rendered space the heading falls much later).
       .toBeGreaterThan(3);
   } finally {
-    if (originalComments === null) {
-      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
-    } else {
-      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
-    }
+    await restoreSidecarContent(LARGE_DOC_COMMENT_PATH, originalComments);
   }
 });
 
@@ -449,9 +497,7 @@ test('local mode: new comment stays anchored after navigating away and back', as
   test.setTimeout(45_000);
 
   const BODY = 'Nav-survival comment from E2E';
-  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-    () => null,
-  );
+  const originalComments = await getSidecarContent(LARGE_DOC_COMMENT_PATH);
 
   try {
     // Open the large fixture document.
@@ -497,11 +543,7 @@ test('local mode: new comment stays anchored after navigating away and back', as
     // would appear here.
     await expect(orphanedSection(page).getByText(BODY)).toHaveCount(0);
   } finally {
-    if (originalComments === null) {
-      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
-    } else {
-      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
-    }
+    await restoreSidecarContent(LARGE_DOC_COMMENT_PATH, originalComments);
   }
 });
 
@@ -513,9 +555,7 @@ test('local mode: reply to a seeded thread is saved to the sidecar', async ({
   test.setTimeout(30_000);
 
   const REPLY_BODY = 'E2E reply to offset-hit thread';
-  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-    () => null,
-  );
+  const originalComments = await getSidecarContent(LARGE_DOC_COMMENT_PATH);
 
   try {
     await page.goto('/');
@@ -541,8 +581,8 @@ test('local mode: reply to a seeded thread is saved to the sidecar', async ({
     // The sidecar on disk must persist the reply nested under the right thread.
     await expect
       .poll(async () => {
-        const raw = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-          () => '',
+        const raw = await getSidecarContent(LARGE_DOC_COMMENT_PATH).then(
+          (content) => content ?? '',
         );
         if (!raw) return false;
         const parsed = JSON.parse(raw) as {
@@ -556,11 +596,7 @@ test('local mode: reply to a seeded thread is saved to the sidecar', async ({
       })
       .toBe(true);
   } finally {
-    if (originalComments === null) {
-      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
-    } else {
-      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
-    }
+    await restoreSidecarContent(LARGE_DOC_COMMENT_PATH, originalComments);
   }
 });
 
@@ -571,9 +607,7 @@ test('local mode: resolving a thread persists resolved:true to the sidecar', asy
 }) => {
   test.setTimeout(30_000);
 
-  const originalComments = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-    () => null,
-  );
+  const originalComments = await getSidecarContent(LARGE_DOC_COMMENT_PATH);
 
   try {
     await page.goto('/');
@@ -594,8 +628,8 @@ test('local mode: resolving a thread persists resolved:true to the sidecar', asy
     // Sidecar on disk must have resolved:true for that thread.
     await expect
       .poll(async () => {
-        const raw = await readFile(LARGE_DOC_COMMENT_PATH, 'utf8').catch(
-          () => '',
+        const raw = await getSidecarContent(LARGE_DOC_COMMENT_PATH).then(
+          (content) => content ?? '',
         );
         if (!raw) return false;
         const parsed = JSON.parse(raw) as {
@@ -608,11 +642,7 @@ test('local mode: resolving a thread persists resolved:true to the sidecar', asy
       })
       .toBe(true);
   } finally {
-    if (originalComments === null) {
-      await rm(LARGE_DOC_COMMENT_PATH, { force: true });
-    } else {
-      await writeFile(LARGE_DOC_COMMENT_PATH, originalComments, 'utf8');
-    }
+    await restoreSidecarContent(LARGE_DOC_COMMENT_PATH, originalComments);
   }
 });
 

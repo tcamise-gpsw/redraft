@@ -51,6 +51,12 @@ function commitMessage(body: ContentRequestBody, fallback: string): string {
   return body.message ?? fallback;
 }
 
+function isCommentSidecarPath(path: string): boolean {
+  return (
+    path.startsWith('.redraft/comments/') && path.endsWith('.comments.json')
+  );
+}
+
 export function registerContentsRoute(
   app: Hono,
   helpers: ContentsRouteHelpers,
@@ -58,9 +64,10 @@ export function registerContentsRoute(
   app.get('/api/github/repos/:owner/:repo/contents/:path{.+}', async (c) => {
     const localPath = helpers.toLocalPath(requireApiPath(c.req.param('path')));
     const ref = c.req.query('ref');
-    const file = ref
-      ? await readGitFile(helpers.basePath, ref, localPath)
-      : await readFile(helpers.basePath, localPath);
+    const file =
+      ref && isCommentSidecarPath(localPath)
+        ? await readGitFile(helpers.basePath, ref, localPath)
+        : await readFile(helpers.basePath, localPath);
 
     return helpers.json({
       type: 'file',
@@ -73,7 +80,7 @@ export function registerContentsRoute(
     const localPath = helpers.toLocalPath(requireApiPath(c.req.param('path')));
     const body = (await c.req.json()) as ContentRequestBody;
     let result: { sha: string };
-    if (body.branch) {
+    if (body.branch && isCommentSidecarPath(localPath)) {
       result = body.sha
         ? await writeGitFile(
             helpers.basePath,
@@ -121,15 +128,16 @@ export function registerContentsRoute(
   app.post('/api/github/repos/:owner/:repo/contents/:path{.+}', async (c) => {
     const localPath = helpers.toLocalPath(requireApiPath(c.req.param('path')));
     const body = (await c.req.json()) as ContentRequestBody;
-    const result = body.branch
-      ? await createGitFile(
-          helpers.basePath,
-          body.branch,
-          localPath,
-          decodeContent(body),
-          commitMessage(body, `Create ${localPath}`),
-        )
-      : await createFile(helpers.basePath, localPath, decodeContent(body));
+    const result =
+      body.branch && isCommentSidecarPath(localPath)
+        ? await createGitFile(
+            helpers.basePath,
+            body.branch,
+            localPath,
+            decodeContent(body),
+            commitMessage(body, `Create ${localPath}`),
+          )
+        : await createFile(helpers.basePath, localPath, decodeContent(body));
 
     return helpers.json({ content: { sha: result.sha } }, 201);
   });
@@ -142,7 +150,7 @@ export function registerContentsRoute(
       throw new FileOperationError(400, 'Request body must include a sha.');
     }
 
-    if (body.branch) {
+    if (body.branch && isCommentSidecarPath(localPath)) {
       await deleteGitFile(helpers.basePath, body.branch, localPath, body.sha);
     } else {
       await deleteFile(helpers.basePath, localPath, body.sha);
