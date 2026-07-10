@@ -18,6 +18,9 @@ This skill covers two distinct E2E paths:
 
 Choose the mode first. Do not mix them casually — the auth model, server startup, and verification method differ.
 
+Before running manual QA, check `issue://?state=open&label=bug` for known bugs
+to avoid re-reporting fixed or already-tracked issues.
+
 ---
 
 ## Mode selection
@@ -51,6 +54,22 @@ npx eslint src/ server/
 npx prettier --check src/ server/
 npm run build
 npm run serve
+```
+
+### Do NOT run remote and local projects in parallel
+
+The `webServer` array in `playwright.config.ts` is **global** — Playwright starts
+ALL web servers regardless of which `--project=` you select. Running two separate
+`npx playwright test` processes concurrently causes:
+
+- **Port collisions**: the first process occupies port 4201; the second fails with
+  `http://127.0.0.1:4201 is already used`.
+- **Git init race**: both processes run `rm -rf /tmp/redraft-local-playwright &&
+  git init` simultaneously, producing `fatal: cannot copy … File exists`.
+
+Always run remote and local sequentially:
+```bash
+npx playwright test --project=remote && npx playwright test --project=local
 ```
 
 ---
@@ -111,19 +130,32 @@ cp src/hooks/useComments.ts ~/gopro/redraft-<branch>/src/hooks/useComments.ts
 ```
 
 **Authenticate with the real PAT:**
+
+The app caches the PAT in `localStorage`. If a prior session already authenticated,
+the auth form will not appear — the app loads directly into the documents view.
+Check `tab.observe()` before filling auth fields.
+
 ```javascript
 // Get PAT from gh CLI
 const token = (await Bun.$`gh auth token`.text()).trim();
-await tab.fill('input[aria-label="GitHub PAT"]', token);
-await tab.fill('input[aria-label="Repository"]', 'tcamise-gpsw/redraft-test-repo');
+// Auth form uses htmlFor-linked labels, not aria-label attributes
+await tab.fill('#github-pat', token);
+await tab.fill('#repository', 'tcamise-gpsw/redraft-test-repo');
 await tab.click('button[type="submit"]');
 ```
 
 The sandbox repo (`tcamise-gpsw/redraft-test-repo`) is the `test-fixtures` submodule
 remote. Documents on `main`: `api-design-v2.md` (has existing seeded comments),
-`getting-started.md`, `docs/architecture.md`, `rfcs/rfc-001-pagination.md`,
-`README.md`. Sidecar branch: `redraft` (`.redraft/comments/main/…`). The PAT is
-available via `gh auth token`.
+`getting-started.md`, `docs/architecture.md`, `docs/auth-overhaul.md`,
+`docs/deployment.md`, `docs/platform-architecture.md`, `rfcs/rfc-001-pagination.md`,
+`rfcs/rfc-002-error-responses.md`, `README.md`. Sidecar branch: `redraft`
+(`.redraft/comments/main/…`). The PAT is available via `gh auth token`.
+
+**Baseline tag:** `e2e-baseline-2026-07-10` marks a known-good state of the
+fixture repo. Reset to it if test artifacts accumulate:
+```bash
+cd test-fixtures && git reset --hard e2e-baseline-2026-07-10 && git push --force origin redraft main
+```
 
 **What this covers that mocked tests cannot:**
 - Real GitHub API latency triggering TanStack Query window-focus refetches
@@ -275,6 +307,11 @@ Use these as the default checklist for local E2E coverage.
    - edit markdown
    - save
    - read the document file from disk to prove writeback
+
+   **New Document creation:**
+   - click "New Document"
+   - fill "File path" (`#document-path`) and "Title" (`#document-title`)
+   - verify the file appears on disk and in the tree
 
 4. **Comment operations**
    - select text or reply to an existing thread
